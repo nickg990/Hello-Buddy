@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    LoadingSpinner.xaml - Loading Indicator Component
+    ==================================================
+    Displays a spinning activity indicator with optional message.
+    Token-driven and responsive by design.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Canine_Physio_App.Components.Controls.LoadingSpinner"
+             x:Name="this"
+             IsVisible="{Binding Source={x:Reference this}, Path=IsLoading}">
+
+    <VerticalStackLayout HorizontalOptions="Center"
+                         VerticalOptions="Center"
+                         Spacing="{StaticResource Space8}">
+
+        <!-- Rotating Wheel -->
+        <ActivityIndicator x:Name="activityIndicator"
+                           IsRunning="{Binding Source={x:Reference this}, Path=IsLoading}"
+                           Color="{StaticResource BrandPrimary}"
+                           HorizontalOptions="Center" />
+
+        <!-- Message Text -->
+        <Label x:Name="messageLabel"
+               Text="{Binding Source={x:Reference this}, Path=Message}"
+               IsVisible="{Binding Source={x:Reference this}, Path=ShowMessage}"
+               Style="{StaticResource TextSmStyle}"
+               TextColor="{StaticResource TextMuted}"
+               HorizontalTextAlignment="Center"
+               LineBreakMode="WordWrap" />
+
+    </VerticalStackLayout>
+
+</ContentView>

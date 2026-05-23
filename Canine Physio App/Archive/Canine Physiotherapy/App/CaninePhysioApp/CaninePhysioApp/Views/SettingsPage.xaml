@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:CaninePhysioApp.Controls"
+             x:Class="CaninePhysioApp.Views.SettingsPage"
+             Shell.NavBarIsVisible="False">
+
+    <controls:PageTemplate Title="Settings"
+                           Subtitle="C     A     N     I     N     E          P     H     Y     S     I     O     T     H     E     R     A     P     Y"
+                           ShowSubtitle="True">
+
+        <!-- Slot 1: Above wave content - empty spacer -->
+        <controls:PageTemplate.AboveWaveContent>
+            <Grid HeightRequest="20" />
+        </controls:PageTemplate.AboveWaveContent>
+
+        <!-- Slot 2: Main content within the wave area -->
+        <controls:PageTemplate.WaveContent>
+            <Grid RowDefinitions="*,Auto">
+
+                <!-- Settings content -->
+                <ScrollView Grid.Row="0"
+                            Padding="0,0,0,10">
+                    <VerticalStackLayout Spacing="{StaticResource SpacingL}">
+
+                        <!-- Program Code Display -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0" Spacing="{StaticResource SpacingXS}">
+                                <Label Text="P  R  O  G  R  A  M     C  O  D  E"
+                                       Style="{StaticResource SectionLabelStyle}" />
+                                <Label Text="Your unique program identifier"
+                                       Style="{StaticResource CaptionStyle}"
+                                       TextColor="{StaticResource TextMuted}" />
+                            </VerticalStackLayout>
+                            <Border Grid.Column="1"
+                                    StrokeShape="RoundRectangle 6"
+                                    Stroke="{StaticResource InputBorder}"
+                                    StrokeThickness="1"
+                                    BackgroundColor="{StaticResource CardBackground}"
+                                    Padding="15,8"
+                                    VerticalOptions="Center">
+                                <Label Text="UIUKThiRxd"
+                                       Style="{StaticResource CaptionStyle}"
+                                       TextColor="{StaticResource TextMuted}"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center" />
+                            </Border>
+                        </Grid>
+
+                        <!-- Download Exercise Videos Toggle -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0" Spacing="{StaticResource SpacingXS}">
+                                <Label Text="D  O  W  N  L  O  A  D     E  X  E  R  C  I  S  E     V  I  D  E  O  S"
+                                       Style="{StaticResource SectionLabelStyle}" />
+                                <Label Text="Have access to exercise videos when you are offline"
+                                       Style="{StaticResource CaptionStyle}"
+                                       TextColor="{StaticResource TextMuted}" />
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="1"
+                                    IsToggled="{Binding DownloadVideosEnabled}"
+                                    OnColor="{StaticResource Surface}"
+                                    ThumbColor="{StaticResource Primary}"
+                                    VerticalOptions="Center" />
+                        </Grid>
+
+                        <!-- Enable Offline Caching Toggle -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0" Spacing="{StaticResource SpacingXS}">
+                                <Label Text="E  N  A  B  L  E     O  F  F  L  I  N  E     C  A  C  H  I  N  G"
+                                       Style="{StaticResource SectionLabelStyle}" />
+                                <Label Text="Download exercise data for offline use"
+                                       Style="{StaticResource CaptionStyle}"
+                                       TextColor="{StaticResource TextMuted}" />
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="1"
+                                    IsToggled="{Binding OfflineCachingEnabled}"
+                                    OnColor="{StaticResource Surface}"
+                                    ThumbColor="{StaticResource Primary}"
+                                    VerticalOptions="Center" />
+                        </Grid>
+
+                        <!-- Notifications Toggle -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0" Spacing="{StaticResource SpacingXS}">
+                                <Label Text="N  O  T  I  F  I  C  A  T  I  O  N  S"
+                                       Style="{StaticResource SectionLabelStyle}" />
+                                <Label Text="Receive reminders for your exercises"
+                                       Style="{StaticResource CaptionStyle}"
+                                       TextColor="{StaticResource TextMuted}" />
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="1"
+                                    IsToggled="{Binding NotificationsEnabled}"
+                                    OnColor="{StaticResource Surface}"
+                                    ThumbColor="{StaticResource Primary}"
+                                    VerticalOptions="Center" />
+                        </Grid>
+
+                        <!-- Notification Time Picker (visible only when notifications enabled) -->
+                        <Grid ColumnDefinitions="*,Auto"
+                              IsVisible="{Binding NotificationsEnabled}">
+                            <VerticalStackLayout Grid.Column="0" Spacing="{StaticResource SpacingXS}">
+                                <Label Text="N  O  T  I  F  I  C  A  T  I  O  N     T  I  M  E"
+                                       Style="{StaticResource SectionLabelStyle}" />
+                                <Label Text="Choose when to receive daily reminders"
+                                       Style="{StaticResource CaptionStyle}"
+                                       TextColor="{StaticResource TextMuted}" />
+                            </VerticalStackLayout>
+                            <TimePicker Grid.Column="1"
+                                        Time="{Binding NotificationTime}"
+                                        Format="HH:mm"
+                                        TextColor="{StaticResource TextPrimary}"
+                                        FontSize="12"
+                                        VerticalOptions="Center" />
+                        </Grid>
+
+                    </VerticalStackLayout>
+                </ScrollView>
+
+                <!-- Back Button - positioned at bottom-left -->
+                <controls:StyledButton Grid.Row="1"
+                                       Text="B  A  C  K"
+                                       ButtonBackgroundColor="{StaticResource ButtonSecondary}"
+                                       ButtonTextColor="{StaticResource ButtonSecondaryText}"
+                                       ButtonHorizontalAlignment="Start"
+                                       Margin="0,10,0,0"
+                                       Command="{Binding NavigateBackCommand}" />
+            </Grid>
+        </controls:PageTemplate.WaveContent>
+
+    </controls:PageTemplate>
+
+</ContentPage>

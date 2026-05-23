@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="CaninePhysioApp.Controls.ExerciseTile"
+             x:Name="this">
+    <Grid RowDefinitions="Auto,Auto"
+          RowSpacing="{StaticResource SpacingXS}"
+          Padding="{StaticResource SpacingXS}">
+        <Grid.GestureRecognizers>
+            <TapGestureRecognizer Command="{Binding Source={x:Reference this}, Path=Command}"
+                                  CommandParameter="{Binding Source={x:Reference this}, Path=ExerciseKey}" />
+        </Grid.GestureRecognizers>
+
+        <!-- Image container with status tick -->
+        <Grid Grid.Row="0"
+              MinimumHeightRequest="{Binding Source={x:Reference this}, Path=TileHeight}">
+
+            <!-- Shadow layer -->
+            <BoxView BackgroundColor="{StaticResource Shadow}"
+                     CornerRadius="{StaticResource ControlCornerRadius}"
+                     TranslationX="{StaticResource ShadowOffsetSmall}"
+                     TranslationY="{StaticResource ShadowOffsetSmall}" />
+
+            <!-- Image with border -->
+            <Border BackgroundColor="{StaticResource Surface}"
+                    StrokeShape="RoundRectangle 8"
+                    Stroke="{StaticResource BorderDefault}"
+                    StrokeThickness="{StaticResource BorderThickness}">
+                <Image Source="{Binding Source={x:Reference this}, Path=ImageSource}"
+                       Aspect="AspectFill" />
+            </Border>
+
+            <!-- Completion tick (only visible when complete) -->
+            <Border BackgroundColor="{StaticResource CompletionTick}"
+                    StrokeShape="RoundRectangle 10"
+                    Stroke="{StaticResource Surface}"
+                    StrokeThickness="1"
+                    WidthRequest="{StaticResource IconSizeMedium}"
+                    HeightRequest="{StaticResource IconSizeMedium}"
+                    HorizontalOptions="End"
+                    VerticalOptions="Start"
+                    Margin="0,4,4,0"
+                    IsVisible="{Binding Source={x:Reference this}, Path=IsComplete}">
+                <Label Text="✓"
+                       TextColor="{StaticResource TextOnPrimary}"
+                       FontSize="12"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center" />
+            </Border>
+        </Grid>
+
+        <!-- Exercise name -->
+        <Label Grid.Row="1"
+               Text="{Binding Source={x:Reference this}, Path=ExerciseName}"
+               Style="{StaticResource TileTitleStyle}" />
+    </Grid>
+</ContentView>

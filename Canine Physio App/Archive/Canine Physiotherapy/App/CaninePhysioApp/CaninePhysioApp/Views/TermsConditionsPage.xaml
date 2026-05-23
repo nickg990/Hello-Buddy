@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:CaninePhysioApp.Controls"
+             x:Class="CaninePhysioApp.Views.TermsConditionsPage"
+             Shell.NavBarIsVisible="False">
+
+    <Grid>
+        <!-- Main Content -->
+        <controls:PageTemplate Title="Terms &amp; Conditions"
+                               Subtitle="C     A     N     I     N     E          P     H     Y     S     I     O     T     H     E     R     A     P     Y"
+                               ShowSubtitle="True">
+
+            <!-- Slot 1: Above wave content - 25px gap from header -->
+            <controls:PageTemplate.AboveWaveContent>
+                <Grid HeightRequest="25" />
+            </controls:PageTemplate.AboveWaveContent>
+
+            <!-- Slot 2: Main content within the wave area -->
+            <controls:PageTemplate.WaveContent>
+                <Grid RowDefinitions="Auto,*,Auto">
+
+                    <!-- Row 0: Agreement Switch -->
+                    <Grid Grid.Row="0"
+                          ColumnDefinitions="*,Auto"
+                          Margin="0,0,0,20">
+                        <Label Grid.Column="0"
+                               Text="I agree to the terms of service, privacy policy and acceptable use policy"
+                               TextColor="{StaticResource TextPrimary}"
+                               Style="{StaticResource BodyBoldStyle}"
+                               VerticalOptions="Center"
+                               LineBreakMode="WordWrap" />
+                        <Switch Grid.Column="1"
+                                IsToggled="{Binding IsAccepted}"
+                                OnColor="{StaticResource Surface}"
+                                ThumbColor="{StaticResource Primary}"
+                                VerticalOptions="Center" />
+                    </Grid>
+
+                    <!-- Row 1: Scrollable Collapsible Terms Sections -->
+                    <ScrollView Grid.Row="1"
+                                Padding="0,0,0,10">
+                        <VerticalStackLayout Spacing="{StaticResource SpacingM}">
+
+                            <!-- Terms of Service Section -->
+                            <VerticalStackLayout Spacing="0">
+                                <Grid ColumnDefinitions="*,Auto"
+                                      Padding="{StaticResource SpacingS}"
+                                      BackgroundColor="Transparent">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding ToggleTermsCommand}" />
+                                    </Grid.GestureRecognizers>
+                                    <Label Grid.Column="0"
+                                           Text="{Binding TermsHeader}"
+                                           Style="{StaticResource CollapsibleHeaderStyle}"
+                                           VerticalOptions="Center" />
+                                    <Label Grid.Column="1"
+                                           Text="{Binding TermsExpanderIcon}"
+                                           TextColor="{StaticResource Primary}"
+                                           FontSize="16"
+                                           FontAttributes="Bold"
+                                           VerticalOptions="Center" />
+                                </Grid>
+                                <BoxView HeightRequest="{StaticResource DividerThickness}" 
+                                         BackgroundColor="{StaticResource Divider}" />
+                                <Label Text="{Binding TermsBody}"
+                                       Style="{StaticResource BodyStyle}"
+                                       TextColor="{StaticResource TextSecondary}"
+                                       LineBreakMode="WordWrap"
+                                       Padding="0,10,0,0"
+                                       IsVisible="{Binding IsTermsExpanded}" />
+                            </VerticalStackLayout>
+
+                            <!-- Privacy Policy Section -->
+                            <VerticalStackLayout Spacing="0">
+                                <Grid ColumnDefinitions="*,Auto"
+                                      Padding="{StaticResource SpacingS}"
+                                      BackgroundColor="Transparent">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding TogglePrivacyCommand}" />
+                                    </Grid.GestureRecognizers>
+                                    <Label Grid.Column="0"
+                                           Text="{Binding PrivacyHeader}"
+                                           Style="{StaticResource CollapsibleHeaderStyle}"
+                                           VerticalOptions="Center" />
+                                    <Label Grid.Column="1"
+                                           Text="{Binding PrivacyExpanderIcon}"
+                                           TextColor="{StaticResource Primary}"
+                                           FontSize="16"
+                                           FontAttributes="Bold"
+                                           VerticalOptions="Center" />
+                                </Grid>
+                                <BoxView HeightRequest="{StaticResource DividerThickness}" 
+                                         BackgroundColor="{StaticResource Divider}" />
+                                <Label Text="{Binding PrivacyBody}"
+                                       Style="{StaticResource BodyStyle}"
+                                       TextColor="{StaticResource TextSecondary}"
+                                       LineBreakMode="WordWrap"
+                                       Padding="0,10,0,0"
+                                       IsVisible="{Binding IsPrivacyExpanded}" />
+                            </VerticalStackLayout>
+
+                            <!-- Acceptable Use Policy Section -->
+                            <VerticalStackLayout Spacing="0">
+                                <Grid ColumnDefinitions="*,Auto"
+                                      Padding="{StaticResource SpacingS}"
+                                      BackgroundColor="Transparent">
+                                    <Grid.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding ToggleAcceptableUseCommand}" />
+                                    </Grid.GestureRecognizers>
+                                    <Label Grid.Column="0"
+                                           Text="{Binding AcceptableUseHeader}"
+                                           Style="{StaticResource CollapsibleHeaderStyle}"
+                                           VerticalOptions="Center" />
+                                    <Label Grid.Column="1"
+                                           Text="{Binding AcceptableUseExpanderIcon}"
+                                           TextColor="{StaticResource Primary}"
+                                           FontSize="16"
+                                           FontAttributes="Bold"
+                                           VerticalOptions="Center" />
+                                </Grid>
+                                <BoxView HeightRequest="{StaticResource DividerThickness}" 
+                                         BackgroundColor="{StaticResource Divider}" />
+                                <Label Text="{Binding AcceptableUseBody}"
+                                       Style="{StaticResource BodyStyle}"
+                                       TextColor="{StaticResource TextSecondary}"
+                                       LineBreakMode="WordWrap"
+                                       Padding="0,10,0,0"
+                                       IsVisible="{Binding IsAcceptableUseExpanded}" />
+                            </VerticalStackLayout>
+
+                        </VerticalStackLayout>
+                    </ScrollView>
+
+                    <!-- Row 2: Back and Next Buttons side by side -->
+                    <Grid Grid.Row="2"
+                          ColumnDefinitions="Auto,*,Auto"
+                          Margin="0,10,0,0">
+
+                        <!-- Back Button -->
+                        <controls:StyledButton Grid.Column="0"
+                                               Text="B  A  C  K"
+                                               ButtonBackgroundColor="{StaticResource ButtonSecondary}"
+                                               ButtonTextColor="{StaticResource ButtonSecondaryText}"
+                                               Command="{Binding NavigateBackCommand}"
+                                               IsVisible="{Binding IsNotNavigating}" />
+
+                        <!-- Next Button -->
+                        <controls:StyledButton Grid.Column="2"
+                                               Text="N  E  X  T"
+                                               ButtonBackgroundColor="{Binding NextButtonColor}"
+                                               ButtonTextColor="{StaticResource ButtonPrimaryText}"
+                                               Command="{Binding NavigateNextCommand}"
+                                               IsVisible="{Binding IsNotNavigating}" />
+                    </Grid>
+
+                </Grid>
+            </controls:PageTemplate.WaveContent>
+
+        </controls:PageTemplate>
+
+        <!-- Loading Overlay -->
+        <Grid IsVisible="{Binding IsNavigating}"
+              BackgroundColor="{StaticResource OverlayScrim}"
+              ZIndex="100">
+            <controls:LoadingSpinner IsLoading="{Binding IsNavigating}"
+                                     Message="Loading exercises..."
+                                     SpinnerColor="{StaticResource ButtonPrimaryText}"
+                                     MessageColor="{StaticResource ButtonPrimaryText}"
+                                     VerticalOptions="Center"
+                                     HorizontalOptions="Center" />
+        </Grid>
+    </Grid>
+
+</ContentPage>

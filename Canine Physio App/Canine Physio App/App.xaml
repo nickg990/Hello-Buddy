@@ -1,0 +1,33 @@
+﻿<?xml version = "1.0" encoding = "UTF-8" ?>
+<!--
+    App.xaml - Application Resources
+    =================================
+    Canine Physio App (Hello Buddy)
+    
+    Theme dictionaries are merged in a specific order:
+    1. Colors     - Raw color tokens (must be first)
+    2. Typography - Font families, sizes, text styles
+    3. Spacing    - Margin/padding scale
+    4. Radii      - Corner radius scale
+    5. Sizing     - Control height/tap target tokens
+    6. Controls   - Global control styles (must be last, consumes all tokens)
+-->
+<Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Canine_Physio_App"
+             x:Class="Canine_Physio_App.App">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Token Dictionaries (order matters) -->
+                <ResourceDictionary Source="Theming/Colors.xaml" />
+                <ResourceDictionary Source="Theming/Typography.xaml" />
+                <ResourceDictionary Source="Theming/Spacing.xaml" />
+                <ResourceDictionary Source="Theming/Radii.xaml" />
+                <ResourceDictionary Source="Theming/Sizing.xaml" />
+                <!-- Control Styles (depends on all tokens above) -->
+                <ResourceDictionary Source="Theming/Controls.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

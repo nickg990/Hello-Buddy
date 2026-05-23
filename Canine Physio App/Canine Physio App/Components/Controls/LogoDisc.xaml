@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    LogoDisc.xaml - Brand Logo Disc Component
+    ==========================================
+    Displays the Hello Buddy dog logo with "GETTING BETTER" tagline
+    inside a branded circular disc with shadow and border ring.
+    
+    Responsive by design:
+    - If DiscSize is set, uses that exact size
+    - If DiscSize is 0 (default), auto-sizes based on allocated space
+    
+    All internal element sizes are proportionally derived from DiscSize.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Canine_Physio_App.Components.Controls.LogoDisc">
+
+    <!-- 
+        Grid allows stacking of layers (shadow, border, disc, logo, label)
+        All elements are centered and sized programmatically in code-behind.
+    -->
+    <Grid x:Name="rootGrid"
+          HorizontalOptions="Center" 
+          VerticalOptions="Center"
+          IsClippedToBounds="False">
+        
+        <!-- Layer 1: Shadow ellipse (behind, slightly offset down-right) -->
+        <Ellipse x:Name="shadowEllipse"
+                 Fill="{StaticResource Shadow}"
+                 HorizontalOptions="Center"
+                 VerticalOptions="Center"/>
+        
+        <!-- Layer 2: Border ring (white, slightly larger than disc) -->
+        <Ellipse x:Name="borderEllipse"
+                 Fill="{StaticResource Surface}"
+                 HorizontalOptions="Center"
+                 VerticalOptions="Center"/>
+        
+        <!-- Layer 3: Primary disc background -->
+        <Ellipse x:Name="discEllipse"
+                 Fill="{StaticResource BrandPrimary}"
+                 HorizontalOptions="Center"
+                 VerticalOptions="Center"/>
+        
+        <!-- Layer 4: Logo + Tagline stack (centered in disc, micro gap between) -->
+        <VerticalStackLayout x:Name="logoStack"
+                             Spacing="0"
+                             HorizontalOptions="Center"
+                             VerticalOptions="Center"
+                             IsClippedToBounds="False">
+            
+            <!-- Dog logo image -->
+            <Image x:Name="logoImage"
+                   Source="hellobuddy_logo.png"
+                   Aspect="AspectFit"
+                   HorizontalOptions="Center"/>
+            
+            <!-- "GETTING BETTER" tagline (gold, fills disc width) -->
+            <Label x:Name="taglineLabel"
+                   Text="GETTING BETTER"
+                   Style="{StaticResource LogoDiscTextStyle}"
+                   HorizontalOptions="Center"/>
+            
+        </VerticalStackLayout>
+        
+    </Grid>
+
+</ContentView>

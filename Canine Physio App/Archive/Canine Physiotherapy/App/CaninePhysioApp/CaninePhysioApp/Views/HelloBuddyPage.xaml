@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:CaninePhysioApp.Controls"
+             x:Class="CaninePhysioApp.Views.HelloBuddyPage"
+             Shell.NavBarIsVisible="False">
+
+    <controls:PageTemplate Title="Hello Buddy"
+                           Subtitle="CANINE PHYSIOTHERAPY"
+                           ShowSubtitle="True">
+        
+        <!-- Slot 1: Logo Disc (above the wave) -->
+        <controls:PageTemplate.AboveWaveContent>
+            <Grid VerticalOptions="Center"
+                  HorizontalOptions="Center"
+                  Padding="{StaticResource SpacingL}">
+                <controls:LogoDisc HorizontalOptions="Center"
+                                   VerticalOptions="Center"
+                                   DiscSize="{StaticResource LogoDiscDefaultSize}" />
+            </Grid>
+        </controls:PageTemplate.AboveWaveContent>
+        
+        <!-- Slot 2: Navigation Buttons (within the wave area) -->
+        <controls:PageTemplate.WaveContent>
+            <VerticalStackLayout Spacing="{StaticResource SpacingL}"
+                                 VerticalOptions="End"
+                                 HorizontalOptions="Center">
+                
+                <!-- Information Button -->
+                <controls:StyledButton Text="INFO"
+                                       ButtonBackgroundColor="{StaticResource ButtonSecondary}"
+                                       ButtonTextColor="{StaticResource ButtonSecondaryText}"
+                                       ButtonCharacterSpacing="{StaticResource ButtonCharacterSpacing}"
+                                       ButtonWidth="{StaticResource HelloBuddyButtonWidth}"
+                                       ButtonHorizontalAlignment="Center"
+                                       Command="{Binding NavigateToInformationCommand}" />
+                
+                <!-- Settings Button -->
+                <controls:StyledButton Text="SETTINGS"
+                                       ButtonBackgroundColor="{StaticResource ButtonPrimary}"
+                                       ButtonTextColor="{StaticResource ButtonPrimaryText}"
+                                       ButtonCharacterSpacing="{StaticResource ButtonCharacterSpacing}"
+                                       ButtonWidth="{StaticResource HelloBuddyButtonWidth}"
+                                       ButtonHorizontalAlignment="Center"
+                                       Command="{Binding NavigateToSettingsCommand}" />
+                
+                <!-- Start Physio Button -->
+                <controls:StyledButton Text="START PHYSIO"
+                                       ButtonBackgroundColor="{StaticResource ButtonSecondary}"
+                                       ButtonTextColor="{StaticResource ButtonSecondaryText}"
+                                       ButtonCharacterSpacing="{StaticResource ButtonCharacterSpacing}"
+                                       ButtonWidth="{StaticResource HelloBuddyButtonWidth}"
+                                       ButtonHorizontalAlignment="Center"
+                                       Command="{Binding NavigateToLoginCommand}" />
+                
+                <!-- Registration Button -->
+                <controls:StyledButton Text="REGISTRATION"
+                                       ButtonBackgroundColor="{StaticResource ButtonPrimary}"
+                                       ButtonTextColor="{StaticResource ButtonPrimaryText}"
+                                       ButtonCharacterSpacing="{StaticResource ButtonCharacterSpacing}"
+                                       ButtonWidth="{StaticResource HelloBuddyButtonWidth}"
+                                       ButtonHorizontalAlignment="Center"
+                                       Command="{Binding NavigateToRegistrationCommand}" />
+            </VerticalStackLayout>
+        </controls:PageTemplate.WaveContent>
+        
+    </controls:PageTemplate>
+    
+</ContentPage>

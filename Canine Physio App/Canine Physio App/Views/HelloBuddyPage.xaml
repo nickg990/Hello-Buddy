@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    HelloBuddyPage.xaml - Main Landing Page
+    ========================================
+    The app's main entry point featuring the Hello Buddy branding
+    and navigation to key app sections.
+    
+    Layout: AppPageTemplate with logo disc in hero area and
+    navigation buttons in the body content.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:layout="clr-namespace:Canine_Physio_App.Components.Layout"
+             xmlns:controls="clr-namespace:Canine_Physio_App.Components.Controls"
+             x:Class="Canine_Physio_App.Views.HelloBuddyPage"
+             Shell.NavBarIsVisible="False"
+             Title="Hello Buddy"
+             Padding="0"
+             ios:Page.UseSafeArea="False"
+             xmlns:ios="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific;assembly=Microsoft.Maui.Controls">
+
+    <layout:AppPageTemplate
+        Title="Hello Buddy"
+        Subtitle="CANINE PHYSIOTHERAPY"
+        ShowSubtitle="True"
+        ShowHeaderIcon="False"
+        IsBodyScrollable="False"
+        ShowFooter="False">
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             HERO CONTENT - Logo disc with brand identity
+             LogoDisc auto-sizes to fit the hero area responsively.
+             ═══════════════════════════════════════════════════════════════ -->
+        <layout:AppPageTemplate.HeroContent>
+            <controls:LogoDisc />
+        </layout:AppPageTemplate.HeroContent>
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             BODY CONTENT - Navigation buttons
+             Alternating Primary/Secondary styles per Archive design.
+             Buttons fill available width (constrained by SpacePage padding).
+             Grid wrapper enables vertical centering within available space.
+             ═══════════════════════════════════════════════════════════════ -->
+        <layout:AppPageTemplate.BodyContent>
+            <Grid VerticalOptions="Fill">
+                <VerticalStackLayout 
+                    Padding="{StaticResource SpacePage}"
+                    Spacing="{StaticResource SpaceStackMd}"
+                    VerticalOptions="Center">
+                
+                <!-- Info Button (Secondary) -->
+                <Button 
+                    Text="INFO"
+                    Style="{StaticResource ButtonSecondary}"
+                    HorizontalOptions="Fill"
+                    Command="{Binding NavigateToInfoCommand}"
+                    AutomationProperties.Name="Information" />
+                
+                <!-- Settings Button (Primary) -->
+                <Button 
+                    Text="SETTINGS"
+                    Style="{StaticResource ButtonPrimary}"
+                    HorizontalOptions="Fill"
+                    Command="{Binding NavigateToSettingsCommand}"
+                    AutomationProperties.Name="Settings" />
+                
+                <!-- Start Physio Button (Secondary) -->
+                <Button 
+                    Text="START PHYSIO"
+                    Style="{StaticResource ButtonSecondary}"
+                    HorizontalOptions="Fill"
+                    Command="{Binding NavigateToStartPhysioCommand}"
+                    AutomationProperties.Name="Start physiotherapy" />
+                
+                <!-- Registration Button (Primary) -->
+                <Button 
+                    Text="REGISTRATION"
+                    Style="{StaticResource ButtonPrimary}"
+                    HorizontalOptions="Fill"
+                    Command="{Binding NavigateToRegistrationCommand}"
+                    AutomationProperties.Name="Registration" />
+                
+                </VerticalStackLayout>
+            </Grid>
+        </layout:AppPageTemplate.BodyContent>
+        
+    </layout:AppPageTemplate>
+
+</ContentPage>

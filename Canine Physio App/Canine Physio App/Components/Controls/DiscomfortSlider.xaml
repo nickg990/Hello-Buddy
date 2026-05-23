@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    DiscomfortSlider.xaml - Discomfort Rating Component
+    ====================================================
+    A thick slider with tick labels (0-10) for rating discomfort levels.
+    Uses custom-drawn track similar to progress bar for visual consistency.
+    
+    Bindable Properties:
+    - Value (double): Current slider value (0-10), two-way binding
+    - MaxValue (double): Maximum value (default 10)
+    
+    Token-driven styling throughout.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Canine_Physio_App.Components.Controls.DiscomfortSlider"
+             x:Name="this">
+    
+    <VerticalStackLayout Spacing="{StaticResource Space4}">
+        
+        <!-- Custom thick slider track (styled like progress bar) -->
+        <Grid HeightRequest="{StaticResource DiscomfortSliderHeight}">
+            <!-- Background track -->
+            <Border BackgroundColor="{StaticResource BorderDefault}"
+                    HeightRequest="{StaticResource DiscomfortSliderHeight}">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="{StaticResource DiscomfortSliderCornerRadius}" />
+                </Border.StrokeShape>
+            </Border>
+            
+            <!-- Filled track (width based on value percentage) -->
+            <Border BackgroundColor="{StaticResource BrandPrimary}"
+                    HeightRequest="{StaticResource DiscomfortSliderHeight}"
+                    HorizontalOptions="Start"
+                    WidthRequest="{Binding Source={x:Reference this}, Path=FilledWidth}">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="{StaticResource DiscomfortSliderCornerRadius}" />
+                </Border.StrokeShape>
+            </Border>
+            
+            <!-- Invisible slider for interaction (sits on top) -->
+            <Slider x:Name="slider"
+                    Minimum="0"
+                    Maximum="{Binding Source={x:Reference this}, Path=MaxValue}"
+                    Value="{Binding Source={x:Reference this}, Path=Value, Mode=TwoWay}"
+                    MinimumTrackColor="Transparent"
+                    MaximumTrackColor="Transparent"
+                    ThumbColor="{StaticResource BrandPrimary}"
+                    Opacity="1"
+                    AutomationProperties.Name="Discomfort level" />
+        </Grid>
+        
+        <!-- Tick labels 0-10 -->
+        <Grid x:Name="tickLabelGrid"
+              ColumnDefinitions="*,*,*,*,*,*,*,*,*,*,*"
+              Margin="-4,0,-4,0">
+            <Label Grid.Column="0" Text="0" Style="{StaticResource TextXsStyle}" 
+                   HorizontalOptions="Start" TextColor="{StaticResource TextMuted}" />
+            <Label Grid.Column="1" Text="1" Style="{StaticResource TextXsStyle}" 
+                   HorizontalOptions="Center" TextColor="{StaticResource TextMuted}" />
+            <Label Grid.Column="2" Text="2" Style="{StaticResource TextXsStyle}" 
+                   HorizontalOptions="Center" TextColor="{StaticResource TextMuted}" />
+            <Label Grid.Column="3" Text="3" Style="{StaticResource TextXsStyle}" 
+                   HorizontalOptions="Center" TextColor="{StaticResource TextMuted}" />
+            <Label Grid.Column="4" Text="4" Style="{StaticResource TextXsStyle}" 
+                   HorizontalOptions="Center" TextColor="{StaticResource TextMuted}" />
+            <Label Grid.Column="5" Text="5" Style="{StaticResource TextXsStyle}" 
+                   HorizontalOptions="Center" TextColor="{StaticResource TextMuted}" />
+            <Label Grid.Column="6" Text="6" Style="{StaticResource TextXsStyle}" 
+                   HorizontalOptions="Center" TextColor="{StaticResource TextMuted}" />
+            <Label Grid.Column="7" Text="7" Style="{StaticResource TextXsStyle}" 
+                   HorizontalOptions="Center" TextColor="{StaticResource TextMuted}" />
+            <Label Grid.Column="8" Text="8" Style="{StaticResource TextXsStyle}" 
+                   HorizontalOptions="Center" TextColor="{StaticResource TextMuted}" />
+            <Label Grid.Column="9" Text="9" Style="{StaticResource TextXsStyle}" 
+                   HorizontalOptions="Center" TextColor="{StaticResource TextMuted}" />
+            <Label Grid.Column="10" Text="10" Style="{StaticResource TextXsStyle}" 
+                   HorizontalOptions="End" TextColor="{StaticResource TextMuted}" />
+        </Grid>
+        
+    </VerticalStackLayout>
+    
+</ContentView>

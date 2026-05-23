@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    ExerciseDetailPage.xaml - Exercise Detail Page
+    ===============================================
+    Displays detailed information about a specific exercise including:
+    - Summary description
+    - Video thumbnail with play button overlay
+    - Numbered instruction steps
+    - Reps and Sets display
+    
+    Layout: Uses ShowFullBody="True" mode so content scrolls
+    over the hero/wave/body backgrounds as a transparent overlay.
+    Header info icon navigates to InformationPage.
+    BACK and DONE buttons fixed at bottom via template footer.
+    Tab bar visible — Skip tab (>) skips this exercise.
+    
+    Video plays fullscreen in an overlay outside the template.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:layout="clr-namespace:Canine_Physio_App.Components.Layout"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:Class="Canine_Physio_App.Views.ExerciseDetailPage"
+             x:Name="thisPage"
+             Shell.NavBarIsVisible="False"
+             Title="Exercise Detail"
+             Padding="0"
+             ios:Page.UseSafeArea="False"
+             xmlns:ios="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific;assembly=Microsoft.Maui.Controls">
+
+    <Grid>
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             MAIN PAGE CONTENT - AppPageTemplate with FullBody mode
+             ═══════════════════════════════════════════════════════════════ -->
+        <layout:AppPageTemplate
+            x:Name="pageTemplate"
+            Title="{Binding ExerciseTitle}"
+            Subtitle="CANINE PHYSIOTHERAPY"
+            ShowSubtitle="True"
+            ShowHeaderIcon="True"
+            HeaderIconSource="info_icon.svg"
+            HeaderIconCommand="{Binding NavigateToInfoCommand}"
+            ShowFullBody="True"
+            ShowFooter="True"
+            SecondaryButtonText="BACK"
+            SecondaryCommand="{Binding NavigateBackCommand}"
+            PrimaryButtonText="DONE"
+            PrimaryCommand="{Binding MarkCompleteCommand}">
+            
+            <!-- ═══════════════════════════════════════════════════════════════
+                 FULL BODY CONTENT - Scrollable content over backgrounds
+                 ═══════════════════════════════════════════════════════════════ -->
+            <layout:AppPageTemplate.FullBodyContent>
+                <VerticalStackLayout 
+                    Padding="{StaticResource SpacePage}"
+                    Spacing="{StaticResource SpaceStackLg}">
+                    
+                    <!-- Single responsive layout — sizing adjusted in code-behind
+                         via ApplyResponsiveContentStyles() based on IsTablet/IsPhone -->
+                    <VerticalStackLayout x:Name="contentLayout"
+                        Spacing="{StaticResource SpaceStackSm}">
+                        
+                        <!-- Exercise Summary -->
+                        <Label 
+                            x:Name="summaryLabel"
+                            Text="{Binding Summary}"
+                            Style="{StaticResource TextSmStyle}"
+                            TextColor="{StaticResource TextPrimary}"
+                            LineBreakMode="WordWrap" />
+                        
+                        <!-- Video Thumbnail with Play Button -->
+                        <Border 
+                            Margin="{StaticResource SpaceDividerVertical}"
+                            Stroke="{StaticResource BrandPrimary}"
+                            StrokeThickness="{StaticResource BorderWidthEmphasis}"
+                            BackgroundColor="{StaticResource Surface}"
+                            HeightRequest="{StaticResource VideoThumbnailHeight}"
+                            Padding="0"
+                            AutomationProperties.Name="Play exercise video">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding PlayVideoCommand}" />
+                            </Border.GestureRecognizers>
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="{StaticResource CornerRadiusMd}" />
+                            </Border.StrokeShape>
+                            <Border.Shadow>
+                                <Shadow Brush="{StaticResource Shadow}"
+                                        Offset="2,2"
+                                        Radius="4" />
+                            </Border.Shadow>
+                            <Grid>
+                                <!-- Thumbnail Image -->
+                                <Image Source="{Binding ThumbnailImage}"
+                                       Aspect="AspectFill" />
+                                
+                                <!-- Play Button Overlay -->
+                                <Border BackgroundColor="{StaticResource OverlayLight}"
+                                        StrokeThickness="{StaticResource BorderWidthEmphasis}"
+                                        Stroke="{StaticResource TextOnPrimary}"
+                                        WidthRequest="{StaticResource PlayButtonSize}"
+                                        HeightRequest="{StaticResource PlayButtonSize}"
+                                        HorizontalOptions="Center"
+                                        VerticalOptions="Center"
+                                        InputTransparent="True">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="{StaticResource PlayButtonCornerRadius}" />
+                                    </Border.StrokeShape>
+                                    <Polygon Points="0,0 20,12 0,24"
+                                             Fill="{StaticResource TextOnPrimary}"
+                                             HorizontalOptions="Center"
+                                             VerticalOptions="Center"
+                                             Margin="4,0,0,0" />
+                                </Border>
+                            </Grid>
+                        </Border>
+                        
+                        <!-- Reps and Sets -->
+                        <Border BackgroundColor="{StaticResource BrandMist}"
+                                Stroke="{StaticResource BrandPrimary}"
+                                StrokeThickness="{StaticResource BorderWidthDefault}"
+                                Padding="{StaticResource SpaceCardPadding}"
+                                Margin="0,0,0,8"
+                                HorizontalOptions="Center">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="{StaticResource CornerRadiusMd}" />
+                            </Border.StrokeShape>
+                            <Grid x:Name="repsSetsGrid"
+                                  ColumnDefinitions="*,*"
+                                  HorizontalOptions="Center"
+                                  ColumnSpacing="{StaticResource Space32}">
+                                <HorizontalStackLayout x:Name="repsStack"
+                                                       Grid.Column="0"
+                                                       Spacing="{StaticResource Space4}"
+                                                       HorizontalOptions="Center">
+                                    <Label x:Name="repsLabel"
+                                           Text="Reps:"
+                                           Style="{StaticResource TextSmStyle}"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource TextMuted}"
+                                           VerticalOptions="Center" />
+                                    <Label x:Name="repsValue"
+                                           Text="{Binding Reps}"
+                                           Style="{StaticResource TextMdStyle}"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource BrandPrimary}"
+                                           VerticalOptions="Center" />
+                                </HorizontalStackLayout>
+                                <HorizontalStackLayout x:Name="setsStack"
+                                                       Grid.Column="1"
+                                                       Spacing="{StaticResource Space4}"
+                                                       HorizontalOptions="Center">
+                                    <Label x:Name="setsLabel"
+                                           Text="Sets:"
+                                           Style="{StaticResource TextSmStyle}"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource TextMuted}"
+                                           VerticalOptions="Center" />
+                                    <Label x:Name="setsValue"
+                                           Text="{Binding Sets}"
+                                           Style="{StaticResource TextMdStyle}"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource BrandPrimary}"
+                                           VerticalOptions="Center" />
+                                </HorizontalStackLayout>
+                            </Grid>
+                        </Border>
+                        
+                        <!-- Instructions Section -->
+                        <VerticalStackLayout x:Name="instructionsList"
+                            Spacing="{StaticResource Space8}"
+                            BindableLayout.ItemsSource="{Binding InstructionSteps}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="Auto,*" 
+                                          ColumnSpacing="{Binding Source={x:Reference thisPage}, Path=InstructionColumnSpacing}">
+                                        <Label Grid.Column="0"
+                                               Text="{Binding Number, StringFormat='{0}.'}"
+                                               FontSize="{Binding Source={x:Reference thisPage}, Path=ResponsiveTextSize}"
+                                               FontFamily="{StaticResource FontFamilyDefault}"
+                                               FontAttributes="Bold"
+                                               TextColor="{StaticResource BrandPrimary}"
+                                               VerticalOptions="Start"
+                                               HorizontalTextAlignment="End"
+                                               MinimumWidthRequest="{Binding Source={x:Reference thisPage}, Path=InstructionNumberMinWidth}" />
+                                        <Label Grid.Column="1"
+                                               Text="{Binding Text}"
+                                               FontSize="{Binding Source={x:Reference thisPage}, Path=ResponsiveTextSize}"
+                                               FontFamily="{StaticResource FontFamilyDefault}"
+                                               TextColor="{StaticResource TextPrimary}"
+                                               LineBreakMode="WordWrap" />
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                        
+                    </VerticalStackLayout>
+                    
+                </VerticalStackLayout>
+            </layout:AppPageTemplate.FullBodyContent>
+            
+        </layout:AppPageTemplate>
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             FULLSCREEN VIDEO OVERLAY - Outside template, on top of everything
+             Black background with video player and close button.
+             ═══════════════════════════════════════════════════════════════ -->
+        <Grid x:Name="VideoOverlay"
+              IsVisible="{Binding IsVideoPlaying}"
+              BackgroundColor="Black"
+              ZIndex="100">
+            
+            <!-- Video Player - fills screen with AspectFill -->
+            <toolkit:MediaElement x:Name="VideoPlayer"
+                                  ShouldAutoPlay="True"
+                                  ShouldShowPlaybackControls="True"
+                                  Aspect="AspectFill"
+                                  BackgroundColor="Black"
+                                  HorizontalOptions="Fill"
+                                  VerticalOptions="Fill"
+                                  AutomationProperties.Name="Exercise video player" />
+            
+            <!-- Close Button - positioned top-right on top of video -->
+            <Border BackgroundColor="{StaticResource OverlayLight}"
+                    StrokeThickness="0"
+                    WidthRequest="{StaticResource VideoCloseButtonSize}"
+                    HeightRequest="{StaticResource VideoCloseButtonSize}"
+                    HorizontalOptions="End"
+                    VerticalOptions="Start"
+                    Margin="{StaticResource Space16}"
+                    ZIndex="101"
+                    AutomationProperties.Name="Close video">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="{StaticResource VideoCloseCornerRadius}" />
+                </Border.StrokeShape>
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding CloseVideoCommand}" />
+                </Border.GestureRecognizers>
+                <!-- X shape using two crossed lines -->
+                <Grid WidthRequest="{StaticResource VideoCloseIconSize}" HeightRequest="{StaticResource VideoCloseIconSize}"
+                      HorizontalOptions="Center"
+                      VerticalOptions="Center">
+                    <Line X1="0" Y1="0" X2="{StaticResource VideoCloseIconSize}" Y2="{StaticResource VideoCloseIconSize}"
+                          Stroke="{StaticResource TextOnPrimary}"
+                          StrokeThickness="{StaticResource BorderWidthHeavy}"
+                          StrokeLineCap="Round" />
+                    <Line X1="{StaticResource VideoCloseIconSize}" Y1="0" X2="0" Y2="{StaticResource VideoCloseIconSize}"
+                          Stroke="{StaticResource TextOnPrimary}"
+                          StrokeThickness="{StaticResource BorderWidthHeavy}"
+                          StrokeLineCap="Round" />
+                </Grid>
+            </Border>
+        </Grid>
+        
+    </Grid>
+
+</ContentPage>

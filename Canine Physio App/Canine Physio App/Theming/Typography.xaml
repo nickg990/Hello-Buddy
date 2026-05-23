@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    Typography.xaml - Font Families, Sizes, and Text Styles
+    ========================================================
+    Uses Hello Buddy utility tokens: TextPrimary, TextMuted, Error.
+    Light theme only (dark mode deferred).
+-->
+<ResourceDictionary 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         FONT FAMILIES
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <x:String x:Key="FontFamilyDefault">OpenSansRegular</x:String>
+    <x:String x:Key="FontFamilySemibold">OpenSansSemibold</x:String>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         FONT SIZES - Responsive Scale
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <OnIdiom x:Key="TextXs" x:TypeArguments="x:Double" Phone="11" Tablet="12" Default="11"/>
+    <OnIdiom x:Key="TextSm" x:TypeArguments="x:Double" Phone="13" Tablet="14" Default="13"/>
+    <OnIdiom x:Key="TextMd" x:TypeArguments="x:Double" Phone="15" Tablet="16" Default="15"/>
+    <OnIdiom x:Key="TextLg" x:TypeArguments="x:Double" Phone="17" Tablet="18" Default="17"/>
+    <OnIdiom x:Key="TextXl" x:TypeArguments="x:Double" Phone="19" Tablet="21" Default="19"/>
+
+    <OnIdiom x:Key="TextH3" x:TypeArguments="x:Double" Phone="16" Tablet="18" Default="16"/>
+    <OnIdiom x:Key="TextH2" x:TypeArguments="x:Double" Phone="22" Tablet="26" Default="22"/>
+    <OnIdiom x:Key="TextH1" x:TypeArguments="x:Double" Phone="28" Tablet="34" Default="28"/>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         TEXT STYLES - Body Text
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <Style x:Key="TextXsStyle" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource FontFamilyDefault}"/>
+        <Setter Property="FontSize" Value="{StaticResource TextXs}"/>
+        <Setter Property="TextColor" Value="{StaticResource TextMuted}"/>
+        <Setter Property="LineBreakMode" Value="WordWrap"/>
+    </Style>
+
+    <Style x:Key="TextSmStyle" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource FontFamilyDefault}"/>
+        <Setter Property="FontSize" Value="{StaticResource TextSm}"/>
+        <Setter Property="TextColor" Value="{StaticResource TextPrimary}"/>
+        <Setter Property="LineBreakMode" Value="WordWrap"/>
+    </Style>
+
+    <Style x:Key="TextMdStyle" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource FontFamilyDefault}"/>
+        <Setter Property="FontSize" Value="{StaticResource TextMd}"/>
+        <Setter Property="TextColor" Value="{StaticResource TextPrimary}"/>
+        <Setter Property="LineBreakMode" Value="WordWrap"/>
+    </Style>
+
+    <Style x:Key="TextLgStyle" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource FontFamilyDefault}"/>
+        <Setter Property="FontSize" Value="{StaticResource TextLg}"/>
+        <Setter Property="TextColor" Value="{StaticResource TextPrimary}"/>
+        <Setter Property="LineBreakMode" Value="WordWrap"/>
+    </Style>
+
+    <Style x:Key="TextXlStyle" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource FontFamilyDefault}"/>
+        <Setter Property="FontSize" Value="{StaticResource TextXl}"/>
+        <Setter Property="TextColor" Value="{StaticResource TextPrimary}"/>
+        <Setter Property="LineBreakMode" Value="WordWrap"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         TEXT STYLES - Headings
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <Style x:Key="HeadingH3" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource FontFamilySemibold}"/>
+        <Setter Property="FontSize" Value="{StaticResource TextH3}"/>
+        <Setter Property="TextColor" Value="{StaticResource TextPrimary}"/>
+        <Setter Property="LineBreakMode" Value="TailTruncation"/>
+    </Style>
+
+    <Style x:Key="HeadingH2" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource FontFamilySemibold}"/>
+        <Setter Property="FontSize" Value="{StaticResource TextH2}"/>
+        <Setter Property="TextColor" Value="{StaticResource TextPrimary}"/>
+        <Setter Property="LineBreakMode" Value="TailTruncation"/>
+    </Style>
+
+    <Style x:Key="HeadingH1" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource FontFamilySemibold}"/>
+        <Setter Property="FontSize" Value="{StaticResource TextH1}"/>
+        <Setter Property="TextColor" Value="{StaticResource BrandPrimaryDark}"/>
+        <Setter Property="LineBreakMode" Value="TailTruncation"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         SPECIAL TEXT STYLES
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <Style x:Key="TextCaption" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource FontFamilyDefault}"/>
+        <Setter Property="FontSize" Value="{StaticResource TextXs}"/>
+        <Setter Property="TextColor" Value="{StaticResource TextMuted}"/>
+        <Setter Property="LineBreakMode" Value="WordWrap"/>
+    </Style>
+
+    <Style x:Key="TextLink" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource FontFamilyDefault}"/>
+        <Setter Property="FontSize" Value="{StaticResource TextMd}"/>
+        <Setter Property="TextColor" Value="{StaticResource BrandPrimary}"/>
+        <Setter Property="TextDecorations" Value="Underline"/>
+    </Style>
+
+    <Style x:Key="TextError" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource FontFamilyDefault}"/>
+        <Setter Property="FontSize" Value="{StaticResource TextSm}"/>
+        <Setter Property="TextColor" Value="{StaticResource Error}"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         LOGO DISC TEXT STYLE
+         Used for "GETTING BETTER" label inside the LogoDisc component.
+         Character spacing is calculated dynamically in code-behind.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <Style x:Key="LogoDiscTextStyle" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource FontFamilySemibold}"/>
+        <Setter Property="FontSize" Value="{StaticResource TextXs}"/>
+        <Setter Property="TextColor" Value="{StaticResource LogoGold}"/>
+        <Setter Property="HorizontalTextAlignment" Value="Center"/>
+        <Setter Property="LineBreakMode" Value="NoWrap"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         TILE TEXT STYLE
+         Used for exercise tile titles.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <Style x:Key="TileTitleStyle" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource FontFamilySemibold}"/>
+        <Setter Property="FontSize" Value="{StaticResource TextSm}"/>
+        <Setter Property="TextColor" Value="{StaticResource TextPrimary}"/>
+        <Setter Property="HorizontalTextAlignment" Value="Center"/>
+        <Setter Property="LineBreakMode" Value="TailTruncation"/>
+        <Setter Property="MaxLines" Value="2"/>
+    </Style>
+
+</ResourceDictionary>

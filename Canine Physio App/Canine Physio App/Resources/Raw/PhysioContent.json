@@ -1,0 +1,185 @@
+{
+  "programme": {
+    "id": "prog-2026-001",
+    "dogName": "Buddy",
+    "practitionerName": "Dr. Sarah Jones",
+    "createdDate": "2026-03-01",
+    "startDate": "2026-03-03",
+    "endDate": "2026-03-16",
+    "warningText": "Always consult your veterinary physiotherapist before modifying exercises. Stop immediately if your dog shows signs of pain or distress.",
+    "dailySessions": [
+      {
+        "period": "AM",
+        "exerciseSet": {
+          "key": "hindlimbCore",
+          "description": "These canine physiotherapy videos explain how to strengthen your dogs hindlimbs and core muscles using sit to stand exercises, and forelimbs, hindlimbs and core muscles.",
+          "exercises": [
+            {
+              "key": "baitedBackStretch",
+              "title": "Baited back stretch",
+              "image": "baited_back_stretch",
+              "summary": "Neck and spine stretches on block – 2-3 stretches per direction at 7-15s hold twice daily (following heat packs where possible). Perform this action in a standing position and with a treat in hand.",
+              "instructions": [
+                "Raise your dog's forelimbs onto a flat, stable platform a couple of inches high and stretch their neck upwards then forwards/to the side.",
+                "Place your hand in front of your dog's hindlimbs and encourage their head forwards with a treat, hold for at least 7s.",
+                "Take your hand from your dog's nose to the side, wrapping around your legs as you stand next to them, stopping just before they start to rotate their head and/or move their forelimbs.",
+                "Hold this position for 7s then return to neutral head position (i.e., normal straight head position).",
+                "Repeat the action to the other side after a few seconds.",
+                "Encourage their head down without your dog laying down to stretch the muscles on the top of the neck by holding a treat between your dog's forelimbs.",
+                "Remember to always return to neutral before asking for another stretch.",
+                "Do not take your dog's head beyond point of comfort."
+              ],
+              "reps": 3,
+              "sets": 1,
+              "videoName": "baited_back_stretch_video.mp4"
+            },
+            {
+              "key": "raisedPoles",
+              "title": "Raised poles",
+              "image": "raised_poles",
+              "summary": "Five reps (there and back counts as one rep) twice daily. This exercise should be performed on a flat, non-slip surface and at an active walk. Lay X flat poles on the ground and ask your dog to walk over the centre of each.",
+              "instructions": [
+                "The poles should be distanced so that each foot is placed in each gap between the poles only once (i.e., approximately the length of your dog from base of neck to rear).",
+                "Upon completion of the poles, make sure you turn your dog nice and wide.",
+                "If your dog starts to scuff a pole with their feet, you may need to alter the distance between the poles.",
+                "If they are still scuffing poles, you should remove one pole to reduce the intensity of the exercise.",
+                "Raise the last pole on one side by a few centimetres (never higher than your dog's hock/ankle).",
+                "Raise the first pole on the alternate side to the last pole by the same measure of height."
+              ],
+              "reps": 5,
+              "sets": 1,
+              "videoName": "raised_poles_video.mp4"
+            },
+            {
+              "key": "raisedSitStands",
+              "title": "Raised sit stands",
+              "image": "raised_sit_stands",
+              "summary": "Five reps thrice daily. This exercise involves a controlled, square sit onto a firm cushion a couple of inches tall with your dog's legs underneath themselves.",
+              "instructions": [
+                "Once the sit has been achieved, ask them to stand with their hindlimbs on the cushion (you can use a treat or a toy for encouragement but only if controlled).",
+                "Try to stand in front of them as this prevents them from using their forelimbs to drag themselves forwards.",
+                "This is similar to a squat, with them using their hindlimbs to push themselves upwards.",
+                "If necessary, you can use wall support by backing them into a corner and placing a cushion to the side of their hindlimbs to allow for hip support either side of their hindlimbs."
+              ],
+              "reps": 5,
+              "sets": 2,
+              "videoName": "raised_sit_stands_video.mp4"
+            },
+            {
+              "key": "stepUp",
+              "title": "Step up",
+              "image": "step_up",
+              "summary": "Five reps twice daily. Perform this exercise on a flat stable surface with your dog standing square.",
+              "instructions": [
+                "Place a non-slip block flat on the floor in front of your dog.",
+                "Ask your dog to step up onto the block, with forelimbs only, from one side and dismount onto the floor on other side of the block.",
+                "Repeat this action going in the other direction.",
+                "Then do the same in a forward-backward direction."
+              ],
+              "reps": 5,
+              "sets": 3,
+              "videoName": "step_up_video.mp4"
+            }
+          ]
+        }
+      },
+      {
+        "period": "PM",
+        "exerciseSet": {
+          "key": "mobilityFlexibility",
+          "description": "Improve your dog's mobility, balance and spinal flexibility through controlled walking exercises, weaving patterns and targeted limb movements.",
+          "exercises": [
+            {
+              "key": "raisedSitStands",
+              "title": "Raised sit stands",
+              "image": "raised_sit_stands",
+              "summary": "Three reps twice daily. This exercise involves a controlled, square sit onto a firm cushion a couple of inches tall with your dog's legs underneath themselves.",
+              "instructions": [
+                "Once the sit has been achieved, ask them to stand with their hindlimbs on the cushion (you can use a treat or a toy for encouragement but only if controlled).",
+                "Try to stand in front of them as this prevents them from using their forelimbs to drag themselves forwards.",
+                "This is similar to a squat, with them using their hindlimbs to push themselves upwards.",
+                "If necessary, you can use wall support by backing them into a corner and placing a cushion to the side of their hindlimbs to allow for hip support either side of their hindlimbs."
+              ],
+              "reps": 3,
+              "sets": 2,
+              "videoName": "raised_sit_stands_video.mp4"
+            },
+            {
+              "key": "circles",
+              "title": "Circles",
+              "image": "circles",
+              "summary": "Three reps twice daily. Walk your dog around four markers placed 1.5 body lengths apart in a circular path, keeping your dog on the inside. Perform clockwise and anticlockwise on a flat, non-slip surface at an active walk.",
+              "instructions": [
+                "Place four markers or cones 1.5 body lengths apart from the centre of the circle and walk your dog around them.",
+                "Your dog should be on the inside, closest to the circle markers.",
+                "Remember to do this exercise on both sides (i.e. clockwise and anticlockwise).",
+                "This should be performed on a flat, non-slip surface and at an active walk without rushing your dog."
+              ],
+              "reps": 3,
+              "sets": 2,
+              "videoName": "circles.mp4"
+            },
+            {
+              "key": "givePaw",
+              "title": "Give paw",
+              "image": "give_paw",
+              "summary": "Three reps twice daily. Ask your sitting dog to give their paw, bringing it upwards slightly to gain flexion from the elbow joint. If needed, start by picking up the limb yourself.",
+              "instructions": [
+                "Ask your dog to sit square then ask for their paw.",
+                "Depending on their level of training, you may have to start by picking up the limb yourself at first.",
+                "Bring the paw upwards slightly to gain a little flexion from the elbow joint."
+              ],
+              "reps": 3,
+              "sets": 2,
+              "videoName": "give_paw.mp4"
+            },
+            {
+              "key": "slowLeadWalk",
+              "title": "Slow lead walk",
+              "image": "slow_lead",
+              "summary": "Three reps twice daily. Walk your dog on a short lead with a raised head at a slow, controlled pace to encourage equal weight bearing on each limb. Consider a harness if your dog struggles with pulling.",
+              "instructions": [
+                "Walk your dog on a short lead with a raised head.",
+                "This should be slow enough to allow them to weight bear equally on each limb so do not rush them beyond their capable speed.",
+                "The goal is to keep them at heel but if your dog struggles with pulling, you may want to consider a harness or halti (but only if this does not impact movement negatively)."
+              ],
+              "reps": 3,
+              "sets": 2,
+              "videoName": "slow_lead_walk.mp4"
+            },
+            {
+              "key": "layToStand",
+              "title": "Lay to stand",
+              "image": "lay_to_stand",
+              "summary": "Three reps twice daily. A controlled lay-to-stand exercise using hindlimb strength, similar to a squat. Stand in front of your dog to prevent them dragging forward with their forelimbs.",
+              "instructions": [
+                "This exercise involves a controlled, square lay with your dog's legs underneath themselves.",
+                "Once the lay has been achieved, ask them to stand (you can use a treat or a toy for encouragement but only if controlled).",
+                "Try to stand in front of them as this prevents them from using their forelimbs to drag themselves forwards.",
+                "This is similar to a squat, with them using their hindlimbs to push themselves upwards."
+              ],
+              "reps": 3,
+              "sets": 2,
+              "videoName": "lay_to_stand.mp4"
+            },
+            {
+              "key": "weaving",
+              "title": "Weaving",
+              "image": "weaving",
+              "summary": "Three reps twice daily. Walk your dog around three markers placed 6 feet apart in a weaving pattern on a flat, non-slip surface. Maintain slow, controlled movement progressing from shallow to deeper turns to encourage spinal bending.",
+              "instructions": [
+                "Place three markers or cones 6 feet apart and walk your dog around them in a weaving configuration.",
+                "This should be performed on a flat, non-slip surface and at an active walk without rushing your dog.",
+                "Weaving must be slow and controlled with wide turns encouraged to allow bending.",
+                "Start with a shallow turn, close to the markers and progress to a deeper turn to encourage spinal bending slowly."
+              ],
+              "reps": 3,
+              "sets": 2,
+              "videoName": "weaving.mp4"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

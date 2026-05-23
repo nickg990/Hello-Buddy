@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="Canine_Physio_App.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:Canine_Physio_App"
+    xmlns:views="clr-namespace:Canine_Physio_App.Views"
+    Shell.FlyoutBehavior="Disabled"
+    Shell.BackgroundColor="{StaticResource White}"
+    Title="Hello Buddy">
+
+    <!-- Pre-login pages (single item = no tab bar) -->
+    <TabBar Route="PreLogin">
+        <ShellContent
+            Title="Hello Buddy"
+            ContentTemplate="{DataTemplate views:HelloBuddyPage}"
+            Route="HelloBuddy" />
+    </TabBar>
+
+    <!-- Post-login pages (tab bar visible at bottom) -->
+    <TabBar Route="PostLogin">
+        <Tab x:Name="exercisesTab" Title="Exercises" Icon="tab_exercises.svg">
+            <ShellContent
+                ContentTemplate="{DataTemplate views:MainExercisesPage}"
+                Route="MainExercises" />
+        </Tab>
+
+        <Tab Title="Progress" Icon="tab_progress.svg">
+            <ShellContent
+                ContentTemplate="{DataTemplate views:ProgressTabPage}"
+                Route="ProgressTab" />
+        </Tab>
+
+        <Tab x:Name="skipTab" Title="Skip" Icon="tab_skip.svg">
+            <ShellContent
+                ContentTemplate="{DataTemplate views:SkipToNextSessionPage}"
+                Route="SkipSession" />
+        </Tab>
+    </TabBar>
+
+</Shell>

@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    AppPageTemplate.xaml - Standard Page Layout Template
+    =====================================================
+    Provides a consistent page structure with:
+    - Safe area (top) for status bar
+    - HeaderBlock (fixed, does not scroll)
+    - ScrollView containing hero stage, wave, and body content
+    - Optional FullBodyContent overlay (transparent, scrollable over hero+wave+body)
+    - Optional WaveContent overlay (text/label overlaid on the sine wave transition)
+    - Optional fixed footer (outside scroll)
+    - Safe area (bottom) for navigation bar
+    
+    Two modes:
+    - Standard (ShowFullBody=False): HeroContent + Wave + BodyContent
+    - Full Body (ShowFullBody=True): Transparent overlay spans entire scroll area
+    
+    Uses design tokens for all spacing, sizing, and colors.
+    Safe areas are dynamically calculated per platform.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:decor="clr-namespace:Canine_Physio_App.Components.Decor"
+             xmlns:header="clr-namespace:Canine_Physio_App.Components.Header"
+             xmlns:controls="clr-namespace:Canine_Physio_App.Components.Controls"
+             x:Class="Canine_Physio_App.Components.Layout.AppPageTemplate"
+             x:Name="this">
+    
+    <!-- Outer Grid to support loading overlay -->
+    <Grid>
+    
+    <!-- 
+         Root Grid with 5 rows:
+         Row 0: Safe area top (dynamic height) - BrandMist background
+         Row 1: HeaderBlock (Auto, fixed) - BrandMist background
+         Row 2: PageScroll (Star) - ScrollView with hero+wave+body OR full body overlay
+         Row 3: Footer + Safe area bottom (Auto, fixed)
+         
+         Background strategy:
+         - Rows 0-1: BrandMist (safe area + header, fixed)
+         - Row 2: ScrollView content handles its own backgrounds
+         - Row 3: Surface (footer + bottom safe area combined)
+    -->
+    <Grid x:Name="rootGrid" BackgroundColor="{StaticResource BrandMist}">
+        <Grid.RowDefinitions>
+            <RowDefinition x:Name="safeAreaTopRow" Height="0" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             ROW 0: Safe Area Top (status bar)
+             Height set dynamically in code-behind.
+             Background inherited from rootGrid (BrandMist).
+             ═══════════════════════════════════════════════════════════════ -->
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             ROW 1: HeaderBlock (Fixed - does not scroll)
+             ═══════════════════════════════════════════════════════════════ -->
+        <header:HeaderBlock 
+            Grid.Row="1"
+            Title="{Binding Source={x:Reference this}, Path=Title}"
+            Subtitle="{Binding Source={x:Reference this}, Path=Subtitle}"
+            ShowSubtitle="{Binding Source={x:Reference this}, Path=ShowSubtitle}"
+            ShowIcon="{Binding Source={x:Reference this}, Path=ShowHeaderIcon}"
+            IconSource="{Binding Source={x:Reference this}, Path=HeaderIconSource}"
+            IconCommand="{Binding Source={x:Reference this}, Path=HeaderIconCommand}" />
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             ROW 2: Page Scroll Region
+             Uses a Grid overlay approach:
+             - Layer 1 (Background): Hero + Wave + Body backgrounds (always visible)
+             - Layer 2 (Overlay): FullBodyContent (transparent, when ShowFullBody=True)
+             ═══════════════════════════════════════════════════════════════ -->
+        <Grid Grid.Row="2">
+            
+            <!-- ═══════════════════════════════════════════════════════════
+                 LAYER 1: Background ScrollView (hero + wave + body)
+                 Always visible to provide themed backgrounds.
+                 Content slots hidden when ShowFullBody=True.
+                 ═══════════════════════════════════════════════════════════ -->
+            <ScrollView 
+                x:Name="pageScroll"
+                VerticalScrollBarVisibility="Default"
+                HorizontalScrollBarVisibility="Never">
+                
+                <!-- Grid allows body to fill remaining space for vertical centering.
+                     MinimumHeightRequest bound to ScrollView height ensures star row works. -->
+                <Grid BackgroundColor="{StaticResource Surface}" 
+                      RowDefinitions="Auto,Auto,*"
+                      MinimumHeightRequest="{Binding Source={x:Reference pageScroll}, Path=Height}">
+                    
+                    <!-- Hero Stage: height set programmatically via ApplyResponsiveSizing -->
+                    <Grid 
+                        Grid.Row="0"
+                        x:Name="heroStage"
+                        BackgroundColor="{StaticResource BrandMist}">
+                        
+                        <!-- Hero content slot (logo disc, illustrations, etc.) -->
+                        <!-- Hidden when ShowFullBody=True -->
+                        <ContentView x:Name="heroContentHost" />
+                    </Grid>
+                    
+                    <!-- Wave: immediately after hero, provides visual transition -->
+                    <!-- BackgroundColor=BrandMist ensures the area behind the curve shows header color -->
+                    <Grid Grid.Row="1">
+                        <decor:SineWaveBlock
+                            BackgroundColor="{StaticResource BrandMist}"
+                            FillColor="{StaticResource Surface}"
+                            WaveEdge="Bottom" />
+                        
+                        <!-- Optional content overlaid on the wave (e.g., session date label) -->
+                        <ContentView 
+                            x:Name="waveContentHost"
+                            VerticalOptions="End"
+                            HorizontalOptions="Fill"
+                            IsVisible="False" />
+                    </Grid>
+                    
+                    <!-- Body content region - Star row allows Fill to work -->
+                    <!-- Hidden when ShowFullBody=True -->
+                    <ContentView 
+                        Grid.Row="2"
+                        x:Name="bodyContentHost"
+                        BackgroundColor="{StaticResource Surface}" />
+                        
+                </Grid>
+            </ScrollView>
+            
+            <!-- ═══════════════════════════════════════════════════════════
+                 LAYER 2: FullBodyContent Overlay (transparent)
+                 Sits on top of the background layer when ShowFullBody=True.
+                 Content scrolls over the hero/wave/body backgrounds.
+                 ═══════════════════════════════════════════════════════════ -->
+            <ScrollView 
+                x:Name="fullBodyScroll"
+                IsVisible="False"
+                VerticalScrollBarVisibility="Default"
+                HorizontalScrollBarVisibility="Never"
+                BackgroundColor="Transparent">
+                
+                <ContentView 
+                    x:Name="fullBodyContentHost"
+                    BackgroundColor="Transparent" />
+                    
+            </ScrollView>
+            
+        </Grid>
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             ROW 3: Footer + Safe Area Bottom
+             Single VerticalStackLayout with Surface background containing:
+             - Footer buttons (optional)
+             - Safe area spacer (dynamic height set in code-behind)
+             ═══════════════════════════════════════════════════════════════ -->
+        <VerticalStackLayout Grid.Row="3" 
+                             BackgroundColor="{StaticResource Surface}"
+                             Spacing="0">
+            
+            <!-- Footer buttons -->
+            <Grid x:Name="footerGrid"
+                  Padding="{StaticResource SpaceFooterPadding}"
+                  ColumnDefinitions="*,*"
+                  ColumnSpacing="{StaticResource Space8}"
+                  IsVisible="{Binding Source={x:Reference this}, Path=ShowFooter}">
+                
+                <!-- Secondary Button (e.g., Back) -->
+                <Button Grid.Column="0"
+                        Text="{Binding Source={x:Reference this}, Path=SecondaryButtonText}"
+                        Command="{Binding Source={x:Reference this}, Path=SecondaryCommand}"
+                        Style="{StaticResource ButtonSecondary}"
+                        IsVisible="{Binding Source={x:Reference this}, Path=HasSecondaryButton}"
+                        HorizontalOptions="Fill"
+                        AutomationProperties.Name="{Binding Source={x:Reference this}, Path=SecondaryButtonText}" />
+                
+                <!-- Tertiary Button (e.g., Skip) - optional middle button -->
+                <Button x:Name="tertiaryButton"
+                        Grid.Column="1"
+                        Text="{Binding Source={x:Reference this}, Path=TertiaryButtonText}"
+                        Command="{Binding Source={x:Reference this}, Path=TertiaryCommand}"
+                        Style="{StaticResource ButtonSecondary}"
+                        IsVisible="{Binding Source={x:Reference this}, Path=HasTertiaryButton}"
+                        HorizontalOptions="Fill"
+                        AutomationProperties.Name="{Binding Source={x:Reference this}, Path=TertiaryButtonText}" />
+                
+                <!-- Primary Button (e.g., Next, Save) -->
+                <Button x:Name="primaryButton"
+                        Grid.Column="1"
+                        Text="{Binding Source={x:Reference this}, Path=PrimaryButtonText}"
+                        Command="{Binding Source={x:Reference this}, Path=PrimaryCommand}"
+                        Style="{StaticResource ButtonPrimary}"
+                        IsVisible="{Binding Source={x:Reference this}, Path=HasPrimaryButton}"
+                        IsEnabled="{Binding Source={x:Reference this}, Path=PrimaryButtonIsEnabled}"
+                        HorizontalOptions="Fill"
+                        AutomationProperties.Name="{Binding Source={x:Reference this}, Path=PrimaryButtonText}" />
+            </Grid>
+            
+            <!-- Safe area spacer - height set dynamically in code-behind -->
+            <BoxView x:Name="safeAreaBottomSpacer" 
+                     HeightRequest="0"
+                     BackgroundColor="Transparent" />
+        </VerticalStackLayout>
+        <!-- Empty - just spacing -->
+    </Grid>
+    
+    <!-- ═══════════════════════════════════════════════════════════════
+         LOADING OVERLAY
+         Semi-transparent overlay with spinner, shown when ShowOverlay=True.
+         Covers entire template including header and footer.
+         ═══════════════════════════════════════════════════════════════ -->
+    <Grid 
+        IsVisible="{Binding Source={x:Reference this}, Path=ShowOverlay}"
+        BackgroundColor="{StaticResource OverlayLight}"
+        InputTransparent="False">
+        <controls:LoadingSpinner 
+            IsLoading="{Binding Source={x:Reference this}, Path=ShowOverlay}"
+            Message="Loading..."
+            ShowMessage="True"
+            HorizontalOptions="Center"
+            VerticalOptions="Center" />
+    </Grid>
+    
+    </Grid>
+</ContentView>

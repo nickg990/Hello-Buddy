@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    Radii.xaml - Corner Radius Scale
+    =================================
+    Defines consistent corner radius values for rounded elements.
+    
+    Scale: None (0), Sm (4), Md (8), Lg (12), Xl (16), Full (9999 for pills)
+-->
+<ResourceDictionary 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         CORNER RADIUS SCALE
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <x:Double x:Key="RadiusNone">0</x:Double>
+    <x:Double x:Key="RadiusSm">4</x:Double>
+    <x:Double x:Key="RadiusMd">8</x:Double>
+    <x:Double x:Key="RadiusLg">12</x:Double>
+    <x:Double x:Key="RadiusXl">16</x:Double>
+    <x:Double x:Key="RadiusFull">9999</x:Double>
+
+    <!-- Integer versions for Button.CornerRadius (requires int) -->
+    <x:Int32 x:Key="RadiusSmInt">4</x:Int32>
+    <x:Int32 x:Key="RadiusMdInt">8</x:Int32>
+    <x:Int32 x:Key="RadiusLgInt">12</x:Int32>
+    <x:Int32 x:Key="RadiusXlInt">16</x:Int32>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         CORNER RADIUS STRUCTS
+         For Frame/Border StrokeShape using RoundRectangle.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <CornerRadius x:Key="CornerRadiusSm">4</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusMd">8</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusLg">12</CornerRadius>
+    <CornerRadius x:Key="CornerRadiusXl">16</CornerRadius>
+
+</ResourceDictionary>

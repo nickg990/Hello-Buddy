@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    RegistrationPage.xaml - User Registration Page
+    ===============================================
+    Registration page with email/password fields in the hero area,
+    REGISTER button in the body, and BACK button in the footer.
+    
+    Layout: Non-scrollable page using AppPageTemplate.
+    - Hero: Email, Password entries (75% width via Grid ratios), Status message (fixed height)
+    - Body: REGISTER button
+    - Footer: BACK button (via template footer)
+    
+    Entry fields use BrandMist background with BrandPrimary border to match hero area.
+    Status message area has fixed height to prevent layout shift.
+    Shows loading overlay during registration attempt.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:layout="clr-namespace:Canine_Physio_App.Components.Layout"
+             x:Class="Canine_Physio_App.Views.RegistrationPage"
+             Shell.NavBarIsVisible="False"
+             Title="Registration"
+             Padding="0"
+             ios:Page.UseSafeArea="False"
+             xmlns:ios="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific;assembly=Microsoft.Maui.Controls">
+
+    <layout:AppPageTemplate
+        Title="Registration"
+        Subtitle="CANINE PHYSIOTHERAPY"
+        ShowSubtitle="True"
+        ShowHeaderIcon="False"
+        IsBodyScrollable="True"
+        ShowOverlay="{Binding IsLoading}"
+        ShowFooter="True"
+        SecondaryButtonText="BACK"
+        SecondaryCommand="{Binding NavigateBackCommand}">
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             HERO CONTENT - Registration form (Email, Password, Status message)
+             Entries are 75% screen width using Grid column ratios (*,6*,*).
+             ═══════════════════════════════════════════════════════════════ -->
+        <layout:AppPageTemplate.HeroContent>
+            <Grid VerticalOptions="Fill">
+                <VerticalStackLayout 
+                    Spacing="{StaticResource SpaceStackMd}"
+                    VerticalOptions="Center">
+                    
+                    <!-- Email Entry - 75% width via Grid columns (*,6*,*) -->
+                    <Grid ColumnDefinitions="*,6*,*">
+                        <VerticalStackLayout 
+                            Grid.Column="1" 
+                            Spacing="{StaticResource SpaceStackXs}">
+                            <Label 
+                                Text="Email"
+                                Style="{StaticResource TextSmStyle}"
+                                TextColor="{StaticResource TextPrimary}" />
+                            <Border 
+                                Stroke="{StaticResource BrandPrimary}"
+                                StrokeThickness="{StaticResource BorderWidthDefault}"
+                                BackgroundColor="{StaticResource BrandMist}"
+                                Padding="{StaticResource SpaceEntryPadding}">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="{StaticResource CornerRadiusMd}" />
+                                </Border.StrokeShape>
+                                <Entry 
+                                    Text="{Binding Email}"
+                                    Placeholder="Enter your email"
+                                    Keyboard="Email"
+                                    ReturnType="Next"
+                                    BackgroundColor="Transparent"
+                                    AutomationProperties.Name="Email" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </Grid>
+                    
+                    <!-- Password Entry - 75% width via Grid columns (*,6*,*) -->
+                    <Grid ColumnDefinitions="*,6*,*">
+                        <VerticalStackLayout 
+                            Grid.Column="1" 
+                            Spacing="{StaticResource SpaceStackXs}">
+                            <Label 
+                                Text="Password"
+                                Style="{StaticResource TextSmStyle}"
+                                TextColor="{StaticResource TextPrimary}" />
+                            <Border 
+                                Stroke="{StaticResource BrandPrimary}"
+                                StrokeThickness="{StaticResource BorderWidthDefault}"
+                                BackgroundColor="{StaticResource BrandMist}"
+                                Padding="{StaticResource SpaceEntryPadding}">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="{StaticResource CornerRadiusMd}" />
+                                </Border.StrokeShape>
+                                <Entry 
+                                    Text="{Binding Password}"
+                                    Placeholder="Enter your password"
+                                    IsPassword="True"
+                                    ReturnType="Done"
+                                    BackgroundColor="Transparent"
+                                    AutomationProperties.Name="Password" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </Grid>
+                    
+                    <!-- Error Message Area - Fixed height to prevent layout shift -->
+                    <Grid HeightRequest="{StaticResource Space24}">
+                        <!-- Error Message (stays in hero near form fields) -->
+                        <Label 
+                            Text="{Binding ErrorMessage}"
+                            Style="{StaticResource TextSmStyle}"
+                            TextColor="{StaticResource ErrorOnMist}"
+                            HorizontalTextAlignment="Center"
+                            VerticalOptions="Center"
+                            IsVisible="{Binding HasError}" />
+                    </Grid>
+                    
+                </VerticalStackLayout>
+            </Grid>
+        </layout:AppPageTemplate.HeroContent>
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             BODY CONTENT - REGISTER button and Success message
+             Centered in the white body area below the wave.
+             Success message displayed prominently with H3 styling.
+             ═══════════════════════════════════════════════════════════════ -->
+        <layout:AppPageTemplate.BodyContent>
+            <Grid VerticalOptions="Fill">
+                <VerticalStackLayout
+                    Spacing="{StaticResource SpaceStackLg}"
+                    VerticalOptions="Center"
+                    HorizontalOptions="Center">
+                    
+                    <!-- Register Button (hidden when success) -->
+                    <Button 
+                        Text="REGISTER"
+                        Style="{StaticResource ButtonPrimary}"
+                        HorizontalOptions="Center"
+                        WidthRequest="{StaticResource AuthButtonWidth}"
+                        Command="{Binding RegisterCommand}"
+                        IsVisible="{Binding ShowRegisterButton}"
+                        AutomationProperties.Name="Register" />
+                    
+                    <!-- Success Message (shown after successful registration) -->
+                    <Label 
+                        Text="{Binding SuccessMessage}"
+                        Style="{StaticResource HeadingH3}"
+                        TextColor="{StaticResource BrandPrimaryDark}"
+                        HorizontalTextAlignment="Center"
+                        HorizontalOptions="Center"
+                        IsVisible="{Binding HasSuccess}" />
+                    
+                </VerticalStackLayout>
+            </Grid>
+        </layout:AppPageTemplate.BodyContent>
+        
+    </layout:AppPageTemplate>
+    
+</ContentPage>

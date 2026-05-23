@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    MainExercisesPage.xaml - Main Exercises Page
+    =============================================
+    Displays exercise tiles with progress tracking and instructions.
+    
+    Layout: AppPageTemplate (standard mode)
+    - Hero: Instruction card (description + progress bar + warning) on BrandMist
+            Responsive: larger text on tablets, compact text on phones
+    - Body: Exercise tiles grid (scrolls with page)
+    - Header: Info icon (top-right) navigates to InformationPage
+    - Wave: Session date label overlaid on sine wave transition
+    - No footer (SKIP via dedicated tab; INFO via header icon)
+    
+    Single scroll region per page - no nested ScrollViews.
+    Exercise grid uses 2 columns, tiles auto-sized.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:layout="clr-namespace:Canine_Physio_App.Components.Layout"
+             xmlns:controls="clr-namespace:Canine_Physio_App.Components.Controls"
+             x:Class="Canine_Physio_App.Views.MainExercisesPage"
+             Shell.NavBarIsVisible="False"
+             Title="Main Exercises"
+             Padding="0"
+             ios:Page.UseSafeArea="False"
+             xmlns:ios="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific;assembly=Microsoft.Maui.Controls">
+
+    <layout:AppPageTemplate
+        x:Name="pageTemplate"
+        Title="Main Exercises"
+        Subtitle="CANINE PHYSIOTHERAPY"
+        ShowSubtitle="True"
+        ShowHeaderIcon="True"
+        HeaderIconSource="info_icon.svg"
+        HeaderIconCommand="{Binding NavigateToInfoCommand}"
+        IsBodyScrollable="True"
+        ShowOverlay="{Binding IsNavigating}"
+        ShowFooter="False">
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             WAVE CONTENT - Session date label overlaid on the sine wave
+             Sits at the bottom of the wave, on the Surface-coloured curve.
+             ═══════════════════════════════════════════════════════════════ -->
+        <layout:AppPageTemplate.WaveContent>
+            <Label 
+                Text="{Binding SessionDateText}"
+                Style="{StaticResource TextSmStyle}"
+                FontAttributes="Bold"
+                TextColor="{StaticResource TextPrimary}"
+                HorizontalTextAlignment="Center"
+                Padding="0,0,0,4" />
+        </layout:AppPageTemplate.WaveContent>
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             HERO CONTENT - Instruction card on BrandMist background
+             Contains description, progress bar, and warning text.
+             Card background matches header (BrandMist).
+             
+             RESPONSIVE: Two layouts shown/hidden based on screen size:
+             - Tablet: Larger text (TextMd, TextSm) with more spacing
+             - Phone: Compact text (TextSm, TextXs) with tighter spacing
+             ═══════════════════════════════════════════════════════════════ -->
+        <layout:AppPageTemplate.HeroContent>
+            <Grid Padding="{StaticResource SpacePage}">
+                
+                <!-- Single responsive hero card — styling adjusted in code-behind
+                     via ApplyResponsiveHeroStyles() based on IsTablet/IsPhone -->
+                <Border x:Name="heroCard"
+                    BackgroundColor="{StaticResource BrandMist}"
+                    Stroke="{StaticResource BrandPrimary}"
+                    StrokeThickness="{StaticResource BorderWidthDefault}"
+                    Padding="{StaticResource Space12}">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="{StaticResource CornerRadiusMd}" />
+                    </Border.StrokeShape>
+                    
+                    <VerticalStackLayout x:Name="heroStack" Spacing="{StaticResource Space4}">
+                        
+                        <!-- Exercise set description -->
+                        <Label x:Name="descriptionLabel"
+                            Text="{Binding ExerciseSetDescription}"
+                            Style="{StaticResource TextSmStyle}"
+                            TextColor="{StaticResource TextPrimary}" />
+                        
+                        <!-- Progress section (tappable) -->
+                        <Grid x:Name="progressGrid"
+                            RowDefinitions="Auto,Auto"
+                            RowSpacing="{StaticResource Space2}"
+                            AutomationProperties.Name="View exercise progress">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding NavigateToProgressCommand}" />
+                            </Grid.GestureRecognizers>
+                            
+                            <!-- Progress percentage -->
+                            <Label x:Name="progressLabel"
+                                Grid.Row="0"
+                                Text="{Binding ProgressPercentageText}"
+                                Style="{StaticResource TextXsStyle}"
+                                FontAttributes="Bold"
+                                TextColor="{StaticResource TextPrimary}" />
+                            
+                            <!-- Progress bar -->
+                            <Grid 
+                                Grid.Row="1"
+                                HeightRequest="{StaticResource ProgressBarHeight}">
+                                <!-- Background track -->
+                                <Border 
+                                    BackgroundColor="{StaticResource DisabledSurface}"
+                                    StrokeThickness="0">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="{StaticResource ProgressBarCornerRadius}" />
+                                    </Border.StrokeShape>
+                                </Border>
+                                <!-- Fill track -->
+                                <Border 
+                                    BackgroundColor="{StaticResource Success}"
+                                    StrokeThickness="0"
+                                    HorizontalOptions="Start"
+                                    WidthRequest="{Binding ProgressBarWidth}">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="{StaticResource ProgressBarCornerRadius}" />
+                                    </Border.StrokeShape>
+                                </Border>
+                            </Grid>
+                        </Grid>
+                        
+                        <!-- Warning/disclaimer text -->
+                        <Label x:Name="warningLabel"
+                            Text="{Binding WarningText}"
+                            Style="{StaticResource TextXsStyle}"
+                            FontAttributes="Italic"
+                            TextColor="{StaticResource TextMuted}" />
+                        
+                    </VerticalStackLayout>
+                </Border>
+                
+            </Grid>
+        </layout:AppPageTemplate.HeroContent>
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             BODY CONTENT - Exercise tiles grid
+             Single scroll region (handled by AppPageTemplate).
+             No nested ScrollViews. Tiles scroll up under hero area.
+             ═══════════════════════════════════════════════════════════════ -->
+        <layout:AppPageTemplate.BodyContent>
+            <VerticalStackLayout 
+                Padding="{StaticResource SpacePage}"
+                Spacing="{StaticResource SpaceStackMd}">
+                
+                <!-- ═══════════════════════════════════════════════════════
+                     EXERCISE TILES GRID - 2 columns, auto-sized tiles
+                     Grid built in code-behind for proper row management.
+                     ═══════════════════════════════════════════════════════ -->
+                <Grid 
+                    x:Name="ExerciseGrid"
+                    ColumnDefinitions="*,*"
+                    ColumnSpacing="{StaticResource Space8}"
+                    RowSpacing="{StaticResource Space8}" />
+                
+            </VerticalStackLayout>
+        </layout:AppPageTemplate.BodyContent>
+        
+    </layout:AppPageTemplate>
+
+</ContentPage>

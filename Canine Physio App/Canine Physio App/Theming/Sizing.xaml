@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    Sizing.xaml - Control Sizing Tokens
+    ====================================
+    Defines minimum touch targets and consistent control heights.
+    
+    Key principles:
+    - MinTapHeight: 44dp minimum for accessibility (iOS HIG, Material 48dp)
+    - Responsive: Tablet may have slightly larger targets
+-->
+<ResourceDictionary 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         MINIMUM TAP TARGET
+         44dp meets iOS HIG; accessible on small phones.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <x:Double x:Key="MinTapHeight">44</x:Double>
+    <x:Double x:Key="MinTapWidth">44</x:Double>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         HERO HEIGHT (Reference Values)
+         Fixed height for the hero stage area (between HeaderBlock and wave).
+         NOTE: These are reference values only. Actual sizing is applied
+         programmatically in AppPageTemplate.xaml.cs using width-based detection
+         for SmallPhone (360dp) / Phone (400dp) / Tablet (460dp).
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- HeroHeight is set programmatically - see AppPageTemplate.ApplyResponsiveSizing() -->
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         WAVE / DECORATIVE SIZING
+         Height of the SineWaveBlock decorative component.
+         Amplitude is calculated internally (~30% of height).
+         Reduced height to minimize vertical space usage while maintaining wave visual.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <OnIdiom x:Key="WaveHeight" x:TypeArguments="x:Double" 
+             Phone="60" Tablet="80" Default="60"/>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         CONTROL HEIGHTS - Responsive
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <OnIdiom x:Key="ButtonHeightDefault" x:TypeArguments="x:Double" 
+             Phone="48" Tablet="52" Default="48"/>
+    
+    <OnIdiom x:Key="ButtonHeightSmall" x:TypeArguments="x:Double" 
+             Phone="36" Tablet="40" Default="36"/>
+    
+    <OnIdiom x:Key="ButtonHeightLarge" x:TypeArguments="x:Double" 
+             Phone="56" Tablet="60" Default="56"/>
+
+    <OnIdiom x:Key="EntryHeightDefault" x:TypeArguments="x:Double" 
+             Phone="48" Tablet="52" Default="48"/>
+
+    <OnIdiom x:Key="EditorMinHeight" x:TypeArguments="x:Double" 
+             Phone="88" Tablet="100" Default="88"/>
+
+    <OnIdiom x:Key="CommentsEditorHeight" x:TypeArguments="x:Double" 
+             Phone="112" Tablet="140" Default="112"/>
+
+    <OnIdiom x:Key="SwitchRowHeight" x:TypeArguments="x:Double" 
+             Phone="56" Tablet="60" Default="56"/>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         PROGRESS BAR HEIGHTS - Responsive
+         Used for visual progress indicators (not text-containing).
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <OnIdiom x:Key="ProgressBarHeight" x:TypeArguments="x:Double" 
+             Phone="10" Tablet="12" Default="10"/>
+    <OnIdiom x:Key="ProgressBarCornerRadius" x:TypeArguments="x:Double" 
+             Phone="5" Tablet="6" Default="5"/>
+    
+    <!-- Discomfort slider uses same height as progress bar for consistency -->
+    <OnIdiom x:Key="DiscomfortSliderHeight" x:TypeArguments="x:Double" 
+             Phone="10" Tablet="12" Default="10"/>
+    <OnIdiom x:Key="DiscomfortSliderCornerRadius" x:TypeArguments="x:Double" 
+             Phone="5" Tablet="6" Default="5"/>
+    
+    <!-- Small input box for numeric entry (reps/sets) -->
+    <OnIdiom x:Key="SmallInputWidth" x:TypeArguments="x:Double" 
+             Phone="56" Tablet="64" Default="56"/>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         DEMO / SAMPLE SIZES
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <x:Double x:Key="ColorSwatchSize">48</x:Double>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         ICON SIZES
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <OnIdiom x:Key="IconSizeSm" x:TypeArguments="x:Double" Phone="16" Tablet="18" Default="16"/>
+    <OnIdiom x:Key="IconSizeMd" x:TypeArguments="x:Double" Phone="24" Tablet="28" Default="24"/>
+    <OnIdiom x:Key="IconSizeLg" x:TypeArguments="x:Double" Phone="32" Tablet="36" Default="32"/>
+    <OnIdiom x:Key="IconSizeXl" x:TypeArguments="x:Double" Phone="48" Tablet="56" Default="48"/>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         BORDER / STROKE WIDTHS
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <x:Double x:Key="BorderWidthDefault">1</x:Double>
+    <x:Double x:Key="BorderWidthFocus">2</x:Double>
+    <x:Double x:Key="BorderWidthEmphasis">2</x:Double>
+    <x:Double x:Key="BorderWidthHeavy">3</x:Double>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         VIDEO / MEDIA SIZING
+         Responsive sizing for video thumbnails and playback controls.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <OnIdiom x:Key="VideoThumbnailHeight" x:TypeArguments="x:Double" 
+             Phone="180" Tablet="220" Default="180"/>
+    <OnIdiom x:Key="PlayButtonSize" x:TypeArguments="x:Double" 
+             Phone="60" Tablet="70" Default="60"/>
+    <OnIdiom x:Key="PlayButtonCornerRadius" x:TypeArguments="x:Double" 
+             Phone="30" Tablet="35" Default="30"/>
+    <x:Double x:Key="VideoCloseButtonSize">50</x:Double>
+    <x:Double x:Key="VideoCloseIconSize">20</x:Double>
+    <!-- VideoCloseButtonSize / 2 for circular shape -->
+    <CornerRadius x:Key="VideoCloseCornerRadius">25</CornerRadius>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         FORM CONTROL SIZING
+         Specific sizing for form elements like auth buttons.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <x:Double x:Key="AuthButtonWidth">180</x:Double>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         LAYOUT CONSTRAINTS
+         Max content width for tablets to prevent overly wide layouts.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <OnIdiom x:Key="MaxContentWidth" x:TypeArguments="x:Double" 
+             Phone="9999" Tablet="600" Default="9999"/>
+
+</ResourceDictionary>

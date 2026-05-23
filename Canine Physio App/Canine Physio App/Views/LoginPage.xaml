@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    LoginPage.xaml - User Login Page
+    =================================
+    Authentication page with email/password fields in the hero area,
+    LOGIN button and forgotten password link in the body, and BACK button in the footer.
+    
+    Layout: Non-scrollable page using AppPageTemplate.
+    - Hero: Email, Password entries (75% width via Grid ratios), Error message (fixed height)
+    - Body: LOGIN button, FORGOTTEN PASSWORD text button
+    - Footer: BACK button (via template footer)
+    
+    Entry fields use BrandMist background with BrandPrimary border to match hero area.
+    Error message area has fixed height to prevent layout shift.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:layout="clr-namespace:Canine_Physio_App.Components.Layout"
+             x:Class="Canine_Physio_App.Views.LoginPage"
+             Shell.NavBarIsVisible="False"
+             Title="Login"
+             Padding="0"
+             ios:Page.UseSafeArea="False"
+             xmlns:ios="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific;assembly=Microsoft.Maui.Controls">
+
+    <layout:AppPageTemplate
+        Title="Login"
+        Subtitle="CANINE PHYSIOTHERAPY"
+        ShowSubtitle="True"
+        ShowHeaderIcon="False"
+        IsBodyScrollable="True"
+        ShowOverlay="{Binding IsLoading}"
+        ShowFooter="True"
+        SecondaryButtonText="BACK"
+        SecondaryCommand="{Binding NavigateBackCommand}">
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             HERO CONTENT - Login form (Email, Password, Error message)
+             Entries are 75% screen width using Grid column ratios (*,6*,*).
+             ═══════════════════════════════════════════════════════════════ -->
+        <layout:AppPageTemplate.HeroContent>
+            <Grid VerticalOptions="Fill">
+                <VerticalStackLayout 
+                    Spacing="{StaticResource SpaceStackMd}"
+                    VerticalOptions="Center">
+                    
+                    <!-- Email Entry - 75% width via Grid columns (*,6*,*) -->
+                    <Grid ColumnDefinitions="*,6*,*">
+                        <VerticalStackLayout 
+                            Grid.Column="1" 
+                            Spacing="{StaticResource SpaceStackXs}">
+                            <Label 
+                                Text="Email"
+                                Style="{StaticResource TextSmStyle}"
+                                TextColor="{StaticResource TextPrimary}" />
+                            <Border 
+                                Stroke="{StaticResource BrandPrimary}"
+                                StrokeThickness="{StaticResource BorderWidthDefault}"
+                                BackgroundColor="{StaticResource BrandMist}"
+                                Padding="{StaticResource SpaceEntryPadding}">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="{StaticResource CornerRadiusMd}" />
+                                </Border.StrokeShape>
+                                <Entry 
+                                    Text="{Binding Email}"
+                                    Placeholder="Enter your email"
+                                    Keyboard="Email"
+                                    ReturnType="Next"
+                                    BackgroundColor="Transparent"
+                                    AutomationProperties.Name="Email" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </Grid>
+                    
+                    <!-- Password Entry - 75% width via Grid columns (*,6*,*) -->
+                    <Grid ColumnDefinitions="*,6*,*">
+                        <VerticalStackLayout 
+                            Grid.Column="1" 
+                            Spacing="{StaticResource SpaceStackXs}">
+                            <Label 
+                                Text="Password"
+                                Style="{StaticResource TextSmStyle}"
+                                TextColor="{StaticResource TextPrimary}" />
+                            <Border 
+                                Stroke="{StaticResource BrandPrimary}"
+                                StrokeThickness="{StaticResource BorderWidthDefault}"
+                                BackgroundColor="{StaticResource BrandMist}"
+                                Padding="{StaticResource SpaceEntryPadding}">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="{StaticResource CornerRadiusMd}" />
+                                </Border.StrokeShape>
+                                <Entry 
+                                    Text="{Binding Password}"
+                                    Placeholder="Enter your password"
+                                    IsPassword="True"
+                                    ReturnType="Done"
+                                    BackgroundColor="Transparent"
+                                    AutomationProperties.Name="Password" />
+                            </Border>
+                        </VerticalStackLayout>
+                    </Grid>
+                    
+                    <!-- Error Message Area - Fixed height to prevent layout shift -->
+                    <Grid HeightRequest="{StaticResource Space24}">
+                        <Label 
+                            Text="{Binding ErrorMessage}"
+                            Style="{StaticResource TextSmStyle}"
+                            TextColor="{StaticResource ErrorOnMist}"
+                            HorizontalTextAlignment="Center"
+                            VerticalOptions="Center"
+                            IsVisible="{Binding HasError}" />
+                    </Grid>
+                    
+                </VerticalStackLayout>
+            </Grid>
+        </layout:AppPageTemplate.HeroContent>
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             BODY CONTENT - LOGIN button and Forgotten Password link
+             Centered in the white body area below the wave.
+             ═══════════════════════════════════════════════════════════════ -->
+        <layout:AppPageTemplate.BodyContent>
+            <Grid VerticalOptions="Fill">
+                <VerticalStackLayout
+                    Spacing="{StaticResource SpaceStackLg}"
+                    VerticalOptions="Center"
+                    HorizontalOptions="Center">
+                    
+                    <!-- Login Button -->
+                    <Button 
+                        Text="LOGIN"
+                        Style="{StaticResource ButtonPrimary}"
+                        HorizontalOptions="Center"
+                        WidthRequest="{StaticResource AuthButtonWidth}"
+                        Command="{Binding LoginCommand}"
+                        AutomationProperties.Name="Login" />
+                    
+                    <!-- Forgotten Password Button -->
+                    <Button 
+                        Text="FORGOTTEN PASSWORD"
+                        Style="{StaticResource ButtonGhost}"
+                        HorizontalOptions="Center"
+                        Command="{Binding ForgotPasswordCommand}"
+                        AutomationProperties.Name="Forgotten password" />
+                        
+                </VerticalStackLayout>
+            </Grid>
+        </layout:AppPageTemplate.BodyContent>
+        
+    </layout:AppPageTemplate>
+
+</ContentPage>
