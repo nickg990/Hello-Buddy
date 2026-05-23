@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    StyleGuidePage.xaml - Design Token Style Guide
+    ===============================================
+    Reference page demonstrating Hello Buddy design tokens.
+    Uses AppPageTemplate to showcase the reusable layout pattern.
+    Shows: background, heading/body text, primary/secondary buttons, 
+    entry, toggle row, and card surface.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:layout="clr-namespace:Canine_Physio_App.Components.Layout"
+             xmlns:controls="clr-namespace:Canine_Physio_App.Components.Controls"
+             xmlns:decor="clr-namespace:Canine_Physio_App.Components.Decor"
+             xmlns:header="clr-namespace:Canine_Physio_App.Components.Header"
+             x:Class="Canine_Physio_App.StyleGuidePage"
+             Shell.NavBarIsVisible="False"
+             Title="Style Guide"
+             Padding="0"
+             ios:Page.UseSafeArea="False"
+             xmlns:ios="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific;assembly=Microsoft.Maui.Controls">
+
+    <layout:AppPageTemplate
+        Title="Hello Buddy"
+        Subtitle="CANINE PHYSIOTHERAPY"
+        ShowSubtitle="True"
+        ShowHeaderIcon="False"
+        IsBodyScrollable="True"
+        ShowFooter="False">
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             HERO CONTENT - Logo disc with brand identity
+             LogoDisc auto-sizes to fit the hero area responsively.
+             ═══════════════════════════════════════════════════════════════ -->
+        <layout:AppPageTemplate.HeroContent>
+            <controls:LogoDisc />
+        </layout:AppPageTemplate.HeroContent>
+        
+        <layout:AppPageTemplate.BodyContent>
+            <VerticalStackLayout 
+                Padding="{StaticResource SpacePage}"
+                Spacing="{StaticResource SpaceStackMd}">
+
+                <!-- ═══════════════════════════════════════════════════════════════
+                     HEADER BLOCK TEST - Shows HeaderBlock variants
+                     ═══════════════════════════════════════════════════════════════ -->
+                <Label 
+                    Text="Header Block" 
+                    Style="{StaticResource HeadingH2}"
+                    SemanticProperties.HeadingLevel="Level2"/>
+
+                <Label 
+                    Text="HeaderBlock with subtitle:"
+                    Style="{StaticResource TextSmStyle}"/>
+                
+                <Border Style="{StaticResource CardBorder}" Padding="0">
+                    <header:HeaderBlock 
+                        Title="Settings"
+                        ShowSubtitle="True" />
+                </Border>
+
+                <BoxView Style="{StaticResource Divider}" Margin="{StaticResource SpaceDividerVertical}"/>
+
+                <!-- ═══════════════════════════════════════════════════════════════
+                     SINE WAVE TEST - Shows both WaveEdge options
+                     ═══════════════════════════════════════════════════════════════ -->
+                <Label 
+                    Text="Sine Wave Block" 
+                    Style="{StaticResource HeadingH2}"
+                    SemanticProperties.HeadingLevel="Level2"/>
+
+                <Label 
+                    Text="WaveEdge.Bottom (BrandPrimaryLight fill):"
+                    Style="{StaticResource TextSmStyle}"/>
+                
+                <decor:SineWaveBlock 
+                    WaveEdge="Bottom" />
+
+                <Label 
+                    Text="WaveEdge.Top (BrandPrimary fill):"
+                    Style="{StaticResource TextSmStyle}"/>
+                
+                <decor:SineWaveBlock 
+                    WaveEdge="Top"
+                    FillColor="{StaticResource BrandPrimary}" />
+
+                <BoxView Style="{StaticResource Divider}" Margin="{StaticResource SpaceDividerVertical}"/>
+
+                <!-- ═══════════════════════════════════════════════════════════════
+                     BRAND COLORS - Shows the Hello Buddy palette
+                     ═══════════════════════════════════════════════════════════════ -->
+                <Label 
+                    Text="Brand Colors" 
+                    Style="{StaticResource HeadingH2}"
+                    SemanticProperties.HeadingLevel="Level2"/>
+
+                <HorizontalStackLayout Spacing="{StaticResource Space8}">
+                    <Border 
+                        BackgroundColor="{StaticResource BrandPrimary}" 
+                        WidthRequest="{StaticResource ColorSwatchSize}" HeightRequest="{StaticResource ColorSwatchSize}"
+                    StrokeThickness="0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="{StaticResource CornerRadiusMd}"/>
+                    </Border.StrokeShape>
+                </Border>
+                <Border 
+                    BackgroundColor="{StaticResource BrandPrimaryLight}" 
+                    WidthRequest="{StaticResource ColorSwatchSize}" HeightRequest="{StaticResource ColorSwatchSize}"
+                    StrokeThickness="0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="{StaticResource CornerRadiusMd}"/>
+                    </Border.StrokeShape>
+                </Border>
+                <Border 
+                    BackgroundColor="{StaticResource BrandPrimaryDark}" 
+                    WidthRequest="{StaticResource ColorSwatchSize}" HeightRequest="{StaticResource ColorSwatchSize}"
+                    StrokeThickness="0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="{StaticResource CornerRadiusMd}"/>
+                    </Border.StrokeShape>
+                </Border>
+                <Border 
+                    BackgroundColor="{StaticResource BrandMist}" 
+                    WidthRequest="{StaticResource ColorSwatchSize}" HeightRequest="{StaticResource ColorSwatchSize}"
+                    StrokeThickness="0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="{StaticResource CornerRadiusMd}"/>
+                    </Border.StrokeShape>
+                </Border>
+            </HorizontalStackLayout>
+            <Label Text="Primary • PrimaryLight • PrimaryDark • Mist" Style="{StaticResource TextCaption}"/>
+
+            <BoxView Style="{StaticResource Divider}" Margin="{StaticResource SpaceDividerVertical}"/>
+
+            <!-- ═══════════════════════════════════════════════════════════════
+                 BUTTONS - Primary and Secondary styles
+                 ═══════════════════════════════════════════════════════════════ -->
+            <Label 
+                Text="Buttons" 
+                Style="{StaticResource HeadingH2}"
+                SemanticProperties.HeadingLevel="Level2"/>
+
+            <VerticalStackLayout Spacing="{StaticResource SpaceStackSm}">
+                <Button 
+                    x:Name="spinnerTestButton"
+                    Text="Spinner Test" 
+                    Style="{StaticResource ButtonPrimary}"
+                    HorizontalOptions="Fill"
+                    Clicked="OnSpinnerTestClicked"/>
+                
+                <controls:LoadingSpinner 
+                    x:Name="testSpinner"
+                    IsLoading="False"
+                    Message="Please wait..." />
+                
+                <Button 
+                    Text="Secondary Button" 
+                    Style="{StaticResource ButtonSecondary}"
+                    HorizontalOptions="Fill"/>
+                
+                <Button 
+                    Text="Disabled Button" 
+                    IsEnabled="False"
+                    HorizontalOptions="Fill"/>
+            </VerticalStackLayout>
+
+            <BoxView Style="{StaticResource Divider}" Margin="{StaticResource SpaceDividerVertical}"/>
+
+            <!-- ═══════════════════════════════════════════════════════════════
+                 ENTRY - Text input demonstration
+                 ═══════════════════════════════════════════════════════════════ -->
+            <Label 
+                Text="Form Input" 
+                Style="{StaticResource HeadingH2}"
+                SemanticProperties.HeadingLevel="Level2"/>
+
+            <Border Style="{StaticResource CardBorder}">
+                <VerticalStackLayout Spacing="{StaticResource SpaceStackSm}">
+                    <Label Text="Email Address" Style="{StaticResource TextSmStyle}"/>
+                    <Entry 
+                        Placeholder="buddy@example.com"
+                        Keyboard="Email"/>
+                </VerticalStackLayout>
+            </Border>
+
+            <BoxView Style="{StaticResource Divider}" Margin="{StaticResource SpaceDividerVertical}"/>
+
+            <!-- ═══════════════════════════════════════════════════════════════
+                 TOGGLE ROW - Switch demonstration
+                 ═══════════════════════════════════════════════════════════════ -->
+            <Label 
+                    Text="Toggle Control" 
+                    Style="{StaticResource HeadingH2}"
+                    SemanticProperties.HeadingLevel="Level2"/>
+
+                <Border Style="{StaticResource CardBorder}">
+                    <Grid ColumnDefinitions="*,Auto" HeightRequest="{StaticResource SwitchRowHeight}">
+                        <VerticalStackLayout VerticalOptions="Center">
+                            <Label Text="Enable Notifications" Style="{StaticResource TextMdStyle}"/>
+                            <Label Text="Receive alerts for upcoming sessions" Style="{StaticResource TextCaption}"/>
+                        </VerticalStackLayout>
+                        <Switch 
+                            Grid.Column="1" 
+                            IsToggled="True"
+                            VerticalOptions="Center"/>
+                    </Grid>
+                </Border>
+
+                <BoxView Style="{StaticResource Divider}" Margin="{StaticResource SpaceDividerVertical}"/>
+
+                <!-- ═══════════════════════════════════════════════════════════════
+                     CARD SURFACE - Demonstrates Surface token + styling
+                     ═══════════════════════════════════════════════════════════════ -->
+                <Label 
+                    Text="Card Surface" 
+                    Style="{StaticResource HeadingH2}"
+                    SemanticProperties.HeadingLevel="Level2"/>
+
+                <Border Style="{StaticResource CardBorder}">
+                    <VerticalStackLayout Spacing="{StaticResource SpaceStackSm}">
+                        <Label Text="Session Summary" Style="{StaticResource HeadingH3}"/>
+                        <Label 
+                            Text="This card uses the Surface background token, BorderDefault stroke, and RadiusLg corner radius."
+                            Style="{StaticResource TextMdStyle}"/>
+                        <HorizontalStackLayout Spacing="{StaticResource Space8}" Margin="{StaticResource SpaceTopSm}">
+                            <Button Text="View" Style="{StaticResource ButtonPrimary}" HorizontalOptions="Start"/>
+                            <Button Text="Dismiss" Style="{StaticResource ButtonSecondary}" HorizontalOptions="Start"/>
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <BoxView Style="{StaticResource Divider}" Margin="{StaticResource SpaceDividerVertical}"/>
+
+                <!-- ═══════════════════════════════════════════════════════════════
+                     EXERCISE TILES - 2x2 grid demonstration
+                     ═══════════════════════════════════════════════════════════════ -->
+                <Label 
+                    Text="Exercise Tiles" 
+                    Style="{StaticResource HeadingH2}"
+                    SemanticProperties.HeadingLevel="Level2"/>
+
+                <Grid ColumnDefinitions="*,*"
+                      RowDefinitions="Auto,Auto"
+                      ColumnSpacing="{StaticResource Space8}"
+                      RowSpacing="{StaticResource Space8}">
+                    
+                    <controls:ExerciseTile 
+                        Grid.Row="0" Grid.Column="0"
+                        ExerciseKey="baited_back_stretch"
+                        ExerciseName="Baited Back Stretch"
+                        ImageSource="baited_back_stretch.jpg"
+                        IsComplete="True" />
+                    
+                    <controls:ExerciseTile 
+                        Grid.Row="0" Grid.Column="1"
+                        ExerciseKey="raised_poles"
+                        ExerciseName="Raised Poles"
+                        ImageSource="raised_poles.jpg"
+                        IsComplete="False" />
+                    
+                    <controls:ExerciseTile 
+                        Grid.Row="1" Grid.Column="0"
+                        ExerciseKey="raised_sit_stands"
+                        ExerciseName="Raised Sit Stands"
+                        ImageSource="raised_sit_stands.jpg"
+                        IsComplete="True" />
+                    
+                    <controls:ExerciseTile 
+                        Grid.Row="1" Grid.Column="1"
+                        ExerciseKey="step_up"
+                        ExerciseName="Step Up"
+                        ImageSource="step_up.jpg"
+                        IsComplete="False" />
+                </Grid>
+
+                <!-- Bottom padding -->
+                <BoxView HeightRequest="{StaticResource Space32}" BackgroundColor="Transparent"/>
+
+            </VerticalStackLayout>
+        </layout:AppPageTemplate.BodyContent>
+    </layout:AppPageTemplate>
+
+</ContentPage>

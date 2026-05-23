@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    SkipToNextSessionPage.xaml - Skip Page (Session or Exercise)
+    ==============================================================
+    Context-aware skip page:
+    - From MainExercisesPage (no exercise context): skips the current session
+    - From ExerciseDetailPage (exercise context set): skips that exercise
+    
+    Includes a comments field for optional feedback about why they're skipping.
+    
+    Layout: Uses AppPageTemplate (standard mode with hero + body)
+    - Hero: Instruction text (content set in code-behind based on mode)
+    - Body: Comments editor with internal scrolling
+    - Footer: BACK + CONFIRM buttons (fixed)
+    
+    Single scroll region per page - no nested ScrollViews.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:layout="clr-namespace:Canine_Physio_App.Components.Layout"
+             x:Class="Canine_Physio_App.Views.SkipToNextSessionPage"
+             Shell.NavBarIsVisible="False"
+             Title="Skip to Next Session"
+             Padding="0"
+             ios:Page.UseSafeArea="False"
+             xmlns:ios="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific;assembly=Microsoft.Maui.Controls">
+
+    <layout:AppPageTemplate
+        x:Name="pageTemplate"
+        Title="{Binding PageTitle}"
+        Subtitle="CANINE PHYSIOTHERAPY"
+        ShowSubtitle="True"
+        ShowHeaderIcon="False"
+        IsBodyScrollable="True"
+        ShowOverlay="{Binding IsPageBusy}"
+        ShowFooter="True"
+        SecondaryButtonText="BACK"
+        SecondaryCommand="{Binding BackCommand}"
+        PrimaryButtonText="CONFIRM"
+        PrimaryCommand="{Binding ConfirmCommand}"
+        PrimaryButtonIsEnabled="{Binding IsConfirmEnabled}">
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             HERO CONTENT - Instruction text explaining skip behavior
+             Styled as a card with BrandMist background and BrandPrimary border.
+             Left-justified text, consistent with MainExercisesPage.
+             ═══════════════════════════════════════════════════════════════ -->
+        <layout:AppPageTemplate.HeroContent>
+            <Grid Padding="{StaticResource SpacePage}" VerticalOptions="Fill">
+                <Border 
+                    BackgroundColor="{StaticResource BrandMist}"
+                    Stroke="{StaticResource BrandPrimary}"
+                    StrokeThickness="{StaticResource BorderWidthDefault}"
+                    Padding="{StaticResource SpaceCardPadding}"
+                    VerticalOptions="Center">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="{StaticResource CornerRadiusMd}" />
+                    </Border.StrokeShape>
+                    
+                    <VerticalStackLayout Spacing="{StaticResource SpaceStackSm}">
+                        
+                        <Label 
+                            x:Name="heroMainText"
+                            Text="Skipping this session will mark it as complete and load the next exercise session."
+                            Style="{StaticResource TextMdStyle}"
+                            TextColor="{StaticResource TextPrimary}"
+                            LineBreakMode="WordWrap" />
+                        
+                        <Label 
+                            x:Name="heroSubText"
+                            Text="You can optionally add comments below to explain why you're skipping."
+                            Style="{StaticResource TextSmStyle}"
+                            TextColor="{StaticResource TextMuted}"
+                            LineBreakMode="WordWrap" />
+                        
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+        </layout:AppPageTemplate.HeroContent>
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             BODY CONTENT - Comments editor for optional feedback
+             Editor scrolls internally once text exceeds visible height.
+             ═══════════════════════════════════════════════════════════════ -->
+        <layout:AppPageTemplate.BodyContent>
+            <VerticalStackLayout 
+                Padding="{StaticResource SpacePage}"
+                Spacing="{StaticResource SpaceStackMd}"
+                VerticalOptions="Start">
+                
+                <!-- ═══════════════════════════════════════════════════════
+                     COMMENTS - Editor with internal scrolling
+                     ═══════════════════════════════════════════════════════ -->
+                <VerticalStackLayout Spacing="{StaticResource Space4}">
+                    
+                    <Label Text="Comments (optional)"
+                           Style="{StaticResource TextSmStyle}"
+                           TextColor="{StaticResource TextMuted}" />
+                    
+                    <Border Stroke="{StaticResource BorderDefault}"
+                            BackgroundColor="{StaticResource Surface}"
+                            StrokeThickness="{StaticResource BorderWidthDefault}"
+                            Padding="{StaticResource SpaceEntryPadding}">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="{StaticResource CornerRadiusMd}" />
+                        </Border.StrokeShape>
+                        
+                        <!-- Editor with fixed height for internal scrolling -->
+                        <Editor x:Name="commentsEditor"
+                                Text="{Binding Comments}"
+                                Placeholder="{Binding CommentsPlaceholder}"
+                                HeightRequest="{StaticResource CommentsEditorHeight}"
+                                AutoSize="Disabled"
+                                BackgroundColor="Transparent"
+                                AutomationProperties.Name="Skip comments" />
+                        
+                    </Border>
+                    
+                </VerticalStackLayout>
+                
+                <!-- ═══════════════════════════════════════════════════════
+                     STATUS MESSAGE + REVERT - Shown when skip is disabled
+                     ═══════════════════════════════════════════════════════ -->
+                <VerticalStackLayout Spacing="{StaticResource Space8}"
+                                     IsVisible="{Binding HasStatusMessage}">
+                    
+                    <Label Text="{Binding StatusMessage}"
+                           Style="{StaticResource TextSmStyle}"
+                           TextColor="{StaticResource TextMuted}"
+                           HorizontalTextAlignment="Center" />
+                    
+                    <Button Text="REVERT SKIP"
+                            Command="{Binding RevertSkipCommand}"
+                            Style="{StaticResource ButtonSecondary}"
+                            HorizontalOptions="Center"
+                            AutomationProperties.Name="Revert skip" />
+                    
+                </VerticalStackLayout>
+                
+            </VerticalStackLayout>
+        </layout:AppPageTemplate.BodyContent>
+        
+    </layout:AppPageTemplate>
+
+</ContentPage>

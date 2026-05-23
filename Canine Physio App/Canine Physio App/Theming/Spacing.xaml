@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    Spacing.xaml - Spacing Scale Tokens
+    ====================================
+    Defines consistent spacing values for margins, padding, and gaps.
+    
+    Scale: 2, 4, 8, 12, 16, 24, 32, 48, 64
+    Based on 4px grid system for visual consistency.
+    
+    Responsive: Tablet gets slightly larger spacing where needed.
+-->
+<ResourceDictionary 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         SPACING SCALE (Fixed values)
+         Used for consistent margins, padding, and gaps.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <x:Double x:Key="SpaceNone">0</x:Double>
+    <x:Double x:Key="Space2">2</x:Double>
+    <x:Double x:Key="Space4">4</x:Double>
+    <x:Double x:Key="Space8">8</x:Double>
+    <x:Double x:Key="Space12">12</x:Double>
+    <x:Double x:Key="Space16">16</x:Double>
+    <x:Double x:Key="Space24">24</x:Double>
+    <x:Double x:Key="Space32">32</x:Double>
+    <x:Double x:Key="Space48">48</x:Double>
+    <x:Double x:Key="Space64">64</x:Double>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         RESPONSIVE SPACING
+         Slightly larger on tablets for better visual hierarchy.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <OnIdiom x:Key="SpacePage" x:TypeArguments="Thickness" 
+             Phone="16,16,16,16" 
+             Tablet="24,24,24,24" 
+             Default="16,16,16,16"/>
+
+    <OnIdiom x:Key="SpacePageHorizontal" x:TypeArguments="Thickness" 
+             Phone="16,0,16,0" 
+             Tablet="24,0,24,0" 
+             Default="16,0,16,0"/>
+
+    <OnIdiom x:Key="SpaceHeaderPadding" x:TypeArguments="Thickness" 
+             Phone="16,12,16,16" 
+             Tablet="24,16,24,20" 
+             Default="16,12,16,16"/>
+
+    <OnIdiom x:Key="SpaceCardPadding" x:TypeArguments="Thickness" 
+             Phone="16,16,16,16" 
+             Tablet="20,20,20,20" 
+             Default="16,16,16,16"/>
+
+    <OnIdiom x:Key="SpaceButtonPadding" x:TypeArguments="Thickness" 
+             Phone="16,12,16,12" 
+             Tablet="20,14,20,14" 
+             Default="16,12,16,12"/>
+
+    <OnIdiom x:Key="SpaceEntryPadding" x:TypeArguments="Thickness" 
+             Phone="12,10,12,10" 
+             Tablet="16,12,16,12" 
+             Default="12,10,12,10"/>
+
+    <!-- Bottom padding provides minimal spacing below buttons; safe area adds device-specific spacing on iOS -->
+    <OnIdiom x:Key="SpaceFooterPadding" x:TypeArguments="Thickness" 
+             Phone="16,12,16,8" 
+             Tablet="24,16,24,8" 
+             Default="16,12,16,8"/>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         LAYOUT SPACING
+         Common spacing values for StackLayout, Grid, etc.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <OnIdiom x:Key="SpaceStackXs" x:TypeArguments="x:Double" Phone="4" Tablet="6" Default="4"/>
+    <OnIdiom x:Key="SpaceStackSm" x:TypeArguments="x:Double" Phone="8" Tablet="10" Default="8"/>
+    <OnIdiom x:Key="SpaceStackMd" x:TypeArguments="x:Double" Phone="16" Tablet="20" Default="16"/>
+    <OnIdiom x:Key="SpaceStackLg" x:TypeArguments="x:Double" Phone="24" Tablet="32" Default="24"/>
+
+    <!-- Section spacing for page content -->
+    <OnIdiom x:Key="SpaceSection" x:TypeArguments="x:Double" Phone="32" Tablet="48" Default="32"/>
+
+    <!-- Divider vertical margin (above and below) -->
+    <Thickness x:Key="SpaceDividerVertical">0,8,0,8</Thickness>
+
+    <!-- Top margin for inline elements (e.g., buttons inside cards) -->
+    <Thickness x:Key="SpaceTopSm">0,8,0,0</Thickness>
+
+    <!-- Vertical padding for collapsible section headers (tap targets) -->
+    <Thickness x:Key="SpaceCollapsibleHeader">0,8,0,8</Thickness>
+
+    <!-- Top padding for collapsible section body text -->
+    <Thickness x:Key="SpaceCollapsibleBody">0,12,0,0</Thickness>
+
+</ResourceDictionary>

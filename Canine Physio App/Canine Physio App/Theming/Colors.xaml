@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    Colors.xaml - Hello Buddy Design Tokens
+    ========================================
+    Minimal color palette: Brand colors + semantic utility tokens only.
+    Light theme only (dark mode deferred to future section).
+    
+    Brand Colors: Raw hex values from Hello Buddy brand guidelines.
+    Utility Tokens: Semantic tokens for consistent UI theming.
+-->
+<ResourceDictionary 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         BRAND COLORS (Raw Values)
+         Hello Buddy brand palette - do not use directly in UI; use utility tokens.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <Color x:Key="BrandPrimary">#4A7A96</Color>
+    <Color x:Key="BrandPrimaryLight">#B3CDD6</Color>
+    <Color x:Key="BrandPrimaryDark">#28404F</Color>
+    <Color x:Key="BrandMist">#D4E0E5</Color>
+    <Color x:Key="White">#FFFFFF</Color>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         UTILITY TOKENS (Light Theme Only)
+         Semantic tokens for UI elements. Use these in controls/pages.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <Color x:Key="PageBackground">#D4E0E5</Color>          <!-- BrandMist -->
+    <Color x:Key="Surface">#FFFFFF</Color>                  <!-- White -->
+    <Color x:Key="TextPrimary">#111111</Color>              <!-- Near-black for max readability -->
+    <Color x:Key="TextMuted">#5A7A8A</Color>                <!-- Softer grey-blue -->
+    <Color x:Key="BorderDefault">#B3CDD6</Color>            <!-- BrandPrimaryLight -->
+    <Color x:Key="DisabledSurface">#E0E0E0</Color>
+    <Color x:Key="DisabledText">#9E9E9E</Color>
+    <Color x:Key="Error">#DC3545</Color>
+    <Color x:Key="Success">#4CAF50</Color>                   <!-- Green for completion/success states -->
+    <Color x:Key="TextOnPrimary">#FFFFFF</Color>             <!-- White text on coloured backgrounds -->
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         ALIAS TOKENS
+         Semantic aliases for common use cases (controls, shadows, etc.).
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <Color x:Key="Shadow">#4028404F</Color>                 <!-- BrandPrimaryDark @ 25% alpha -->
+    <Color x:Key="LogoGold">#F5D4A8</Color>                  <!-- Gold accent matching dog logo body -->
+    <Color x:Key="OverlayLight">#80FFFFFF</Color>            <!-- Semi-transparent white overlay for loading states -->
+    <Color x:Key="TabBarSurface">#D9FFFFFF</Color>             <!-- White @ 85% opacity for frosted tab bar -->
+    <Color x:Key="ErrorOnMist">#8A4E00</Color>               <!-- Burnt amber for error text on BrandMist background (≥4.5:1 contrast) -->
+
+</ResourceDictionary>

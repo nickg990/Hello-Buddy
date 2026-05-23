@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    HeaderBlock.xaml - Page Header Component
+    =========================================
+    Displays the standard page header with:
+    - Subtitle (small text, e.g., "CANINE PHYSIOTHERAPY")
+    - Title (main heading)
+    - Optional right-side icon button
+    
+    Uses Typography tokens for text styles and Spacing tokens for layout.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Canine_Physio_App.Components.Header.HeaderBlock"
+             x:Name="this"
+             BackgroundColor="{StaticResource PageBackground}">
+    
+    <Grid x:Name="rootGrid"
+          Padding="{StaticResource SpaceHeaderPadding}">
+        
+        <!-- Center: Title and Subtitle (full width, icon overlaid) -->
+        <VerticalStackLayout Spacing="{StaticResource Space4}"
+                             VerticalOptions="Start"
+                             HorizontalOptions="Center">
+            
+            <!-- Main Title -->
+            <Label Text="{Binding Source={x:Reference this}, Path=Title}"
+                   Style="{StaticResource HeadingH1}"
+                   HorizontalTextAlignment="Center"
+                   LineBreakMode="TailTruncation"
+                   MaxLines="1" />
+            
+            <!-- Subtitle (small uppercase text, dynamically spaced to fill 80% width) -->
+            <Label x:Name="subtitleLabel"
+                   Text="{Binding Source={x:Reference this}, Path=Subtitle}"
+                   Style="{StaticResource TextXsStyle}"
+                   TextColor="{StaticResource TextMuted}"
+                   FontAttributes="Bold"
+                   TextTransform="Uppercase"
+                   HorizontalTextAlignment="Center"
+                   LineBreakMode="NoWrap"
+                   MaxLines="1"
+                   IsVisible="{Binding Source={x:Reference this}, Path=ShowSubtitle}" />
+        </VerticalStackLayout>
+        
+        <!-- Right: Optional Icon (overlaid, aligned with title top) -->
+        <!-- Grid provides 44x44dp minimum tap target per iOS HIG -->
+        <Grid IsVisible="{Binding Source={x:Reference this}, Path=ShowIcon}"
+              WidthRequest="{StaticResource MinTapWidth}"
+              HeightRequest="{StaticResource MinTapHeight}"
+              HorizontalOptions="End"
+              VerticalOptions="Start"
+              AutomationProperties.Name="Information">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding Source={x:Reference this}, Path=IconCommand}" />
+            </Grid.GestureRecognizers>
+            <Image Source="{Binding Source={x:Reference this}, Path=IconSource}"
+                   WidthRequest="{StaticResource IconSizeLg}"
+                   HeightRequest="{StaticResource IconSizeLg}"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   Aspect="AspectFit" />
+        </Grid>
+    </Grid>
+</ContentView>

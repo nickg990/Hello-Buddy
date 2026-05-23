@@ -1,0 +1,17 @@
+# Build outputs
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+
+# IDE metadata
+.vs/
+*.user
+*.rsuser
+*.suo
+
+# Nested repo backup during root migration
+Canine Physio App/.git-backup/
+
+# Signing material
+*.keystore

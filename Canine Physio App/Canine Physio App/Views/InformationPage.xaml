@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    InformationPage.xaml - App Information Page
+    ============================================
+    Displays informational content about the app, physiotherapy,
+    and recognising pain in dogs. Content is loaded from AppContent.json.
+    
+    Layout: Uses ShowFullBody="True" mode so text content scrolls
+    over the hero/wave/body backgrounds as a transparent overlay.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:layout="clr-namespace:Canine_Physio_App.Components.Layout"
+             x:Class="Canine_Physio_App.Views.InformationPage"
+             Shell.NavBarIsVisible="False"
+             Title="Information"
+             Padding="0"
+             ios:Page.UseSafeArea="False"
+             xmlns:ios="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific;assembly=Microsoft.Maui.Controls">
+
+    <layout:AppPageTemplate
+        Title="Information"
+        Subtitle="CANINE PHYSIOTHERAPY"
+        ShowSubtitle="True"
+        ShowHeaderIcon="False"
+        ShowFullBody="True"
+        ShowFooter="True"
+        SecondaryButtonText="BACK"
+        SecondaryCommand="{Binding NavigateBackCommand}">
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             FULL BODY CONTENT - Transparent overlay scrolling over backgrounds
+             Text content starts near top and scrolls over hero/wave/body.
+             Buttons fixed at bottom via template footer.
+             ═══════════════════════════════════════════════════════════════ -->
+        <layout:AppPageTemplate.FullBodyContent>
+            <VerticalStackLayout 
+                Padding="{StaticResource SpacePage}"
+                Spacing="{StaticResource SpaceStackLg}">
+                
+                <!-- Dynamic content sections from JSON -->
+                <VerticalStackLayout 
+                    x:Name="contentStack"
+                    Spacing="{StaticResource SpaceStackLg}"
+                    BindableLayout.ItemsSource="{Binding Sections}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate>
+                            <VerticalStackLayout Spacing="{StaticResource SpaceStackSm}">
+                                <!-- Section Header -->
+                                <Label 
+                                    Text="{Binding Header}"
+                                    Style="{StaticResource HeadingH3}"
+                                    FontAttributes="Bold"
+                                    TextColor="{StaticResource TextPrimary}" />
+                                <!-- Section Body -->
+                                <Label 
+                                    Text="{Binding Body}"
+                                    Style="{StaticResource TextMdStyle}"
+                                    TextColor="{StaticResource TextMuted}" />
+                            </VerticalStackLayout>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+                    
+            </VerticalStackLayout>
+        </layout:AppPageTemplate.FullBodyContent>
+        
+    </layout:AppPageTemplate>
+
+</ContentPage>

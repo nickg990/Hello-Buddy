@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    ProgressTabPage.xaml - Progress Overview (Placeholder)
+    =======================================================
+    Placeholder tab page showing overall exercise progress.
+    Will be replaced with full implementation in a future sprint.
+    
+    Layout: AppPageTemplate (standard mode)
+    - Hero: Empty
+    - Body: Centered placeholder message
+    - Header: Info icon navigates to InformationPage
+    - No footer
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:layout="clr-namespace:Canine_Physio_App.Components.Layout"
+             x:Class="Canine_Physio_App.Views.ProgressTabPage"
+             Shell.NavBarIsVisible="False"
+             Shell.TabBarIsVisible="False"
+             Title="Progress"
+             Padding="0"
+             ios:Page.UseSafeArea="False"
+             xmlns:ios="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific;assembly=Microsoft.Maui.Controls">
+
+    <layout:AppPageTemplate
+        x:Name="pageTemplate"
+        Title="Progress"
+        Subtitle="CANINE PHYSIOTHERAPY"
+        ShowSubtitle="True"
+        ShowHeaderIcon="True"
+        HeaderIconSource="info_icon.svg"
+        HeaderIconCommand="{Binding NavigateToInfoCommand}"
+        IsBodyScrollable="False"
+        ShowFooter="True"
+        SecondaryButtonText="BACK"
+        SecondaryCommand="{Binding BackCommand}">
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             BODY CONTENT - Placeholder message
+             Centered text indicating this page is under construction.
+             ═══════════════════════════════════════════════════════════════ -->
+        <layout:AppPageTemplate.BodyContent>
+            <Grid VerticalOptions="Fill">
+                <VerticalStackLayout
+                    VerticalOptions="Center"
+                    HorizontalOptions="Center"
+                    Spacing="{StaticResource Space12}">
+
+                    <Label
+                        Text="Progress tracking"
+                        Style="{StaticResource HeadingH2}"
+                        HorizontalTextAlignment="Center" />
+
+                    <Label
+                        Text="Your exercise progress overview will appear here."
+                        Style="{StaticResource TextMdStyle}"
+                        TextColor="{StaticResource TextMuted}"
+                        HorizontalTextAlignment="Center"
+                        Padding="{StaticResource SpacePage}" />
+
+                </VerticalStackLayout>
+            </Grid>
+        </layout:AppPageTemplate.BodyContent>
+
+    </layout:AppPageTemplate>
+
+</ContentPage>

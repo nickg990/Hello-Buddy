@@ -1,0 +1,39 @@
+{
+  "information": [
+    {
+      "key": "about",
+      "header": "ABOUT THIS APP",
+      "body": "Physiotherapy at home, with practitioner guidance, can significantly improve the recovery and well-being of your dog.\n\nThis app enables practitioners provide exercise programs that can be carried out at home."
+    },
+    {
+      "key": "physiotherapy",
+      "header": "PHYSIOTHERAPY",
+      "body": "Physiotherapy includes massage, exercises, and environmental modifications that can help manage pain and improve mobility.\n\nHowever, it's important to consult with a veterinarian or certified canine physiotherapist before starting any at-home physiotherapy to ensure it's appropriate and safe for your dog."
+    },
+    {
+      "key": "pain",
+      "header": "RECOGNISING PAIN",
+      "body": "Key signs of pain include changes in behaviour, decreased activity, altered posture, increased vocalization, and changes in daily habits.\n\nIf you are concerned about pain or discomfort, stop immediately and contact your practitioner."
+    }
+  ],
+  "termsConditions": [
+    {
+      "key": "termsOfService",
+      "header": "TERMS OF SERVICE",
+      "body": "By using Hello Buddy Canine Physiotherapy, you agree to use the app responsibly and follow all exercise guidance provided. This app provides general physiotherapy exercises for dogs and is not a substitute for professional veterinary care. Always consult your veterinarian before starting any new exercise programme. You acknowledge that exercise results may vary and that you are responsible for monitoring your dog's comfort and safety during all activities."
+    },
+    {
+      "key": "privacyPolicy",
+      "header": "PRIVACY POLICY",
+      "body": "We collect and store your email address and exercise progress data to provide our service. Your dog's exercise history is stored securely and used solely to track progress within the app. We do not sell or share your personal information with third parties. Data may be stored locally on your device and synchronised with our secure servers. You may request deletion of your data at any time by contacting support."
+    },
+    {
+      "key": "acceptableUse",
+      "header": "ACCEPTABLE USE POLICY",
+      "body": "You agree not to misuse the app or attempt to access it using unauthorized methods. The app should only be used for its intended purpose of canine physiotherapy guidance. You must not share your account credentials with others. Any suspected security issues should be reported immediately. We reserve the right to suspend accounts that violate these terms."
+    }
+  ],
+  "warnings": {
+    "exerciseDisclaimer": "If you are concerned about pain or discomfort, stop immediately and contact your practitioner."
+  }
+}

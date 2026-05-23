@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    TermsConditionsPage.xaml - Terms and Conditions Page
+    =====================================================
+    Displays legal terms that users must accept before using the app.
+    Features collapsible sections for Terms of Service, Privacy Policy,
+    and Acceptable Use Policy. Content loaded from AppContent.json.
+    
+    Layout: Uses ShowFullBody="True" mode so content scrolls
+    over the hero/wave/body backgrounds as a transparent overlay.
+    Loading spinner overlay shown during navigation transition.
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:layout="clr-namespace:Canine_Physio_App.Components.Layout"
+             x:Class="Canine_Physio_App.Views.TermsConditionsPage"
+             Shell.NavBarIsVisible="False"
+             Title="Terms &amp; Conditions"
+             Padding="0"
+             ios:Page.UseSafeArea="False"
+             xmlns:ios="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific;assembly=Microsoft.Maui.Controls">
+
+    <layout:AppPageTemplate
+        Title="Terms &amp; Conditions"
+        Subtitle="CANINE PHYSIOTHERAPY"
+        ShowSubtitle="True"
+        ShowOverlay="{Binding IsLoading}"
+        ShowHeaderIcon="False"
+        ShowFullBody="True"
+        ShowFooter="True"
+        SecondaryButtonText="BACK"
+        SecondaryCommand="{Binding NavigateBackCommand}"
+        PrimaryButtonText="NEXT"
+        PrimaryCommand="{Binding NavigateNextCommand}"
+        PrimaryButtonIsEnabled="{Binding IsAccepted}">
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             FULL BODY CONTENT - Transparent overlay scrolling over backgrounds
+             Agreement toggle, collapsible sections, and navigation buttons.
+             ═══════════════════════════════════════════════════════════════ -->
+        <layout:AppPageTemplate.FullBodyContent>
+            <VerticalStackLayout 
+                Padding="{StaticResource SpacePage}"
+                Spacing="{StaticResource SpaceStackLg}">
+                
+                <!-- ═══════════════════════════════════════════════════════
+                     AGREEMENT TOGGLE - Must accept to enable Next button
+                     ═══════════════════════════════════════════════════════ -->
+                <Grid ColumnDefinitions="*,Auto" 
+                      BackgroundColor="Transparent"
+                      MinimumHeightRequest="{StaticResource SwitchRowHeight}">
+                    <Label 
+                        Grid.Column="0"
+                        Text="I agree to the terms of service, privacy policy and acceptable use policy"
+                        Style="{StaticResource TextMdStyle}"
+                        FontFamily="{StaticResource FontFamilySemibold}"
+                        TextColor="{StaticResource TextPrimary}"
+                        VerticalOptions="Center"
+                        LineBreakMode="WordWrap" />
+                    <Switch 
+                        Grid.Column="1"
+                        IsToggled="{Binding IsAccepted}"
+                        VerticalOptions="Center"
+                        AutomationProperties.Name="I agree to terms, privacy policy and acceptable use policy" />
+                </Grid>
+                
+                <!-- ═══════════════════════════════════════════════════════
+                     TERMS OF SERVICE - Collapsible section
+                     ═══════════════════════════════════════════════════════ -->
+                <VerticalStackLayout Spacing="{StaticResource SpaceNone}" BackgroundColor="Transparent">
+                    <Grid ColumnDefinitions="*,Auto" 
+                          Padding="{StaticResource SpaceCollapsibleHeader}" 
+                          MinimumHeightRequest="{StaticResource MinTapHeight}"
+                          BackgroundColor="Transparent"
+                          AutomationProperties.Name="Toggle terms of service section">
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ToggleTermsCommand}" />
+                        </Grid.GestureRecognizers>
+                        <Label 
+                            Grid.Column="0"
+                            Text="{Binding TermsHeader}"
+                            Style="{StaticResource HeadingH3}"
+                            FontAttributes="Bold"
+                            TextColor="{StaticResource TextPrimary}"
+                            VerticalOptions="Center" />
+                        <!-- FontSize uses TextH3 token: Phone=16, Tablet=18, Default=16 -->
+                        <Label 
+                            Grid.Column="1"
+                            Text="{Binding TermsExpanderIcon}"
+                            TextColor="{StaticResource BrandPrimary}"
+                            FontSize="{StaticResource TextH3}"
+                            FontAttributes="Bold"
+                            VerticalOptions="Center" />
+                    </Grid>
+                    <BoxView Style="{StaticResource Divider}" />
+                    <Label 
+                        Text="{Binding TermsBody}"
+                        Style="{StaticResource TextMdStyle}"
+                        TextColor="{StaticResource TextMuted}"
+                        LineBreakMode="WordWrap"
+                        Padding="{StaticResource SpaceCollapsibleBody}"
+                        IsVisible="{Binding IsTermsExpanded}" />
+                </VerticalStackLayout>
+                
+                <!-- ═══════════════════════════════════════════════════════
+                     PRIVACY POLICY - Collapsible section
+                     ═══════════════════════════════════════════════════════ -->
+                <VerticalStackLayout Spacing="{StaticResource SpaceNone}" BackgroundColor="Transparent">
+                    <Grid ColumnDefinitions="*,Auto" 
+                          Padding="{StaticResource SpaceCollapsibleHeader}" 
+                          MinimumHeightRequest="{StaticResource MinTapHeight}"
+                          BackgroundColor="Transparent"
+                          AutomationProperties.Name="Toggle privacy policy section">
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding TogglePrivacyCommand}" />
+                        </Grid.GestureRecognizers>
+                        <Label 
+                            Grid.Column="0"
+                            Text="{Binding PrivacyHeader}"
+                            Style="{StaticResource HeadingH3}"
+                            FontAttributes="Bold"
+                            TextColor="{StaticResource TextPrimary}"
+                            VerticalOptions="Center" />
+                        <!-- FontSize uses TextH3 token: Phone=16, Tablet=18, Default=16 -->
+                        <Label 
+                            Grid.Column="1"
+                            Text="{Binding PrivacyExpanderIcon}"
+                            TextColor="{StaticResource BrandPrimary}"
+                            FontSize="{StaticResource TextH3}"
+                            FontAttributes="Bold"
+                            VerticalOptions="Center" />
+                    </Grid>
+                    <BoxView Style="{StaticResource Divider}" />
+                    <Label 
+                        Text="{Binding PrivacyBody}"
+                        Style="{StaticResource TextMdStyle}"
+                        TextColor="{StaticResource TextMuted}"
+                        LineBreakMode="WordWrap"
+                        Padding="{StaticResource SpaceCollapsibleBody}"
+                        IsVisible="{Binding IsPrivacyExpanded}" />
+                </VerticalStackLayout>
+                
+                <!-- ═══════════════════════════════════════════════════════
+                     ACCEPTABLE USE POLICY - Collapsible section
+                     ═══════════════════════════════════════════════════════ -->
+                <VerticalStackLayout Spacing="{StaticResource SpaceNone}" BackgroundColor="Transparent">
+                    <Grid ColumnDefinitions="*,Auto" 
+                          Padding="{StaticResource SpaceCollapsibleHeader}" 
+                          MinimumHeightRequest="{StaticResource MinTapHeight}"
+                          BackgroundColor="Transparent"
+                          AutomationProperties.Name="Toggle acceptable use policy section">
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ToggleAcceptableUseCommand}" />
+                        </Grid.GestureRecognizers>
+                        <Label 
+                            Grid.Column="0"
+                            Text="{Binding AcceptableUseHeader}"
+                            Style="{StaticResource HeadingH3}"
+                            FontAttributes="Bold"
+                            TextColor="{StaticResource TextPrimary}"
+                            VerticalOptions="Center" />
+                        <!-- FontSize uses TextH3 token: Phone=16, Tablet=18, Default=16 -->
+                        <Label 
+                            Grid.Column="1"
+                            Text="{Binding AcceptableUseExpanderIcon}"
+                            TextColor="{StaticResource BrandPrimary}"
+                            FontSize="{StaticResource TextH3}"
+                            FontAttributes="Bold"
+                            VerticalOptions="Center" />
+                    </Grid>
+                    <BoxView Style="{StaticResource Divider}" />
+                    <Label 
+                        Text="{Binding AcceptableUseBody}"
+                        Style="{StaticResource TextMdStyle}"
+                        TextColor="{StaticResource TextMuted}"
+                        LineBreakMode="WordWrap"
+                        Padding="{StaticResource SpaceCollapsibleBody}"
+                        IsVisible="{Binding IsAcceptableUseExpanded}" />
+                </VerticalStackLayout>
+                
+            </VerticalStackLayout>
+        </layout:AppPageTemplate.FullBodyContent>
+        
+    </layout:AppPageTemplate>
+
+</ContentPage>

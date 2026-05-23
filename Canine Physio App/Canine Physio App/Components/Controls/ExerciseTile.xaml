@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    ExerciseTile.xaml - Exercise Tile Component
+    ============================================
+    Displays an exercise image with title and optional completion tick.
+    Token-driven and responsive by design.
+    
+    Sizing: Tile fills available width from parent container.
+    Parent controls column count via Grid/FlexLayout.
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Canine_Physio_App.Components.Controls.ExerciseTile"
+             x:Name="this">
+    
+    <Grid RowDefinitions="Auto,Auto"
+          RowSpacing="{StaticResource Space4}"
+          Padding="{StaticResource Space4}"
+          AutomationProperties.Name="{Binding Source={x:Reference this}, Path=ExerciseName}">
+        
+        <Grid.GestureRecognizers>
+            <TapGestureRecognizer Command="{Binding Source={x:Reference this}, Path=Command}"
+                                  CommandParameter="{Binding Source={x:Reference this}, Path=ExerciseKey}" />
+        </Grid.GestureRecognizers>
+
+        <!-- Image container with border and completion tick -->
+        <Grid Grid.Row="0"
+              x:Name="imageContainer">
+
+            <!-- Image with border (matching ExerciseDetailPage style) -->
+            <Border x:Name="imageBorder"
+                    BackgroundColor="{StaticResource Surface}"
+                    Stroke="{StaticResource BrandPrimary}"
+                    StrokeThickness="{StaticResource BorderWidthEmphasis}"
+                    Padding="0">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="{StaticResource CornerRadiusMd}" />
+                </Border.StrokeShape>
+                <Border.Shadow>
+                    <Shadow Brush="{StaticResource Shadow}"
+                            Offset="2,2"
+                            Radius="4" />
+                </Border.Shadow>
+                <Image Source="{Binding Source={x:Reference this}, Path=ImageSource}"
+                       Aspect="AspectFill" />
+            </Border>
+
+            <!-- Completion tick (only visible when complete) -->
+            <Border x:Name="completionTick"
+                    BackgroundColor="{StaticResource Success}"
+                    Stroke="{StaticResource Surface}"
+                    StrokeThickness="{StaticResource BorderWidthDefault}"
+                    HorizontalOptions="End"
+                    VerticalOptions="Start"
+                    Margin="{StaticResource Space4}"
+                    Padding="{StaticResource Space4}"
+                    IsVisible="{Binding Source={x:Reference this}, Path=IsComplete}">
+                <!-- StrokeShape set dynamically in code-behind for circular shape -->
+                <Image x:Name="tickIcon"
+                       Source="check_white.svg"
+                       Aspect="AspectFit"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center" />
+            </Border>
+
+            <!-- Skipped cross (only visible when skipped) -->
+            <Border x:Name="skippedCross"
+                    BackgroundColor="{StaticResource Error}"
+                    Stroke="{StaticResource Surface}"
+                    StrokeThickness="{StaticResource BorderWidthDefault}"
+                    HorizontalOptions="End"
+                    VerticalOptions="Start"
+                    Margin="{StaticResource Space4}"
+                    Padding="{StaticResource Space4}"
+                    IsVisible="{Binding Source={x:Reference this}, Path=IsSkipped}">
+                <!-- StrokeShape set dynamically in code-behind for circular shape -->
+                <Image x:Name="crossIcon"
+                       Source="cross_white.svg"
+                       Aspect="AspectFit"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center" />
+            </Border>
+        </Grid>
+
+        <!-- Exercise name -->
+        <Label Grid.Row="1"
+               Text="{Binding Source={x:Reference this}, Path=ExerciseName}"
+               Style="{StaticResource TileTitleStyle}" />
+    </Grid>
+
+</ContentView>

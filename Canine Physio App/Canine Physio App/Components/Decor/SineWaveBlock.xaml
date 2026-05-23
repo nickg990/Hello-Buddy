@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    SineWaveBlock.xaml - Decorative Sine Wave Component
+    ====================================================
+    Displays a smooth sine wave curve used as a visual transition
+    between page sections (e.g., header to body).
+    
+    Bindable Properties:
+    - FillColor: Wave fill color (default: BrandPrimaryLight)
+    - WaveHeight: Overall block height (default: WaveHeight token)
+    - WaveEdge: Bottom (default) or Top - controls curve orientation
+-->
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Canine_Physio_App.Components.Decor.SineWaveBlock"
+             x:Name="this"
+             BackgroundColor="Transparent"
+             HeightRequest="{Binding WaveHeight, Source={x:Reference this}}">
+    
+    <Grid BackgroundColor="Transparent"
+          IsClippedToBounds="True">
+        <!-- Wave shape - smooth cosine curve, filled to edge -->
+        <Path x:Name="wavePath"
+              VerticalOptions="Fill"
+              HorizontalOptions="Fill" />
+    </Grid>
+</ContentView>

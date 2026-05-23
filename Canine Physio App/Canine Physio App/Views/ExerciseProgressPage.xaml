@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    ExerciseProgressPage.xaml - Update Progress Page
+    =================================================
+    Allows users to log their exercise progress including:
+    - Reps/Sets input boxes with expected values
+    - Discomfort slider (0-10)
+    - Comments text area
+    
+    Layout: Uses AppPageTemplate (FullBody mode)
+    - All content scrolls over hero/wave/body backgrounds
+    - Comments and warning sit on an opaque Surface card so they
+      remain readable over the wave decoration
+    - Header: Info icon (top-right) navigates to InformationPage
+    - Footer: BACK + SAVE buttons (fixed)
+    - Tab bar visible with Exercises, Progress, Skip tabs
+    
+    Data is received via Shell query parameters (reps, sets, exerciseKey).
+-->
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:layout="clr-namespace:Canine_Physio_App.Components.Layout"
+             xmlns:controls="clr-namespace:Canine_Physio_App.Components.Controls"
+             x:Class="Canine_Physio_App.Views.ExerciseProgressPage"
+             Shell.NavBarIsVisible="False"
+             Title="Update Progress"
+             Padding="0"
+             ios:Page.UseSafeArea="False"
+             xmlns:ios="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific;assembly=Microsoft.Maui.Controls">
+
+    <layout:AppPageTemplate
+        x:Name="pageTemplate"
+        Title="{Binding ExerciseTitle}"
+        Subtitle="CANINE PHYSIOTHERAPY"
+        ShowSubtitle="True"
+        ShowHeaderIcon="True"
+        HeaderIconSource="info_icon.svg"
+        HeaderIconCommand="{Binding InfoCommand}"
+        ShowFullBody="True"
+        ShowOverlay="{Binding IsPageBusy}"
+        ShowFooter="True"
+        SecondaryButtonText="BACK"
+        SecondaryCommand="{Binding BackCommand}"
+        PrimaryButtonText="SAVE"
+        PrimaryCommand="{Binding SaveCommand}">
+        
+        <!-- ═══════════════════════════════════════════════════════════════
+             FULL BODY CONTENT - All content scrolls together
+             ═══════════════════════════════════════════════════════════════ -->
+        <layout:AppPageTemplate.FullBodyContent>
+            <VerticalStackLayout 
+                Padding="{StaticResource SpacePage}"
+                Spacing="{StaticResource SpaceStackMd}">
+                
+                <!-- Reps / Sets inputs -->
+                <Grid ColumnDefinitions="*,*" 
+                      ColumnSpacing="{StaticResource Space16}">
+                    
+                    <!-- Reps Column -->
+                    <VerticalStackLayout Grid.Column="0" 
+                                         Spacing="{StaticResource Space4}"
+                                         HorizontalOptions="Center">
+                        <Label Text="Reps"
+                               Style="{StaticResource TextSmStyle}"
+                               TextColor="{StaticResource TextMuted}"
+                               HorizontalOptions="Center" />
+                        <HorizontalStackLayout Spacing="{StaticResource Space8}"
+                                               VerticalOptions="Center"
+                                               HorizontalOptions="Center">
+                            <Border Stroke="{StaticResource BrandPrimary}"
+                                    BackgroundColor="{StaticResource BrandMist}"
+                                    StrokeThickness="{StaticResource BorderWidthDefault}"
+                                    WidthRequest="{StaticResource SmallInputWidth}"
+                                    HeightRequest="{StaticResource EntryHeightDefault}"
+                                    Padding="{StaticResource SpaceEntryPadding}">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="{StaticResource CornerRadiusMd}" />
+                                </Border.StrokeShape>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnRepsEntryTapped" />
+                                </Border.GestureRecognizers>
+                                <Entry x:Name="repsEntry"
+                                       Text="{Binding RepsText}"
+                                       Keyboard="Numeric"
+                                       HorizontalOptions="Fill"
+                                       VerticalOptions="Fill"
+                                       HorizontalTextAlignment="Center"
+                                       VerticalTextAlignment="Center"
+                                       BackgroundColor="Transparent"
+                                       AutomationProperties.Name="Reps completed" />
+                            </Border>
+                            <Label Text="{Binding ExpectedReps, StringFormat='/ {0}'}"
+                                   Style="{StaticResource TextMdStyle}"
+                                   TextColor="{StaticResource TextMuted}"
+                                   VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                    
+                    <!-- Sets Column -->
+                    <VerticalStackLayout Grid.Column="1" 
+                                         Spacing="{StaticResource Space4}"
+                                         HorizontalOptions="Center">
+                        <Label Text="Sets"
+                               Style="{StaticResource TextSmStyle}"
+                               TextColor="{StaticResource TextMuted}"
+                               HorizontalOptions="Center" />
+                        <HorizontalStackLayout Spacing="{StaticResource Space8}"
+                                               VerticalOptions="Center"
+                                               HorizontalOptions="Center">
+                            <Border Stroke="{StaticResource BrandPrimary}"
+                                    BackgroundColor="{StaticResource BrandMist}"
+                                    StrokeThickness="{StaticResource BorderWidthDefault}"
+                                    WidthRequest="{StaticResource SmallInputWidth}"
+                                    HeightRequest="{StaticResource EntryHeightDefault}"
+                                    Padding="{StaticResource SpaceEntryPadding}">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="{StaticResource CornerRadiusMd}" />
+                                </Border.StrokeShape>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnSetsEntryTapped" />
+                                </Border.GestureRecognizers>
+                                <Entry x:Name="setsEntry"
+                                       Text="{Binding SetsText}"
+                                       Keyboard="Numeric"
+                                       HorizontalOptions="Fill"
+                                       VerticalOptions="Fill"
+                                       HorizontalTextAlignment="Center"
+                                       VerticalTextAlignment="Center"
+                                       BackgroundColor="Transparent"
+                                       AutomationProperties.Name="Sets completed" />
+                            </Border>
+                            <Label Text="{Binding ExpectedSets, StringFormat='/ {0}'}"
+                                   Style="{StaticResource TextMdStyle}"
+                                   TextColor="{StaticResource TextMuted}"
+                                   VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                    
+                </Grid>
+                
+                <!-- Discomfort slider -->
+                <VerticalStackLayout Spacing="{StaticResource Space8}">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0"
+                               Text="Discomfort"
+                               Style="{StaticResource TextSmStyle}"
+                               TextColor="{StaticResource TextMuted}"
+                               VerticalOptions="Center" />
+                        <Label Grid.Column="1"
+                               Text="{Binding DiscomfortText}"
+                               Style="{StaticResource TextMdStyle}"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource BrandPrimary}"
+                               VerticalOptions="Center" />
+                    </Grid>
+                    <controls:DiscomfortSlider Value="{Binding Discomfort, Mode=TwoWay}" />
+                </VerticalStackLayout>
+                
+                <!-- Warning text -->
+                <Label Text="Please contact your practitioner if you suspect your dog is feeling unexpected pain or discomfort."
+                       Style="{StaticResource TextSmStyle}"
+                       FontAttributes="Italic"
+                       TextColor="{StaticResource TextPrimary}"
+                       LineBreakMode="WordWrap" />
+                
+                <!-- ═══════════════════════════════════════════════════════
+                     COMMENTS - Opaque card so text is readable over wave
+                     ═══════════════════════════════════════════════════════ -->
+                <Border BackgroundColor="{StaticResource Surface}"
+                        Stroke="{StaticResource BorderDefault}"
+                        StrokeThickness="{StaticResource BorderWidthDefault}"
+                        Padding="{StaticResource SpaceCardPadding}">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="{StaticResource CornerRadiusMd}" />
+                    </Border.StrokeShape>
+                    <VerticalStackLayout Spacing="{StaticResource Space4}">
+                        
+                        <Label Text="Comments"
+                               Style="{StaticResource TextSmStyle}"
+                               TextColor="{StaticResource TextMuted}" />
+                        
+                        <Border Stroke="{StaticResource BorderDefault}"
+                                BackgroundColor="{StaticResource Surface}"
+                                StrokeThickness="{StaticResource BorderWidthDefault}"
+                                Padding="{StaticResource SpaceEntryPadding}">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="{StaticResource CornerRadiusMd}" />
+                            </Border.StrokeShape>
+                            
+                            <!-- Editor with fixed height for internal scrolling -->
+                            <Editor x:Name="commentsEditor"
+                                    Text="{Binding Comments}"
+                                    Placeholder="Add any notes about this exercise..."
+                                    HeightRequest="{StaticResource CommentsEditorHeight}"
+                                    AutoSize="Disabled"
+                                    BackgroundColor="Transparent"
+                                    AutomationProperties.Name="Comments" />
+                            
+                        </Border>
+                        
+                    </VerticalStackLayout>
+                </Border>
+                
+            </VerticalStackLayout>
+        </layout:AppPageTemplate.FullBodyContent>
+        
+    </layout:AppPageTemplate>
+
+</ContentPage>
