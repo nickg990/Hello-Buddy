@@ -1,6 +1,6 @@
 # Canine Physiotherapy Admin System — Claude Handoff Pack
 
-Prepared as a structured requirements handoff for Claude Opus 4.7.
+Prepared as a structured requirements handoff for Claude Opus 4.7. Test text
 
 ## Purpose
 
