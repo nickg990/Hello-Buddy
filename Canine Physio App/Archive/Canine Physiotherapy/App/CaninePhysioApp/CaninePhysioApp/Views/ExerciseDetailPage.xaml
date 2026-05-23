@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:CaninePhysioApp.Controls"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:Class="CaninePhysioApp.Views.ExerciseDetailPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource PageBackgroundAlt}">
+
+    <Grid>
+        
+        <!-- Main Page Content -->
+        <controls:PageTemplate Title="{Binding ExerciseTitle}"
+                               Subtitle="C     A     N     I     N     E          P     H     Y     S     I     O     T     H     E     R     A     P     Y"
+                               ShowSubtitle="True">
+
+            <controls:PageTemplate.AboveWaveContent>
+                <VerticalStackLayout Padding="{StaticResource PagePadding}"
+                                     Spacing="{StaticResource SpacingM}"
+                                     BackgroundColor="{StaticResource PageBackground}">
+
+                    <Label Text="{Binding Summary}"
+                           Style="{StaticResource BodyStyle}"
+                           TextColor="{StaticResource TextPrimary}"
+                           LineBreakMode="WordWrap" />
+
+                    <Border Stroke="{StaticResource Primary}"
+                            StrokeThickness="2"
+                            StrokeShape="RoundRectangle 8"
+                            BackgroundColor="Transparent"
+                            MinimumHeightRequest="160"
+                            Padding="0">
+                        <Border.Shadow>
+                            <Shadow Brush="{StaticResource Shadow}"
+                                    Offset="2,2"
+                                    Radius="4" />
+                        </Border.Shadow>
+                        <Grid>
+                            <!-- Thumbnail Image -->
+                            <Image Source="{Binding ThumbnailImage}"
+                                   Aspect="AspectFill"
+                                   HorizontalOptions="Fill"
+                                   VerticalOptions="Fill" />
+                            
+                            <!-- Play Button Overlay -->
+                            <Border BackgroundColor="{StaticResource OverlayScrim}"
+                                    StrokeShape="RoundRectangle 35"
+                                    Stroke="{StaticResource ButtonPrimaryText}"
+                                    StrokeThickness="2"
+                                    MinimumWidthRequest="60"
+                                    MinimumHeightRequest="60"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center">
+                                <Label Text="▶"
+                                       FontSize="28"
+                                       TextColor="{StaticResource ButtonPrimaryText}"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"
+                                       Margin="5,0,0,0" />
+                            </Border>
+                            
+                            <!-- Tap Capture Layer -->
+                            <BoxView Color="Transparent">
+                                <BoxView.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding PlayVideoCommand}" />
+                                </BoxView.GestureRecognizers>
+                            </BoxView>
+                        </Grid>
+                    </Border>
+
+                </VerticalStackLayout>
+            </controls:PageTemplate.AboveWaveContent>
+
+            <controls:PageTemplate.WaveContent>
+                <Grid RowDefinitions="*,Auto">
+
+                    <ScrollView Grid.Row="0" Padding="0,0,0,10">
+                        <VerticalStackLayout Spacing="{StaticResource SpacingM}"
+                                             BindableLayout.ItemsSource="{Binding InstructionSteps}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource SpacingS}">
+                                        <Label Grid.Column="0"
+                                               Text="{Binding Number, StringFormat='{0}.'}"
+                                               Style="{StaticResource InstructionNumberStyle}"
+                                               VerticalOptions="Start"
+                                               HorizontalTextAlignment="End" />
+                                        <Label Grid.Column="1"
+                                               Text="{Binding Text}"
+                                               Style="{StaticResource BodyStyle}"
+                                               TextColor="{StaticResource TextPrimary}"
+                                               LineBreakMode="WordWrap" />
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </ScrollView>
+
+                    <VerticalStackLayout Grid.Row="1" Spacing="{StaticResource SpacingM}">
+                        <BoxView Color="{StaticResource Divider}"
+                                 HeightRequest="{StaticResource DividerThickness}"
+                                 HorizontalOptions="Fill" />
+                        <Grid ColumnDefinitions="*,*"
+                              HorizontalOptions="Center"
+                              ColumnSpacing="{StaticResource SpacingXL}">
+                            <HorizontalStackLayout Grid.Column="0"
+                                                   Spacing="{StaticResource SpacingS}"
+                                                   HorizontalOptions="Center">
+                                <Label Text="Reps:"
+                                       Style="{StaticResource ParameterLabelStyle}"
+                                       VerticalOptions="Center" />
+                                <Label Text="{Binding Reps}"
+                                       Style="{StaticResource ParameterValueStyle}"
+                                       VerticalOptions="Center" />
+                            </HorizontalStackLayout>
+                            <HorizontalStackLayout Grid.Column="1"
+                                                   Spacing="{StaticResource SpacingS}"
+                                                   HorizontalOptions="Center">
+                                <Label Text="Sets:"
+                                       Style="{StaticResource ParameterLabelStyle}"
+                                       VerticalOptions="Center" />
+                                <Label Text="{Binding Sets}"
+                                       Style="{StaticResource ParameterValueStyle}"
+                                       VerticalOptions="Center" />
+                            </HorizontalStackLayout>
+                        </Grid>
+                        <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,5,0,0">
+                            <controls:StyledButton Grid.Column="0"
+                                                   Text="B  A  C  K"
+                                                   ButtonBackgroundColor="{StaticResource ButtonSecondary}"
+                                                   ButtonTextColor="{StaticResource ButtonSecondaryText}"
+                                                   Command="{Binding NavigateBackCommand}" />
+                            <controls:StyledButton Grid.Column="2"
+                                                   Text="D  O  N  E"
+                                                   ButtonBackgroundColor="{StaticResource ButtonPrimary}"
+                                                   ButtonTextColor="{StaticResource ButtonPrimaryText}"
+                                                   Command="{Binding MarkCompleteCommand}" />
+                        </Grid>
+                    </VerticalStackLayout>
+
+                </Grid>
+            </controls:PageTemplate.WaveContent>
+
+        </controls:PageTemplate>
+
+        <!-- Fullscreen Video Overlay -->
+        <Grid x:Name="VideoOverlay"
+              IsVisible="{Binding IsVideoPlaying}"
+              BackgroundColor="Black"
+              ZIndex="100">
+            
+            <!-- Video Player - centered with AspectFill to eliminate black bars -->
+            <toolkit:MediaElement x:Name="VideoPlayer"
+                                  ShouldAutoPlay="True"
+                                  ShouldShowPlaybackControls="True"
+                                  Aspect="AspectFill"
+                                  BackgroundColor="Black"
+                                  HorizontalOptions="Fill"
+                                  VerticalOptions="Fill" />
+            
+            <!-- Close Button - on top of video -->
+            <Button Text="✕"
+                    FontSize="24"
+                    TextColor="{StaticResource ButtonPrimaryText}"
+                    BackgroundColor="{StaticResource OverlayScrim}"
+                    CornerRadius="25"
+                    MinimumWidthRequest="50"
+                    MinimumHeightRequest="50"
+                    HorizontalOptions="End"
+                    VerticalOptions="Start"
+                    Margin="15"
+                    ZIndex="101"
+                    Command="{Binding CloseVideoCommand}" />
+        </Grid>
+        
+    </Grid>
+
+</ContentPage>

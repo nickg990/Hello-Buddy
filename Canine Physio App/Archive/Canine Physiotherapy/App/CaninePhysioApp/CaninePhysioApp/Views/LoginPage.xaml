@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:CaninePhysioApp.Controls"
+             x:Class="CaninePhysioApp.Views.LoginPage"
+             Shell.NavBarIsVisible="False">
+
+    <controls:PageTemplate Title="Login"
+                           Subtitle="C     A     N     I     N     E          P     H     Y     S     I     O     T     H     E     R     A     P     Y"
+                           ShowSubtitle="True">
+
+        <!-- Slot 1: Above wave content - spacer -->
+        <controls:PageTemplate.AboveWaveContent>
+            <Grid HeightRequest="25" />
+        </controls:PageTemplate.AboveWaveContent>
+
+        <!-- Slot 2: Main content within the wave area -->
+        <controls:PageTemplate.WaveContent>
+            <Grid RowDefinitions="Auto,Auto,Auto,*,Auto,Auto"
+                  RowSpacing="{StaticResource SpacingM}">
+
+                <!-- Row 0: Input Fields Grid - responsive layout -->
+                <Grid Grid.Row="0"
+                      ColumnDefinitions="Auto,*"
+                      RowDefinitions="Auto,Auto"
+                      RowSpacing="{StaticResource FormFieldSpacing}"
+                      ColumnSpacing="{StaticResource SpacingM}"
+                      HorizontalOptions="Fill">
+
+                    <!-- Row 0: Email -->
+                    <Label Grid.Row="0" Grid.Column="0"
+                           Text="Email"
+                           Style="{StaticResource FormLabelStyle}" />
+                    <controls:StyledInputBox Grid.Row="0" Grid.Column="1"
+                                             Placeholder="Email"
+                                             Text="{Binding Email}"
+                                             Keyboard="Email"
+                                             HorizontalOptions="Fill" />
+
+                    <!-- Row 1: Password -->
+                    <Label Grid.Row="1" Grid.Column="0"
+                           Text="Password"
+                           Style="{StaticResource FormLabelStyle}" />
+                    <controls:StyledInputBox Grid.Row="1" Grid.Column="1"
+                                             Placeholder="Password"
+                                             Text="{Binding Password}"
+                                             IsPassword="True"
+                                             HorizontalOptions="Fill" />
+                </Grid>
+
+                <!-- Row 1: Error message area -->
+                <Label Grid.Row="1"
+                       Text="{Binding ErrorMessage}"
+                       Style="{StaticResource ErrorTextStyle}"
+                       IsVisible="{Binding HasError}" />
+
+                <!-- Row 2: Login Button - primary action, can fill -->
+                <controls:StyledButton Grid.Row="2"
+                                       Text="L  O  G  I  N"
+                                       ButtonBackgroundColor="{StaticResource ButtonPrimary}"
+                                       ButtonTextColor="{StaticResource ButtonPrimaryText}"
+                                       ButtonWidth="165"
+                                       HorizontalOptions="Center"
+                                       Margin="0,24,0,0"
+                                       Command="{Binding LoginCommand}" />
+
+                <!-- Row 3: Loading Spinner (shown during redirect) -->
+                <controls:LoadingSpinner Grid.Row="3"
+                                         IsLoading="{Binding IsRedirecting}"
+                                         Message="Redirecting..."
+                                         SpinnerColor="{StaticResource Primary}"
+                                         MessageColor="{StaticResource Success}"
+                                         VerticalOptions="Center"
+                                         HorizontalOptions="Center" />
+
+                <!-- Row 4: Forgot Password Button (text style) -->
+                <controls:StyledButton Grid.Row="4"
+                                       Text="F  O  R  G  O  T     P  A  S  S  W  O  R  D"
+                                       ButtonBackgroundColor="Transparent"
+                                       ButtonTextColor="{StaticResource Primary}"
+                                       ShadowColor="Transparent"
+                                       HorizontalOptions="Center"
+                                       Margin="0,0,0,24"
+                                       Command="{Binding ForgotPasswordCommand}"
+                                       IsVisible="{Binding IsNotRedirecting}" />
+
+                <!-- Row 5: Back Button -->
+                <controls:StyledButton Grid.Row="5"
+                                       Text="B  A  C  K"
+                                       ButtonBackgroundColor="{StaticResource GhostButton}"
+                                       ButtonTextColor="{StaticResource GhostButtonText}"
+                                       ButtonWidth="140"
+                                       HorizontalOptions="Start"
+                                       Command="{Binding NavigateBackCommand}"
+                                       IsVisible="{Binding IsNotRedirecting}" />
+            </Grid>
+        </controls:PageTemplate.WaveContent>
+
+    </controls:PageTemplate>
+
+</ContentPage>

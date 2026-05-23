@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?xaml-comp compile="true" ?>
+<ResourceDictionary 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- ============================================== -->
+    <!-- SPACING RESOURCE DICTIONARY                    -->
+    <!-- Centralised spacing values for consistent      -->
+    <!-- margins, padding, and layout across the app    -->
+    <!-- ============================================== -->
+
+    <!-- Spacing Doubles (use for RowSpacing, ColumnSpacing, individual values) -->
+    <x:Double x:Key="SpacingXS">4</x:Double>
+    <x:Double x:Key="SpacingS">8</x:Double>
+    <x:Double x:Key="SpacingM">12</x:Double>
+    <x:Double x:Key="SpacingL">16</x:Double>
+    <x:Double x:Key="SpacingXL">24</x:Double>
+    <x:Double x:Key="SpacingXXL">32</x:Double>
+
+    <!-- Page-level Padding -->
+    <Thickness x:Key="PagePadding">20,0,20,20</Thickness>
+    <Thickness x:Key="PagePaddingHorizontal">20,0</Thickness>
+    <Thickness x:Key="PagePaddingVertical">0,20</Thickness>
+
+    <!-- Section Padding (for content blocks within pages) -->
+    <Thickness x:Key="SectionPadding">0,12</Thickness>
+    <Thickness x:Key="SectionPaddingLarge">0,20</Thickness>
+
+    <!-- Control Padding (internal padding for controls) -->
+    <Thickness x:Key="ControlPadding">12,8</Thickness>
+    <Thickness x:Key="ControlPaddingHorizontal">12,0</Thickness>
+    <Thickness x:Key="InputPadding">12,0</Thickness>
+
+    <!-- Button Margins -->
+    <Thickness x:Key="ButtonMarginTop">12,12,0,0</Thickness>
+    <Thickness x:Key="ButtonMarginBottom">0,0,0,12</Thickness>
+
+    <!-- Form Field Spacing -->
+    <x:Double x:Key="FormFieldSpacing">12</x:Double>
+    <x:Double x:Key="FormLabelInputSpacing">8</x:Double>
+
+    <!-- Corner Radii -->
+    <x:Double x:Key="ControlCornerRadius">8</x:Double>
+    <x:Double x:Key="ButtonCornerRadius">12</x:Double>
+    <x:Double x:Key="CardCornerRadius">8</x:Double>
+
+    <!-- Border/Divider Thickness -->
+    <x:Double x:Key="DividerThickness">1.5</x:Double>
+    <x:Double x:Key="BorderThickness">2</x:Double>
+    <x:Double x:Key="InputBorderThickness">1.5</x:Double>
+
+    <!-- Touch Target Minimums -->
+    <x:Double x:Key="MinTouchTargetHeight">48</x:Double>
+    <x:Double x:Key="MinButtonHeight">48</x:Double>
+    <x:Double x:Key="MinInputHeight">48</x:Double>
+
+    <!-- Icon Sizes -->
+    <x:Double x:Key="IconSizeSmall">16</x:Double>
+    <x:Double x:Key="IconSizeMedium">20</x:Double>
+    <x:Double x:Key="IconSizeLarge">24</x:Double>
+
+    <!-- Shadow Offsets -->
+    <x:Double x:Key="ShadowOffsetSmall">2</x:Double>
+    <x:Double x:Key="ShadowOffsetMedium">3</x:Double>
+
+    <!-- Wave Dimensions -->
+    <x:Double x:Key="WaveHeight">160</x:Double>
+    <x:Double x:Key="WaveAmplitude">50</x:Double>
+
+    <!-- Adaptive Header Panel Heights -->
+    <x:Double x:Key="HeaderPanelMinHeight_SmallPhone">320</x:Double>
+    <x:Double x:Key="HeaderPanelMinHeight_Phone">380</x:Double>
+    <x:Double x:Key="HeaderPanelMinHeight_Tablet">440</x:Double>
+
+    <!-- Adaptive Wave Heights -->
+    <x:Double x:Key="WaveHeight_SmallPhone">140</x:Double>
+    <x:Double x:Key="WaveHeight_Phone">180</x:Double>
+    <x:Double x:Key="WaveHeight_Tablet">220</x:Double>
+
+    <!-- Adaptive Wave Amplitudes -->
+    <x:Double x:Key="WaveAmplitude_SmallPhone">40</x:Double>
+    <x:Double x:Key="WaveAmplitude_Phone">50</x:Double>
+    <x:Double x:Key="WaveAmplitude_Tablet">60</x:Double>
+
+    <!-- Character Spacing -->
+    <x:Double x:Key="SubtitleCharacterSpacing">0.35</x:Double>
+    <x:Double x:Key="ButtonCharacterSpacing">0.4</x:Double>
+    <x:Double x:Key="LogoDiscCharacterSpacing">0.4</x:Double>
+
+    <!-- Logo Disc -->
+    <x:Double x:Key="LogoDiscDefaultSize">220</x:Double>
+
+    <!-- HelloBuddy Button Width -->
+    <x:Double x:Key="HelloBuddyButtonWidth">280</x:Double>
+
+</ResourceDictionary>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="CaninePhysioApp.Controls.StyledInputBox"
+             x:Name="this">
+
+    <!-- Border wrapper to create the styled input appearance -->
+    <Border BackgroundColor="{Binding Source={x:Reference this}, Path=InputBackgroundColor}"
+            Stroke="{Binding Source={x:Reference this}, Path=BorderColor}"
+            StrokeThickness="{Binding Source={x:Reference this}, Path=BorderThickness}"
+            StrokeShape="RoundRectangle 8"
+            Padding="{StaticResource InputPadding}"
+            MinimumHeightRequest="{Binding Source={x:Reference this}, Path=InputHeight}">
+
+        <!-- Grid allows for future expansion (e.g., icon, clear button) -->
+        <Grid ColumnDefinitions="*,Auto"
+              VerticalOptions="Center">
+            <Entry x:Name="InputEntry"
+                   Grid.Column="0"
+                   Text="{Binding Source={x:Reference this}, Path=Text, Mode=TwoWay}"
+                   Placeholder="{Binding Source={x:Reference this}, Path=Placeholder}"
+                   PlaceholderColor="{Binding Source={x:Reference this}, Path=PlaceholderColor}"
+                   TextColor="{Binding Source={x:Reference this}, Path=TextColor}"
+                   FontFamily="{Binding Source={x:Reference this}, Path=FontFamily}"
+                   FontSize="{Binding Source={x:Reference this}, Path=FontSize}"
+                   IsPassword="{Binding Source={x:Reference this}, Path=IsPassword}"
+                   Keyboard="{Binding Source={x:Reference this}, Path=Keyboard}"
+                   BackgroundColor="Transparent"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Fill" />
+        </Grid>
+
+    </Border>
+
+</ContentView>

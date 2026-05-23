@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="CaninePhysioApp.Controls.LoadingSpinner"
+             x:Name="this"
+             IsVisible="{Binding Source={x:Reference this}, Path=IsLoading}">
+
+    <VerticalStackLayout HorizontalOptions="Center"
+                         VerticalOptions="Center"
+                         Spacing="{StaticResource SpacingM}">
+
+        <!-- Rotating Wheel -->
+        <ActivityIndicator IsRunning="{Binding Source={x:Reference this}, Path=IsLoading}"
+                           Color="{Binding Source={x:Reference this}, Path=SpinnerColor}"
+                           WidthRequest="{Binding Source={x:Reference this}, Path=SpinnerSize}"
+                           HeightRequest="{Binding Source={x:Reference this}, Path=SpinnerSize}" />
+
+        <!-- Message Text -->
+        <Label Text="{Binding Source={x:Reference this}, Path=Message}"
+               IsVisible="{Binding Source={x:Reference this}, Path=ShowMessage}"
+               TextColor="{Binding Source={x:Reference this}, Path=MessageColor}"
+               FontFamily="{Binding Source={x:Reference this}, Path=MessageFontFamily}"
+               FontSize="{Binding Source={x:Reference this}, Path=MessageFontSize}"
+               HorizontalTextAlignment="Center"
+               LineBreakMode="WordWrap" />
+
+    </VerticalStackLayout>
+
+</ContentView>

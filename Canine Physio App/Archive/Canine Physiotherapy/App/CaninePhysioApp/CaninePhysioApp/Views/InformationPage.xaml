@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:CaninePhysioApp.Controls"
+             x:Class="CaninePhysioApp.Views.InformationPage"
+             Shell.NavBarIsVisible="False">
+
+    <controls:PageTemplate Title="Information"
+                           Subtitle="C     A     N     I     N     E          P     H     Y     S     I     O     T     H     E     R     A     P     Y"
+                           ShowSubtitle="True">
+
+        <!-- Slot 1: Above wave content - empty spacer -->
+        <controls:PageTemplate.AboveWaveContent>
+            <Grid HeightRequest="20" />
+        </controls:PageTemplate.AboveWaveContent>
+
+        <!-- Slot 2: Main content within the wave area -->
+        <controls:PageTemplate.WaveContent>
+            <Grid RowDefinitions="*,Auto">
+                
+                <!-- Scrollable text content - overlays above wave and wave content -->
+                <ScrollView Grid.Row="0"
+                            Padding="0,0,0,10">
+                    <VerticalStackLayout x:Name="ContentStack"
+                                         Spacing="{StaticResource SpacingL}"
+                                         BindableLayout.ItemsSource="{Binding Sections}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate>
+                                <VerticalStackLayout Spacing="{StaticResource SpacingXS}">
+                                    <!-- Header - Bold, Black -->
+                                    <Label Text="{Binding Header}"
+                                           Style="{StaticResource H2Style}"
+                                           TextColor="{StaticResource TextPrimary}"
+                                           FontAttributes="Bold" />
+                                    <!-- Body - SemiBold, Black -->
+                                    <Label Text="{Binding Body}"
+                                           Style="{StaticResource BodyBoldStyle}"
+                                           TextColor="{StaticResource TextPrimary}" />
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
+                </ScrollView>
+
+                <!-- Back Button - positioned at bottom-left -->
+                <controls:StyledButton Grid.Row="1"
+                                       Text="B  A  C  K"
+                                       ButtonBackgroundColor="{StaticResource ButtonSecondary}"
+                                       ButtonTextColor="{StaticResource ButtonSecondaryText}"
+                                       ButtonHorizontalAlignment="Start"
+                                       Margin="0,10,0,0"
+                                       Command="{Binding NavigateBackCommand}" />
+            </Grid>
+        </controls:PageTemplate.WaveContent>
+
+    </controls:PageTemplate>
+
+</ContentPage>

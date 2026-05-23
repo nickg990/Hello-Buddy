@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:CaninePhysioApp.Controls"
+             x:Class="CaninePhysioApp.Controls.PageTemplate"
+             x:Name="this">
+    
+    <Grid x:Name="RootGrid"
+          RowDefinitions="Auto,Auto,Auto,*,Auto" 
+          BackgroundColor="{StaticResource SafeArea}">
+        
+        <!-- Row 0-1: Header Block (spans safe area + header) -->
+        <controls:HeaderBlock Grid.Row="0"
+                              Grid.RowSpan="2"
+                              Title="{Binding Source={x:Reference this}, Path=Title}"
+                              Subtitle="{Binding Source={x:Reference this}, Path=Subtitle}"
+                              ShowSubtitle="{Binding Source={x:Reference this}, Path=ShowSubtitle}" />
+        
+        <!-- Row 2: Blue header panel containing AboveWaveContent with wave at bottom -->
+        <Grid x:Name="HeaderPanel" 
+              Grid.Row="2">
+            
+            <!-- Sub-grid: AboveWaveContent fills space, wave anchored at bottom -->
+            <Grid RowDefinitions="*,Auto">
+                
+                <!-- Row 0: Blue background + AboveWaveContent (logo disc etc.) -->
+                <Grid Grid.Row="0" BackgroundColor="{StaticResource PageBackgroundAlt}">
+                    <ContentView Content="{Binding Source={x:Reference this}, Path=AboveWaveContent}"
+                                 VerticalOptions="Center"
+                                 HorizontalOptions="Fill" />
+                </Grid>
+                
+                <!-- Row 1: Wave at bottom of blue panel (white fill creates transition) -->
+                <Grid Grid.Row="1" BackgroundColor="{StaticResource PageBackgroundAlt}">
+                    <controls:SineWaveBlock x:Name="WaveBlock"
+                                            VerticalOptions="End" />
+                </Grid>
+            </Grid>
+        </Grid>
+        
+        <!-- Row 3: White content area (below the wave) -->
+        <Grid Grid.Row="3" BackgroundColor="{StaticResource PageBackground}">
+            <!-- WaveContent sits on white background -->
+            <ContentView Content="{Binding Source={x:Reference this}, Path=WaveContent}"
+                         VerticalOptions="Start"
+                         Padding="{StaticResource PagePadding}" />
+        </Grid>
+        
+        <!-- Row 4: Bottom safe area (navigation bar) -->
+        <BoxView Grid.Row="4" 
+                 Color="{StaticResource SafeArea}"
+                 HeightRequest="30" />
+
+    </Grid>
+</ContentView>

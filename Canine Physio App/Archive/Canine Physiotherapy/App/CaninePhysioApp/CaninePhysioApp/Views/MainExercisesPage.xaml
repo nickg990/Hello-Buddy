@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:CaninePhysioApp.Controls"
+             x:Class="CaninePhysioApp.Views.MainExercisesPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource PageBackground}">
+
+    <Grid>
+        <!-- Main Content -->
+        <controls:PageTemplate Title="Main Exercises"
+                               Subtitle="C     A     N     I     N     E          P     H     Y     S     I     O     T     H     E     R     A     P     Y"
+                               ShowSubtitle="True">
+            
+            <controls:PageTemplate.AboveWaveContent>
+                <Grid HeightRequest="25" />
+            </controls:PageTemplate.AboveWaveContent>
+            
+            <controls:PageTemplate.WaveContent>
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto,*"
+                      RowSpacing="{StaticResource SpacingM}">
+                    
+                    <!-- Row 0: Helper text -->
+                    <Label Grid.Row="0"
+                           Text="{Binding ExerciseSetDescription}"
+                           Style="{StaticResource BodySecondaryStyle}" />
+                    
+                    <!-- Row 1: Progress bar -->
+                    <Grid Grid.Row="1"
+                          RowDefinitions="Auto,Auto"
+                          RowSpacing="{StaticResource SpacingXS}">
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding NavigateToProgressCommand}" />
+                        </Grid.GestureRecognizers>
+                        
+                        <!-- Percentage label -->
+                        <Label Grid.Row="0"
+                               Text="{Binding ProgressPercentageText}"
+                               Style="{StaticResource BodyBoldStyle}" />
+                        
+                        <!-- Progress bar container -->
+                        <Grid Grid.Row="1"
+                              ColumnDefinitions="*"
+                              HeightRequest="14">
+                            <!-- Grey background (remaining) -->
+                            <BoxView BackgroundColor="{StaticResource ProgressBackground}"
+                                     CornerRadius="6" />
+                            
+                            <!-- Green progress (complete) -->
+                            <BoxView BackgroundColor="{StaticResource ProgressFill}"
+                                     CornerRadius="6"
+                                     HorizontalOptions="Start"
+                                     WidthRequest="{Binding ProgressBarWidth}" />
+                        </Grid>
+                    </Grid>
+                    
+                    <!-- Row 2: Warning text -->
+                    <Label Grid.Row="2"
+                           Text="{Binding WarningText}"
+                           Style="{StaticResource BodySecondaryStyle}"
+                           FontAttributes="Italic" />
+
+                    <!-- Row 3: Skip and Info buttons -->
+                    <Grid Grid.Row="3"
+                          ColumnDefinitions="*,*"
+                          ColumnSpacing="{StaticResource SpacingM}"
+                          Margin="0,16,0,16">
+                        <controls:StyledButton Grid.Column="0"
+                                               Text="S  K  I  P"
+                                               ButtonBackgroundColor="{StaticResource GhostButton}"
+                                               ButtonTextColor="{StaticResource GhostButtonText}"
+                                               ButtonWidth="120"
+                                               HorizontalOptions="Start"
+                                               Command="{Binding NavigateToSkipCommand}" />
+                        
+                        <controls:StyledButton Grid.Column="1"
+                                               Text="I  N  F  O"
+                                               ButtonBackgroundColor="{StaticResource ButtonPrimary}"
+                                               ButtonTextColor="{StaticResource ButtonPrimaryText}"
+                                               ButtonWidth="120"
+                                               HorizontalOptions="End"
+                                               Command="{Binding NavigateToInfoCommand}" />
+                    </Grid>
+                    
+                    <!-- Row 4: Exercise grid (scrollable, takes remaining space) -->
+                    <ScrollView Grid.Row="4">
+                        <Grid x:Name="ExerciseGrid"
+                              ColumnDefinitions="*,*"
+                              RowSpacing="{StaticResource SpacingS}"
+                              ColumnSpacing="{StaticResource SpacingS}"
+                              HorizontalOptions="Fill" />
+                    </ScrollView>
+                    
+                </Grid>
+            </controls:PageTemplate.WaveContent>
+            
+        </controls:PageTemplate>
+
+        <!-- Loading Spinner Overlay -->
+        <Grid IsVisible="{Binding IsNavigating}"
+              BackgroundColor="{StaticResource OverlayScrim}"
+              InputTransparent="False">
+            <controls:LoadingSpinner IsLoading="{Binding IsNavigating}"
+                                     Message="Loading exercise..."
+                                     SpinnerColor="{StaticResource TextOnPrimary}"
+                                     MessageColor="{StaticResource TextOnPrimary}"
+                                     HorizontalOptions="Center"
+                                     VerticalOptions="Center" />
+        </Grid>
+    </Grid>
+    
+</ContentPage>

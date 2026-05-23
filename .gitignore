@@ -11,7 +11,7 @@
 *.suo
 
 # Nested repo backup during root migration
-Canine Physio App/.git-backup/
+**/.git-backup/
 
 # Signing material
 *.keystore
