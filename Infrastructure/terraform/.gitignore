@@ -1,0 +1,8 @@
+# Secrets and per-module gitignores handle these, but belt-and-braces:
+*.tfvars
+*.auto.tfvars
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+crash.log
