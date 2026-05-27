@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 1754" font-family="Georgia, Cambria, 'Times New Roman', serif" font-size="16" fill="#223843">
+  <defs>
+    <style>
+      .page { fill:#FFFFFF; }
+      .frame { fill:#FFFFFF; stroke:#B9CBD4; stroke-width:2; }
+      .header { fill:#28404F; }
+      .band { fill:#D9E7EC; stroke:#B9CBD4; stroke-width:1; }
+      .panel { fill:#F8FBFC; stroke:#B9CBD4; stroke-width:1; }
+      .thumb { fill:#D4E0E5; stroke:#6392AE; stroke-width:1; }
+      .title { fill:#FFFFFF; font-size:34px; font-weight:700; }
+      .subTitle { fill:#D9E7EC; font-size:16px; }
+      .h1 { font-size:28px; font-weight:700; fill:#223843; }
+      .h2 { font-size:20px; font-weight:700; fill:#223843; }
+      .h3 { font-size:18px; font-weight:700; fill:#223843; }
+      .body { font-size:16px; fill:#223843; }
+      .muted { font-size:14px; fill:#5A6E7A; }
+      .small { font-size:12px; fill:#5A6E7A; }
+      .divider { stroke:#B9CBD4; stroke-width:1; }
+      .pill { fill:#EAF2F5; stroke:#6392AE; stroke-width:1; }
+      .warn { fill:#FFF8E8; stroke:#D8A334; stroke-width:1; }
+      .footer { fill:#F8FBFC; stroke:#B9CBD4; stroke-width:1; }
+      .link { fill:#245E7C; text-decoration:underline; }
+      .num { font-size:18px; font-weight:700; fill:#245E7C; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1240" height="1754" class="page"/>
+  <rect x="40" y="40" width="1160" height="1674" rx="4" ry="4" class="frame"/>
+
+  <rect x="40" y="40" width="1160" height="170" class="header"/>
+  <circle cx="118" cy="124" r="34" fill="#D9E7EC" stroke="#FFFFFF" stroke-width="2"/>
+  <text x="95" y="130" font-size="18" font-weight="700" fill="#28404F">HB</text>
+  <text x="176" y="108" class="title">Hello Buddy Canine Physiotherapy</text>
+  <text x="176" y="138" class="subTitle">Home exercise programme</text>
+  <text x="176" y="164" class="subTitle">Prepared for Bella by Nick Gilbert</text>
+
+  <rect x="80" y="244" width="1080" height="132" class="band"/>
+  <text x="108" y="286" class="h1">Right hind cruciate post-op rehabilitation</text>
+  <text x="108" y="316" class="body">Programme version 3 · Daily plan · 26 April 2026 to 23 June 2026</text>
+  <text x="108" y="344" class="muted">Pet: Bella · Breed: Labrador Retriever · Age: 7 years · Owner: Mrs S. Patel</text>
+  <text x="108" y="366" class="muted">Published: 26 April 2026 · Reviewed by: Nick Gilbert MSc ACPAT Cat A</text>
+
+  <rect x="80" y="406" width="1080" height="130" class="panel"/>
+  <text x="108" y="442" class="h2">Before you start</text>
+  <text x="108" y="472" class="body">Please follow the exercises as advised by your physiotherapist and use the video links to check technique.</text>
+  <text x="108" y="500" class="body">Stop and contact the practice if Bella appears uncomfortable, becomes more lame, or symptoms worsen.</text>
+  <text x="108" y="528" class="body">Do not increase repetitions, duration, or difficulty without clinical advice.</text>
+
+  <rect x="80" y="572" width="1080" height="42" class="band"/>
+  <text x="108" y="600" class="h2">AM session</text>
+
+  <rect x="80" y="634" width="1080" height="214" class="panel"/>
+  <circle cx="116" cy="676" r="18" class="pill"/>
+  <text x="110" y="682" class="num">1</text>
+  <rect x="150" y="662" width="138" height="138" class="thumb"/>
+  <text x="196" y="736" class="muted">exercise</text>
+  <text x="324" y="692" class="h3">Sit-to-stand</text>
+  <text x="324" y="722" class="body">10 reps · 3 sets · once per day</text>
+  <text x="324" y="750" class="body">Slow, controlled rise and sit. Pause briefly between repetitions.</text>
+  <text x="324" y="778" class="body">Watch Bella's weight bearing on the right hind throughout.</text>
+  <text x="324" y="812" class="link">Watch video: Sit-to-stand demonstration</text>
+  <line x1="324" y1="826" x2="560" y2="826" class="divider"/>
+  <text x="820" y="692" class="muted">Clinical note</text>
+  <text x="820" y="722" class="body">Pause if Bella shifts weight off the right hind limb.</text>
+  <text x="820" y="750" class="muted">Objective</text>
+  <text x="820" y="780" class="body">Improve controlled strength through sit and rise.</text>
+
+  <rect x="80" y="872" width="1080" height="214" class="panel"/>
+  <circle cx="116" cy="914" r="18" class="pill"/>
+  <text x="110" y="920" class="num">2</text>
+  <rect x="150" y="900" width="138" height="138" class="thumb"/>
+  <text x="196" y="974" class="muted">exercise</text>
+  <text x="324" y="930" class="h3">Cavaletti walk</text>
+  <text x="324" y="960" class="body">8 reps · 2 sets · once per day</text>
+  <text x="324" y="988" class="body">Use low poles and keep Bella moving at a slow, even rhythm.</text>
+  <text x="324" y="1016" class="body">Allow a short rest between each pass if she tires.</text>
+  <text x="324" y="1050" class="link">Watch video: Cavaletti walk demonstration</text>
+  <line x1="324" y1="1064" x2="572" y2="1064" class="divider"/>
+  <text x="820" y="930" class="muted">Clinical note</text>
+  <text x="820" y="960" class="body">Keep the pace steady and avoid rushing over the poles.</text>
+  <text x="820" y="988" class="muted">Objective</text>
+  <text x="820" y="1018" class="body">Support proprioception and controlled limb placement.</text>
+
+  <rect x="80" y="1110" width="1080" height="42" class="band"/>
+  <text x="108" y="1138" class="h2">PM session</text>
+
+  <rect x="80" y="1172" width="1080" height="214" class="panel"/>
+  <circle cx="116" cy="1214" r="18" class="pill"/>
+  <text x="110" y="1220" class="num">1</text>
+  <rect x="150" y="1200" width="138" height="138" class="thumb"/>
+  <text x="196" y="1274" class="muted">exercise</text>
+  <text x="324" y="1230" class="h3">Wobble cushion (front paws)</text>
+  <text x="324" y="1260" class="body">3 sets · hold for 20 seconds · once per day</text>
+  <text x="324" y="1288" class="body">Use short bouts and support Bella if balance becomes uncertain.</text>
+  <text x="324" y="1316" class="body">Stop immediately if she looks unstable or distressed.</text>
+  <rect x="324" y="1340" width="320" height="28" class="warn"/>
+  <text x="338" y="1359" class="small">Video link placeholder shown here in draft data. Final published PDF should include a valid link.</text>
+  <text x="820" y="1230" class="muted">Clinical note</text>
+  <text x="820" y="1260" class="body">Keep the duration short and prioritise quality over time held.</text>
+  <text x="820" y="1288" class="muted">Objective</text>
+  <text x="820" y="1318" class="body">Improve balance tolerance through controlled front-limb loading.</text>
+
+  <rect x="80" y="1420" width="1080" height="122" class="footer"/>
+  <text x="108" y="1454" class="h2">Need help?</text>
+  <text x="108" y="1482" class="body">If you are unsure about any exercise, please contact Hello Buddy before continuing.</text>
+  <text x="108" y="1510" class="body">Phone: 07xxx xxx xxx · Email: hello@hellobuddy.example</text>
+  <text x="108" y="1534" class="small">Generated 26 April 2026 · Programme version 3 · Page 1 of 1</text>
+  <text x="804" y="1482" class="small">Safety note: stop and seek advice if Bella becomes sore, reluctant to move,</text>
+  <text x="804" y="1500" class="small">or shows increased lameness after the exercises.</text>
+</svg>

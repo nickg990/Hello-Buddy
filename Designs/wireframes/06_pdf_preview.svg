@@ -1,0 +1,260 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1720 1140" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#28404F">
+  <defs>
+    <style>
+      .bg { fill:#F4F8FA; }
+      .panel { fill:#FFFFFF; stroke:#6392AE; stroke-width:1; }
+      .card { fill:#FFFFFF; stroke:#B3CDD6; stroke-width:1; }
+      .pale { fill:#D4E0E5; stroke:#B3CDD6; stroke-width:1; }
+      .navItem { fill:#FFFFFF; stroke:none; }
+      .navActive { fill:#D4E0E5; stroke:#6392AE; stroke-width:1; }
+      .btn { fill:#FFFFFF; stroke:#6392AE; stroke-width:1; }
+      .btnPri { fill:#6392AE; stroke:#28404F; stroke-width:1; }
+      .btnPriText { fill:#FFFFFF; font-weight:600; }
+      .btnDisabled { fill:#E6EEF2; stroke:#B3CDD6; stroke-width:1; }
+      .muted { fill:#5A6E7A; font-size:11px; }
+      .title { font-size:18px; font-weight:600; }
+      .h1 { font-size:22px; font-weight:700; }
+      .h2 { font-size:14px; font-weight:600; }
+      .h3 { font-size:13px; font-weight:600; }
+      .divider { stroke:#B3CDD6; stroke-width:1; }
+      .paper { fill:#FFFFFF; stroke:#28404F; stroke-width:1; }
+      .pdfHead { fill:#28404F; }
+      .ok { fill:#E6EFC2; stroke:#5A6E2D; stroke-width:1; }
+      .warn { fill:#FFF7E0; stroke:#B58900; stroke-width:1; }
+      .err { fill:#F8E2E2; stroke:#A33A3A; stroke-width:1; }
+      .thumb { fill:#D4E0E5; stroke:#6392AE; stroke-width:1; }
+    </style>
+  </defs>
+
+  <!-- ============ DESKTOP ============ -->
+  <g id="desktop-pdf-preview">
+    <text x="20" y="28" class="title">Desktop · 1280 px · PDF preview</text>
+    <rect x="20" y="40" width="1280" height="1080" class="bg"/>
+
+    <!-- Header & nav -->
+    <rect x="20" y="40" width="1280" height="64" class="panel"/>
+    <circle cx="56" cy="72" r="18" class="pale"/><text x="48" y="76" font-size="11">logo</text>
+    <text x="92" y="78" class="h2">Hello Buddy Admin</text>
+    <text x="1248" y="76" text-anchor="end">Nick G.</text>
+
+    <rect x="20" y="104" width="240" height="1016" class="panel"/>
+    <rect x="32" y="128" width="216" height="36" class="navItem"/><text x="48" y="151">Dashboard</text>
+    <rect x="32" y="172" width="216" height="36" class="navItem"/><text x="48" y="195">Owners</text>
+    <rect x="32" y="216" width="216" height="36" class="navItem"/><text x="48" y="239">Pets</text>
+    <rect x="32" y="260" width="216" height="36" class="navItem"/><text x="48" y="283">Treatment cases</text>
+    <rect x="32" y="304" width="216" height="36" class="navActive"/><text x="48" y="327">Programmes</text>
+    <rect x="32" y="348" width="216" height="36" class="navItem"/><text x="48" y="371">Exercise library</text>
+    <rect x="32" y="392" width="216" height="36" class="navItem"/><text x="48" y="415">Published PDFs</text>
+    <rect x="32" y="436" width="216" height="36" class="navItem"/><text x="48" y="459">Settings</text>
+    <line x1="32" y1="488" x2="248" y2="488" class="divider"/>
+    <text x="48" y="512" class="muted">Wizard steps</text>
+    <rect x="32" y="528" width="216" height="28" class="card"/><text x="48" y="547">1 · Details ✓</text>
+    <rect x="32" y="560" width="216" height="28" class="card"/><text x="48" y="579">2 · Sessions ✓</text>
+    <rect x="32" y="592" width="216" height="28" class="navActive"/><text x="48" y="611">3 · Preview PDF</text>
+    <rect x="32" y="624" width="216" height="28" class="card"/><text x="48" y="643">4 · Publish</text>
+
+    <!-- Breadcrumb + title -->
+    <text x="284" y="126" class="muted">Cases / #2041 Bella / Programme v3 (draft) / Preview</text>
+    <text x="284" y="154" class="h1">In-page PDF preview</text>
+    <text x="284" y="174" class="muted">Draft preview inside the page only — not printable or downloadable until published</text>
+
+    <rect x="860" y="132" width="120" height="36" class="btn"/><text x="888" y="156">← Back to edit</text>
+    <rect x="996" y="132" width="124" height="36" class="btnDisabled"/><text x="1018" y="156" class="muted">Draft only</text>
+    <rect x="1136" y="132" width="144" height="36" class="btnPri"/><text x="1180" y="156" class="btnPriText">Publish v3</text>
+
+    <!-- PDF preview pane (left) -->
+    <g id="pdf-pane">
+      <rect x="284" y="196" width="640" height="900" class="card"/>
+      <text x="304" y="222" class="muted">Page 1 of 3 · A4 layout preview · zoom 100%</text>
+      <rect x="640" y="204" width="28" height="22" class="btn"/><text x="649" y="219">−</text>
+      <rect x="672" y="204" width="28" height="22" class="btn"/><text x="681" y="219">+</text>
+      <rect x="704" y="204" width="60" height="22" class="btn"/><text x="714" y="219" class="muted">Fit ▾</text>
+      <rect x="768" y="204" width="60" height="22" class="btn"/><text x="780" y="219" class="muted">Page ▾</text>
+      <rect x="832" y="204" width="80" height="22" class="btnDisabled"/><text x="842" y="219" class="muted">No print</text>
+
+      <!-- Paper -->
+      <rect x="312" y="240" width="584" height="836" class="paper"/>
+
+      <!-- PDF header banner -->
+      <rect x="312" y="240" width="584" height="80" class="pdfHead"/>
+      <circle cx="356" cy="280" r="20" class="pale"/>
+      <text x="348" y="285" font-size="11">logo</text>
+      <text x="392" y="276" fill="#FFFFFF" font-size="18" font-weight="700">Hello Buddy Canine Physiotherapy</text>
+      <text x="392" y="298" fill="#B3CDD6" font-size="11">Home exercise programme for Bella</text>
+
+      <!-- Programme intro -->
+      <text x="332" y="350" class="h2">Right hind cruciate post-op · weeks 4–8</text>
+      <text x="332" y="370" class="muted">For: Bella (Labrador, 7y) · Owner: Mrs S. Patel</text>
+      <text x="332" y="386" class="muted">Practitioner: Nick Gilbert · Programme v3 · 26 Apr → 23 Jun · daily</text>
+
+      <line x1="332" y1="402" x2="876" y2="402" class="divider"/>
+      <text x="332" y="424" class="muted">Practitioner notes</text>
+      <text x="332" y="444">Keep sessions short. Watch for swelling after exercise.</text>
+      <text x="332" y="460">Stop and rest if Bella shifts weight off her right hind.</text>
+
+      <!-- AM session block -->
+      <rect x="332" y="488" width="544" height="28" class="pale"/>
+      <text x="344" y="507" class="h2">AM session</text>
+
+      <g>
+        <rect x="332" y="524" width="544" height="120" class="card"/>
+        <rect x="344" y="536" width="80" height="80" class="thumb"/>
+        <text x="370" y="580">img</text>
+        <text x="438" y="552" class="h3">1 · Sit-to-stand</text>
+        <text x="438" y="572" class="muted">10 reps · 3 sets · 1× per day</text>
+        <text x="438" y="592">Slow, controlled. Pause between reps.</text>
+        <text x="438" y="612" class="muted">▶ Watch demo video</text>
+      </g>
+      <g>
+        <rect x="332" y="652" width="544" height="120" class="card"/>
+        <rect x="344" y="664" width="80" height="80" class="thumb"/>
+        <text x="370" y="708">img</text>
+        <text x="438" y="680" class="h3">2 · Cavaletti walk</text>
+        <text x="438" y="700" class="muted">8 reps · 2 sets · 1× per day</text>
+        <text x="438" y="720">Low poles. Slow even rhythm.</text>
+        <text x="438" y="740" class="muted">▶ Watch demo video</text>
+      </g>
+
+      <!-- PM session block -->
+      <rect x="332" y="788" width="544" height="28" class="pale"/>
+      <text x="344" y="807" class="h2">PM session</text>
+
+      <g>
+        <rect x="332" y="824" width="544" height="120" class="card"/>
+        <rect x="344" y="836" width="80" height="80" class="thumb"/>
+        <text x="370" y="880">img</text>
+        <text x="438" y="852" class="h3">1 · Wobble cushion (front paws)</text>
+        <text x="438" y="872" class="muted">3 sets · hold 20 s · 1× per day</text>
+        <text x="438" y="892">Short bouts. Stop if Bella loses balance.</text>
+        <text x="438" y="912" class="muted" fill="#A33A3A">⚠ Video link not yet attached</text>
+      </g>
+
+      <text x="332" y="970" class="muted">If you have any concerns, contact Nick on 07xxx xxx xxx. Page 1 of 3.</text>
+    </g>
+
+    <!-- Validation panel (right) -->
+    <g id="validation">
+      <rect x="940" y="196" width="340" height="900" class="card"/>
+      <text x="960" y="222" class="h2">Pre-publish validation</text>
+      <line x1="940" y1="236" x2="1280" y2="236" class="divider"/>
+
+      <text x="960" y="262" class="muted">Required for publish</text>
+
+      <rect x="960" y="276" width="300" height="40" class="ok"/>
+      <text x="976" y="301">✓ Owner name present</text>
+
+      <rect x="960" y="322" width="300" height="40" class="ok"/>
+      <text x="976" y="347">✓ Pet name present</text>
+
+      <rect x="960" y="368" width="300" height="40" class="ok"/>
+      <text x="976" y="393">✓ Programme date range set</text>
+
+      <rect x="960" y="414" width="300" height="40" class="ok"/>
+      <text x="976" y="439">✓ AM session has ≥ 1 exercise</text>
+
+      <rect x="960" y="460" width="300" height="40" class="err"/>
+      <text x="976" y="478">✗ Wobble cushion missing</text>
+      <text x="976" y="494" class="muted">video link (required on PDF)</text>
+
+      <rect x="960" y="506" width="300" height="40" class="ok"/>
+      <text x="976" y="531">✓ All prescriptions populated</text>
+
+      <text x="960" y="572" class="muted">Warnings (won't block publish)</text>
+
+      <rect x="960" y="586" width="300" height="40" class="warn"/>
+      <text x="976" y="611">⚠ PM session has only 1 exercise</text>
+
+      <line x1="940" y1="650" x2="1280" y2="650" class="divider"/>
+
+      <text x="960" y="676" class="h2">Publish</text>
+      <text x="960" y="698" class="muted">Fix 1 blocker above to enable publishing. Draft preview stays in-page only.</text>
+
+      <rect x="960" y="720" width="300" height="40" class="btn"/>
+      <text x="984" y="744">← Back to fix issues</text>
+
+      <rect x="960" y="770" width="300" height="40" class="btnDisabled"/>
+      <text x="1058" y="794" class="muted">Publish v3 (disabled)</text>
+
+      <line x1="940" y1="828" x2="1280" y2="828" class="divider"/>
+      <text x="960" y="854" class="h2">After publish</text>
+      <text x="960" y="876" class="muted">• Immutable PDF v3 stored against case</text>
+      <text x="960" y="894" class="muted">• Previous v2 retained, marked superseded</text>
+      <text x="960" y="912" class="muted">• Programme history updated</text>
+      <text x="960" y="930" class="muted">• You'll receive a copy link to share</text>
+    </g>
+  </g>
+
+  <!-- ============ MOBILE ============ -->
+  <g id="mobile-pdf" transform="translate(1340, 0)">
+    <text x="0" y="28" class="title">Mobile · 360 px</text>
+    <rect x="0" y="40" width="360" height="1080" class="bg"/>
+
+    <rect x="0" y="40" width="360" height="56" class="panel"/>
+    <rect x="12" y="56" width="24" height="24" class="card"/><text x="18" y="73" font-size="11">←</text>
+    <text x="48" y="74" class="h2">In-page preview</text>
+    <rect x="312" y="56" width="36" height="24" class="btnDisabled"/><text x="319" y="73" class="muted" font-size="10">No</text>
+
+    <!-- Tabs to switch preview / validation on mobile -->
+    <rect x="12" y="108" width="166" height="32" class="navActive"/>
+    <text x="60" y="129" class="h3">Preview</text>
+    <rect x="182" y="108" width="166" height="32" class="card"/>
+    <text x="220" y="129" class="h3">Issues (1)</text>
+
+    <!-- PDF paper preview (scaled-down representation) -->
+    <rect x="12" y="152" width="336" height="500" class="paper"/>
+    <rect x="12" y="152" width="336" height="56" class="pdfHead"/>
+    <circle cx="40" cy="180" r="14" class="pale"/>
+    <text x="60" y="178" fill="#FFFFFF" font-size="12" font-weight="700">Hello Buddy</text>
+    <text x="60" y="194" fill="#B3CDD6" font-size="10">Bella · Programme v3</text>
+
+    <text x="24" y="234" class="h3">Cruciate post-op weeks 4–8</text>
+    <text x="24" y="252" class="muted">Bella · Mrs S. Patel · daily</text>
+
+    <rect x="24" y="270" width="312" height="20" class="pale"/>
+    <text x="32" y="285" class="h3">AM session</text>
+
+    <rect x="24" y="298" width="312" height="60" class="card"/>
+    <rect x="32" y="306" width="40" height="40" class="thumb"/>
+    <text x="80" y="320" class="h3">Sit-to-stand</text>
+    <text x="80" y="338" class="muted">10 × 3 · 1×/day · ▶ video</text>
+
+    <rect x="24" y="368" width="312" height="60" class="card"/>
+    <rect x="32" y="376" width="40" height="40" class="thumb"/>
+    <text x="80" y="390" class="h3">Cavaletti walk</text>
+    <text x="80" y="408" class="muted">8 × 2 · 1×/day · ▶ video</text>
+
+    <rect x="24" y="440" width="312" height="20" class="pale"/>
+    <text x="32" y="455" class="h3">PM session</text>
+
+    <rect x="24" y="468" width="312" height="60" class="card"/>
+    <rect x="32" y="476" width="40" height="40" class="thumb"/>
+    <text x="80" y="490" class="h3">Wobble cushion</text>
+    <text x="80" y="508" class="muted" fill="#A33A3A">⚠ no video link</text>
+
+    <text x="24" y="552" class="muted">Page 1 of 3 · scroll to see all pages</text>
+
+    <!-- Validation summary -->
+    <rect x="12" y="668" width="336" height="80" class="err"/>
+    <text x="24" y="692" class="h3">1 blocker · 1 warning</text>
+    <text x="24" y="712" class="muted">Wobble cushion: video link missing</text>
+    <text x="24" y="732" class="muted">PM session: only 1 exercise (warn)</text>
+
+    <!-- Sticky bottom action bar -->
+    <rect x="0" y="780" width="360" height="68" class="panel"/>
+    <rect x="12" y="794" width="140" height="40" class="btn"/>
+    <text x="40" y="818">← Back to edit</text>
+    <rect x="164" y="794" width="184" height="40" class="btnDisabled"/>
+    <text x="208" y="818" class="muted">Publish (disabled)</text>
+
+    <!-- Bottom tab bar -->
+    <rect x="0" y="848" width="360" height="56" class="panel"/>
+    <text x="20" y="882" font-size="11">Home</text>
+    <text x="86" y="882" font-size="11">Owners</text>
+    <text x="156" y="882" font-size="11">Cases</text>
+    <text x="220" y="882" font-size="11">Library</text>
+    <text x="288" y="882" font-size="11">Programmes</text>
+    <line x1="288" y1="892" x2="350" y2="892" stroke="#6392AE" stroke-width="2"/>
+  </g>
+
+  <text x="20" y="1132" class="muted">Layout-only · draft preview is rendered inside the admin page and is not printable or downloadable until the final publish step</text>
+</svg>

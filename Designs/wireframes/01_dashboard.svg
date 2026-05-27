@@ -1,0 +1,244 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1720 940" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#28404F">
+  <defs>
+    <style>
+      .bg { fill:#F4F8FA; }
+      .panel { fill:#FFFFFF; stroke:#6392AE; stroke-width:1; }
+      .card { fill:#FFFFFF; stroke:#B3CDD6; stroke-width:1; }
+      .pale { fill:#D4E0E5; stroke:#B3CDD6; stroke-width:1; }
+      .navItem { fill:#FFFFFF; stroke:none; }
+      .navActive { fill:#D4E0E5; stroke:#6392AE; stroke-width:1; }
+      .btn { fill:#FFFFFF; stroke:#6392AE; stroke-width:1; }
+      .btnPri { fill:#6392AE; stroke:#28404F; stroke-width:1; }
+      .btnPriText { fill:#FFFFFF; font-weight:600; }
+      .muted { fill:#5A6E7A; font-size:11px; }
+      .title { font-size:18px; font-weight:600; }
+      .h1 { font-size:22px; font-weight:700; }
+      .h2 { font-size:14px; font-weight:600; }
+      .divider { stroke:#B3CDD6; stroke-width:1; }
+    </style>
+  </defs>
+
+  <!-- ============ DESKTOP 1280 ============ -->
+  <g id="desktop-dashboard">
+    <text x="20" y="28" class="title">Desktop · 1280 px · Dashboard</text>
+    <rect x="20" y="40" width="1280" height="880" class="bg"/>
+
+    <!-- Header -->
+    <g id="desktop-header">
+      <rect x="20" y="40" width="1280" height="64" class="panel"/>
+      <circle cx="56" cy="72" r="18" class="pale"/>
+      <text x="48" y="76" font-size="11">logo</text>
+      <text x="92" y="78" class="h2">Hello Buddy Admin</text>
+      <rect x="1140" y="58" width="80" height="22" class="card"/>
+      <text x="1148" y="73" class="muted">DEV · v0.1</text>
+      <circle cx="1248" cy="72" r="14" class="pale"/>
+      <text x="1268" y="76">Nick G.</text>
+    </g>
+
+    <!-- Left nav -->
+    <g id="desktop-nav">
+      <rect x="20" y="104" width="240" height="816" class="panel"/>
+      <rect x="32" y="128" width="216" height="36" class="navActive"/>
+      <text x="48" y="151">Dashboard</text>
+      <rect x="32" y="172" width="216" height="36" class="navItem"/>
+      <text x="48" y="195">Owners</text>
+      <rect x="32" y="216" width="216" height="36" class="navItem"/>
+      <text x="48" y="239">Pets</text>
+      <rect x="32" y="260" width="216" height="36" class="navItem"/>
+      <text x="48" y="283">Treatment cases</text>
+      <rect x="32" y="304" width="216" height="36" class="navItem"/>
+      <text x="48" y="327">Programmes</text>
+      <rect x="32" y="348" width="216" height="36" class="navItem"/>
+      <text x="48" y="371">Exercise library</text>
+      <rect x="32" y="392" width="216" height="36" class="navItem"/>
+      <text x="48" y="415">Published PDFs</text>
+      <rect x="32" y="436" width="216" height="36" class="navItem"/>
+      <text x="48" y="459">Settings</text>
+      <line x1="32" y1="488" x2="248" y2="488" class="divider"/>
+      <text x="48" y="512" class="muted">Quick add</text>
+      <rect x="32" y="524" width="216" height="32" class="btn"/>
+      <text x="48" y="545">+ New owner</text>
+      <rect x="32" y="562" width="216" height="32" class="btn"/>
+      <text x="48" y="583">+ New pet</text>
+      <rect x="32" y="600" width="216" height="32" class="btn"/>
+      <text x="48" y="621">+ New treatment case</text>
+      <rect x="32" y="638" width="216" height="32" class="btn"/>
+      <text x="48" y="659">+ New programme</text>
+    </g>
+
+    <!-- Main -->
+    <g id="desktop-main">
+      <!-- Title row -->
+      <text x="284" y="146" class="h1">Dashboard</text>
+      <text x="284" y="166" class="muted">Wednesday 6 May · 12 open cases · 3 drafts</text>
+      <rect x="1140" y="124" width="140" height="36" class="btnPri"/>
+      <text x="1166" y="148" class="btnPriText">+ New patient</text>
+
+      <!-- Metric cards -->
+      <g id="metrics">
+        <rect x="284" y="190" width="328" height="110" class="card"/>
+        <text x="304" y="218" class="h2">Open treatment cases</text>
+        <text x="304" y="264" font-size="36" font-weight="700">12</text>
+        <text x="304" y="288" class="muted">3 reviews due this week</text>
+
+        <rect x="624" y="190" width="328" height="110" class="card"/>
+        <text x="644" y="218" class="h2">Programmes in draft</text>
+        <text x="644" y="264" font-size="36" font-weight="700">3</text>
+        <text x="644" y="288" class="muted">2 awaiting validation</text>
+
+        <rect x="964" y="190" width="316" height="110" class="card"/>
+        <text x="984" y="218" class="h2">Published last 7 days</text>
+        <text x="984" y="264" font-size="36" font-weight="700">5</text>
+        <text x="984" y="288" class="muted">View published PDFs →</text>
+      </g>
+
+      <!-- Lower split: recent cases | drafts -->
+      <g id="recent-cases">
+        <rect x="284" y="320" width="496" height="580" class="card"/>
+        <text x="304" y="350" class="h2">Recently updated cases</text>
+        <text x="744" y="350" class="muted">View all →</text>
+        <line x1="284" y1="364" x2="780" y2="364" class="divider"/>
+        <g>
+          <rect x="284" y="364" width="496" height="72" fill="none" stroke="none"/>
+          <text x="304" y="390">Bella · Labrador</text>
+          <text x="304" y="410" class="muted">Post-op cruciate · Case #2041 · last note 2h ago</text>
+          <rect x="700" y="380" width="60" height="22" class="pale"/>
+          <text x="710" y="395" class="muted">Active</text>
+          <line x1="304" y1="436" x2="760" y2="436" class="divider"/>
+        </g>
+        <g>
+          <text x="304" y="462">Murphy · Cocker Spaniel</text>
+          <text x="304" y="482" class="muted">Hip dysplasia · Case #2039 · note added yesterday</text>
+          <rect x="700" y="452" width="60" height="22" class="pale"/>
+          <text x="710" y="467" class="muted">Active</text>
+          <line x1="304" y1="508" x2="760" y2="508" class="divider"/>
+        </g>
+        <g>
+          <text x="304" y="534">Luna · Border Collie</text>
+          <text x="304" y="554" class="muted">Soft tissue · Case #2037 · review due Fri</text>
+          <rect x="690" y="524" width="70" height="22" fill="#FFF7E0" stroke="#B58900"/>
+          <text x="700" y="539" class="muted">Review due</text>
+          <line x1="304" y1="580" x2="760" y2="580" class="divider"/>
+        </g>
+        <g>
+          <text x="304" y="606">Rex · GSD</text>
+          <text x="304" y="626" class="muted">Mobility decline · Case #2030 · note added 3d ago</text>
+          <line x1="304" y1="652" x2="760" y2="652" class="divider"/>
+        </g>
+        <g>
+          <text x="304" y="678">Pip · Jack Russell</text>
+          <text x="304" y="698" class="muted">Recovery check · Case #2025 · last note 5d ago</text>
+        </g>
+      </g>
+
+      <g id="drafts">
+        <rect x="800" y="320" width="480" height="580" class="card"/>
+        <text x="820" y="350" class="h2">Drafts in progress</text>
+        <text x="1244" y="350" class="muted">View all →</text>
+        <line x1="800" y1="364" x2="1280" y2="364" class="divider"/>
+        <g>
+          <text x="820" y="394">Bella · Programme v3 draft</text>
+          <text x="820" y="414" class="muted">3 of 4 sessions populated · started 14:02</text>
+          <rect x="1180" y="382" width="80" height="28" class="btn"/>
+          <text x="1198" y="400">Resume</text>
+          <line x1="820" y1="438" x2="1260" y2="438" class="divider"/>
+        </g>
+        <g>
+          <text x="820" y="466">New patient journey — Mrs Patel</text>
+          <text x="820" y="486" class="muted">Owner ✓ · Pet ✓ · Case not yet created</text>
+          <rect x="1180" y="454" width="80" height="28" class="btn"/>
+          <text x="1198" y="472">Resume</text>
+          <line x1="820" y1="510" x2="1260" y2="510" class="divider"/>
+        </g>
+        <g>
+          <text x="820" y="538">Murphy · Programme v2 draft</text>
+          <text x="820" y="558" class="muted">Awaiting video link on 2 exercises</text>
+          <rect x="1180" y="526" width="80" height="28" class="btn"/>
+          <text x="1198" y="544">Resume</text>
+        </g>
+      </g>
+    </g>
+  </g>
+
+  <!-- ============ MOBILE 360 ============ -->
+  <g id="mobile-dashboard" transform="translate(1340, 0)">
+    <text x="0" y="28" class="title">Mobile · 360 px</text>
+    <rect x="0" y="40" width="360" height="880" class="bg"/>
+
+    <!-- Sticky header -->
+    <g id="mobile-header">
+      <rect x="0" y="40" width="360" height="56" class="panel"/>
+      <rect x="12" y="56" width="24" height="24" class="card"/>
+      <text x="18" y="73" font-size="11">≡</text>
+      <text x="48" y="74" class="h2">Dashboard</text>
+      <circle cx="336" cy="68" r="14" class="pale"/>
+      <text x="328" y="72" font-size="11">NG</text>
+    </g>
+
+    <!-- Greeting -->
+    <text x="16" y="120" class="muted">12 open · 3 drafts · 3 reviews due</text>
+
+    <!-- Metric cards stacked -->
+    <g id="m-metrics">
+      <rect x="12" y="136" width="336" height="72" class="card"/>
+      <text x="28" y="160" class="h2">Open treatment cases</text>
+      <text x="28" y="190" font-size="24" font-weight="700">12</text>
+      <text x="120" y="190" class="muted">3 reviews due</text>
+
+      <rect x="12" y="220" width="336" height="72" class="card"/>
+      <text x="28" y="244" class="h2">Programmes in draft</text>
+      <text x="28" y="274" font-size="24" font-weight="700">3</text>
+      <text x="120" y="274" class="muted">Tap to resume</text>
+
+      <rect x="12" y="304" width="336" height="72" class="card"/>
+      <text x="28" y="328" class="h2">Published last 7 days</text>
+      <text x="28" y="358" font-size="24" font-weight="700">5</text>
+      <text x="120" y="358" class="muted">View PDFs →</text>
+    </g>
+
+    <!-- Recently updated cases -->
+    <text x="16" y="400" class="h2">Recently updated cases</text>
+    <text x="312" y="400" class="muted">All →</text>
+    <g>
+      <rect x="12" y="412" width="336" height="64" class="card"/>
+      <text x="28" y="434">Bella · Labrador</text>
+      <text x="28" y="454" class="muted">Case #2041 · note 2h ago</text>
+
+      <rect x="12" y="484" width="336" height="64" class="card"/>
+      <text x="28" y="506">Murphy · Cocker Spaniel</text>
+      <text x="28" y="526" class="muted">Case #2039 · note yesterday</text>
+
+      <rect x="12" y="556" width="336" height="64" class="card"/>
+      <text x="28" y="578">Luna · Border Collie</text>
+      <text x="28" y="598" class="muted">Review due Fri</text>
+    </g>
+
+    <!-- Drafts -->
+    <text x="16" y="648" class="h2">Drafts</text>
+    <g>
+      <rect x="12" y="660" width="336" height="64" class="card"/>
+      <text x="28" y="682">Bella · Programme v3 draft</text>
+      <text x="28" y="702" class="muted">3 of 4 sessions populated</text>
+    </g>
+
+    <!-- FAB -->
+    <circle cx="320" cy="800" r="28" class="btnPri"/>
+    <text x="312" y="807" class="btnPriText" font-size="24">+</text>
+
+    <!-- Bottom tab bar -->
+    <g id="mobile-tabbar">
+      <rect x="0" y="848" width="360" height="56" class="panel"/>
+      <text x="20" y="882" font-size="11">Home</text>
+      <text x="86" y="882" font-size="11">Owners</text>
+      <text x="156" y="882" font-size="11">Cases</text>
+      <text x="220" y="882" font-size="11">Library</text>
+      <text x="288" y="882" font-size="11">Programmes</text>
+      <line x1="20" y1="892" x2="48" y2="892" stroke="#6392AE" stroke-width="2"/>
+    </g>
+  </g>
+
+  <!-- Footnotes -->
+  <g transform="translate(20, 922)">
+    <text class="muted">Layout-only wireframe · Hello Buddy Admin · §04 page flow, §05 UI direction · WCAG 2.2 AA shell · no CSS finesse</text>
+  </g>
+</svg>

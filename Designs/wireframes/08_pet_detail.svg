@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1720 1080" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#28404F">
+  <defs>
+    <style>
+      .bg { fill:#F4F8FA; }
+      .panel { fill:#FFFFFF; stroke:#6392AE; stroke-width:1; }
+      .card { fill:#FFFFFF; stroke:#B3CDD6; stroke-width:1; }
+      .pale { fill:#D4E0E5; stroke:#B3CDD6; stroke-width:1; }
+      .navItem { fill:#FFFFFF; stroke:none; }
+      .navActive { fill:#D4E0E5; stroke:#6392AE; stroke-width:1; }
+      .btn { fill:#FFFFFF; stroke:#6392AE; stroke-width:1; }
+      .btnPri { fill:#6392AE; stroke:#28404F; stroke-width:1; }
+      .btnPriText { fill:#FFFFFF; font-weight:600; }
+      .muted { fill:#5A6E7A; font-size:11px; }
+      .title { font-size:18px; font-weight:600; }
+      .h1 { font-size:22px; font-weight:700; }
+      .h2 { font-size:14px; font-weight:600; }
+      .divider { stroke:#B3CDD6; stroke-width:1; }
+      .tabActive { fill:#FFFFFF; stroke:#6392AE; stroke-width:1; }
+      .tabIdle { fill:#F4F8FA; stroke:#B3CDD6; stroke-width:1; }
+      .underline { stroke:#6392AE; stroke-width:3; }
+    </style>
+  </defs>
+
+  <g id="desktop-pet-detail">
+    <text x="20" y="28" class="title">Desktop · 1280 px · Pet detail</text>
+    <rect x="20" y="40" width="1280" height="1000" class="bg"/>
+
+    <rect x="20" y="40" width="1280" height="64" class="panel"/>
+    <circle cx="56" cy="72" r="18" class="pale"/><text x="48" y="76" font-size="11">logo</text>
+    <text x="92" y="78" class="h2">Hello Buddy Admin</text>
+    <text x="1248" y="76" text-anchor="end">Nick G.</text>
+
+    <rect x="20" y="104" width="240" height="936" class="panel"/>
+    <rect x="32" y="128" width="216" height="36" class="navItem"/><text x="48" y="151">Dashboard</text>
+    <rect x="32" y="172" width="216" height="36" class="navItem"/><text x="48" y="195">Owners</text>
+    <rect x="32" y="216" width="216" height="36" class="navActive"/><text x="48" y="239">Pets</text>
+    <rect x="32" y="260" width="216" height="36" class="navItem"/><text x="48" y="283">Treatment cases</text>
+    <rect x="32" y="304" width="216" height="36" class="navItem"/><text x="48" y="327">Programmes</text>
+    <rect x="32" y="348" width="216" height="36" class="navItem"/><text x="48" y="371">Exercise library</text>
+    <rect x="32" y="392" width="216" height="36" class="navItem"/><text x="48" y="415">Published PDFs</text>
+    <rect x="32" y="436" width="216" height="36" class="navItem"/><text x="48" y="459">Settings</text>
+
+    <text x="284" y="126" class="muted">Home / Pets / Bella</text>
+    <text x="284" y="154" class="h1">Bella</text>
+    <text x="284" y="174" class="muted">Pet #P-2041 · Labrador · 7y · owner Mrs S. Patel · last updated today</text>
+    <rect x="1040" y="132" width="100" height="36" class="btn"/><text x="1064" y="156">Edit pet</text>
+    <rect x="1156" y="132" width="124" height="36" class="btnPri"/><text x="1172" y="156" class="btnPriText">+ New case</text>
+
+    <g id="tabs">
+      <rect x="284" y="196" width="120" height="36" class="tabActive"/>
+      <text x="320" y="219">Summary</text>
+      <line x1="284" y1="232" x2="404" y2="232" class="underline"/>
+      <rect x="408" y="196" width="120" height="36" class="tabIdle"/>
+      <text x="444" y="219">Cases (2)</text>
+      <rect x="532" y="196" width="160" height="36" class="tabIdle"/>
+      <text x="566" y="219">Programmes (4)</text>
+      <rect x="696" y="196" width="120" height="36" class="tabIdle"/>
+      <text x="730" y="219">History</text>
+      <line x1="284" y1="232" x2="1280" y2="232" class="divider"/>
+    </g>
+
+    <rect x="284" y="252" width="616" height="280" class="card"/>
+    <text x="304" y="280" class="h2">Pet profile</text>
+    <line x1="284" y1="294" x2="900" y2="294" class="divider"/>
+    <text x="304" y="324" class="muted">Name</text><text x="304" y="346">Bella</text>
+    <text x="304" y="378" class="muted">Breed</text><text x="304" y="400">Labrador Retriever</text>
+    <text x="304" y="432" class="muted">Age</text><text x="304" y="454">7 years</text>
+    <text x="304" y="486" class="muted">Sex</text><text x="304" y="508">Female</text>
+    <text x="600" y="324" class="muted">Owner</text><text x="600" y="346">Mrs S. Patel → open owner</text>
+    <text x="600" y="378" class="muted">Weight</text><text x="600" y="400">28.4 kg</text>
+    <text x="600" y="432" class="muted">Practitioner</text><text x="600" y="454">Nick Gilbert</text>
+    <text x="600" y="486" class="muted">Flags</text><text x="600" y="508">Post-op rehab · review due Friday</text>
+
+    <rect x="920" y="252" width="360" height="280" class="card"/>
+    <text x="940" y="280" class="h2">Current activity</text>
+    <line x1="920" y1="294" x2="1280" y2="294" class="divider"/>
+    <text x="940" y="324">Active case</text>
+    <text x="940" y="344" class="muted">#2041 · Post-op cruciate · Active</text>
+    <rect x="940" y="360" width="100" height="32" class="btn"/><text x="962" y="380">Open case</text>
+    <line x1="940" y1="410" x2="1260" y2="410" class="divider"/>
+    <text x="940" y="438">Latest programme</text>
+    <text x="940" y="458" class="muted">Programme v3 draft · auto-saved today</text>
+    <rect x="940" y="474" width="120" height="32" class="btnPri"/><text x="960" y="494" class="btnPriText">Resume draft</text>
+
+    <rect x="284" y="552" width="996" height="420" class="card"/>
+    <text x="304" y="580" class="h2">Recent programme and case activity</text>
+    <line x1="284" y1="594" x2="1280" y2="594" class="divider"/>
+    <text x="304" y="628">Today · Draft programme v3 updated</text>
+    <text x="304" y="648" class="muted">PM session adjusted for weight-bearing tolerance</text>
+    <line x1="304" y1="672" x2="1260" y2="672" class="divider"/>
+    <text x="304" y="704">22 Apr · Programme v2 published</text>
+    <text x="304" y="724" class="muted">Owner copy issued via WhatsApp</text>
+    <line x1="304" y1="748" x2="1260" y2="748" class="divider"/>
+    <text x="304" y="780">14 Apr · Initial review note added</text>
+    <text x="304" y="800" class="muted">Goals agreed with owner and treatment plan started</text>
+  </g>
+
+  <g id="mobile-pet-detail" transform="translate(1340, 0)">
+    <text x="0" y="28" class="title">Mobile · 360 px</text>
+    <rect x="0" y="40" width="360" height="1000" class="bg"/>
+    <rect x="0" y="40" width="360" height="56" class="panel"/>
+    <rect x="12" y="56" width="24" height="24" class="card"/><text x="18" y="73" font-size="11">←</text>
+    <text x="48" y="74" class="h2">Bella</text>
+    <rect x="312" y="56" width="36" height="24" class="card"/><text x="322" y="73" font-size="11">⋯</text>
+    <text x="16" y="120" class="muted">Labrador · 7y · owner Mrs S. Patel</text>
+    <rect x="16" y="140" width="100" height="22" class="pale"/><text x="28" y="155" class="muted">Active case</text>
+
+    <rect x="12" y="184" width="336" height="180" class="card"/>
+    <text x="28" y="208" class="h2">Pet profile</text>
+    <text x="28" y="236" class="muted">Weight</text><text x="28" y="254">28.4 kg</text>
+    <text x="28" y="282" class="muted">Practitioner</text><text x="28" y="300">Nick Gilbert</text>
+    <text x="28" y="328" class="muted">Latest programme</text><text x="28" y="346">Programme v3 draft</text>
+
+    <rect x="12" y="380" width="336" height="96" class="card"/>
+    <text x="28" y="404" class="h2">Open case</text>
+    <text x="28" y="424" class="muted">#2041 · Post-op cruciate</text>
+    <rect x="220" y="394" width="116" height="32" class="btnPri"/><text x="238" y="414" class="btnPriText">Open case</text>
+
+    <rect x="12" y="492" width="336" height="96" class="card"/>
+    <text x="28" y="516" class="h2">Latest programme</text>
+    <text x="28" y="536" class="muted">Draft updated today</text>
+    <rect x="212" y="506" width="124" height="32" class="btn"/><text x="234" y="526">Resume draft</text>
+
+    <rect x="0" y="780" width="360" height="68" class="panel"/>
+    <rect x="12" y="794" width="160" height="40" class="btn"/><text x="52" y="818">Edit pet</text>
+    <rect x="184" y="794" width="164" height="40" class="btnPri"/><text x="214" y="818" class="btnPriText">+ New case</text>
+  </g>
+</svg>

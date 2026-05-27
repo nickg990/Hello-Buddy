@@ -1,0 +1,214 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1720 940" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#28404F">
+  <defs>
+    <style>
+      .bg { fill:#F4F8FA; }
+      .panel { fill:#FFFFFF; stroke:#6392AE; stroke-width:1; }
+      .card { fill:#FFFFFF; stroke:#B3CDD6; stroke-width:1; }
+      .pale { fill:#D4E0E5; stroke:#B3CDD6; stroke-width:1; }
+      .navItem { fill:#FFFFFF; stroke:none; }
+      .navActive { fill:#D4E0E5; stroke:#6392AE; stroke-width:1; }
+      .btn { fill:#FFFFFF; stroke:#6392AE; stroke-width:1; }
+      .btnPri { fill:#6392AE; stroke:#28404F; stroke-width:1; }
+      .btnPriText { fill:#FFFFFF; font-weight:600; }
+      .muted { fill:#5A6E7A; font-size:11px; }
+      .title { font-size:18px; font-weight:600; }
+      .h1 { font-size:22px; font-weight:700; }
+      .h2 { font-size:14px; font-weight:600; }
+      .th { fill:#28404F; font-weight:600; font-size:12px; }
+      .divider { stroke:#B3CDD6; stroke-width:1; }
+      .input { fill:#FFFFFF; stroke:#6392AE; stroke-width:1; }
+    </style>
+  </defs>
+
+  <!-- ============ DESKTOP ============ -->
+  <g id="desktop-owners">
+    <text x="20" y="28" class="title">Desktop · 1280 px · Owners list</text>
+    <rect x="20" y="40" width="1280" height="880" class="bg"/>
+
+    <!-- Header (shared shell) -->
+    <rect x="20" y="40" width="1280" height="64" class="panel"/>
+    <circle cx="56" cy="72" r="18" class="pale"/><text x="48" y="76" font-size="11">logo</text>
+    <text x="92" y="78" class="h2">Hello Buddy Admin</text>
+    <text x="1248" y="76" text-anchor="end">Nick G.</text>
+
+    <!-- Left nav -->
+    <rect x="20" y="104" width="240" height="816" class="panel"/>
+    <rect x="32" y="128" width="216" height="36" class="navItem"/><text x="48" y="151">Dashboard</text>
+    <rect x="32" y="172" width="216" height="36" class="navActive"/><text x="48" y="195">Owners</text>
+    <rect x="32" y="216" width="216" height="36" class="navItem"/><text x="48" y="239">Pets</text>
+    <rect x="32" y="260" width="216" height="36" class="navItem"/><text x="48" y="283">Treatment cases</text>
+    <rect x="32" y="304" width="216" height="36" class="navItem"/><text x="48" y="327">Programmes</text>
+    <rect x="32" y="348" width="216" height="36" class="navItem"/><text x="48" y="371">Exercise library</text>
+    <rect x="32" y="392" width="216" height="36" class="navItem"/><text x="48" y="415">Published PDFs</text>
+    <rect x="32" y="436" width="216" height="36" class="navItem"/><text x="48" y="459">Settings</text>
+
+    <!-- Breadcrumb + title -->
+    <text x="284" y="126" class="muted">Home / Owners</text>
+    <text x="284" y="154" class="h1">Owners</text>
+    <text x="284" y="174" class="muted">142 owners · 218 pets · 47 active cases</text>
+    <rect x="1140" y="132" width="140" height="36" class="btnPri"/>
+    <text x="1170" y="156" class="btnPriText">+ New owner</text>
+
+    <!-- Filter / search row -->
+    <g id="filters">
+      <rect x="284" y="196" width="996" height="56" class="card"/>
+      <text x="304" y="218" class="muted">Search</text>
+      <rect x="304" y="222" width="320" height="24" class="input"/>
+      <text x="312" y="238" class="muted">Owner name, pet name, email or phone…</text>
+
+      <text x="644" y="218" class="muted">Has active case</text>
+      <rect x="644" y="222" width="140" height="24" class="input"/>
+      <text x="654" y="238" class="muted">Any ▾</text>
+
+      <text x="804" y="218" class="muted">Sort</text>
+      <rect x="804" y="222" width="160" height="24" class="input"/>
+      <text x="814" y="238" class="muted">Last updated ▾</text>
+
+      <rect x="980" y="218" width="100" height="28" class="btn"/>
+      <text x="1006" y="237">Filter</text>
+      <rect x="1090" y="218" width="160" height="28" class="btn"/>
+      <text x="1108" y="237" class="muted">Reset · Export CSV</text>
+    </g>
+
+    <!-- Results table -->
+    <g id="table">
+      <rect x="284" y="272" width="996" height="608" class="card"/>
+      <!-- Table header -->
+      <rect x="284" y="272" width="996" height="40" class="pale"/>
+      <text x="304" y="297" class="th">Owner</text>
+      <text x="500" y="297" class="th">Pets</text>
+      <text x="620" y="297" class="th">Phone</text>
+      <text x="780" y="297" class="th">Email</text>
+      <text x="980" y="297" class="th">Active cases</text>
+      <text x="1100" y="297" class="th">Last updated</text>
+
+      <!-- Rows -->
+      <g>
+        <line x1="284" y1="312" x2="1280" y2="312" class="divider"/>
+        <text x="304" y="338">Mrs S. Patel</text>
+        <text x="500" y="338">Bella, Murphy</text>
+        <text x="620" y="338">07712 …112</text>
+        <text x="780" y="338">s.patel@…</text>
+        <rect x="980" y="324" width="24" height="22" class="pale"/><text x="989" y="339">2</text>
+        <text x="1100" y="338" class="muted">2h ago</text>
+      </g>
+      <g>
+        <line x1="284" y1="358" x2="1280" y2="358" class="divider"/>
+        <text x="304" y="384">Mr J. Howard</text>
+        <text x="500" y="384">Luna</text>
+        <text x="620" y="384">07823 …041</text>
+        <text x="780" y="384">jhoward@…</text>
+        <rect x="980" y="370" width="24" height="22" class="pale"/><text x="989" y="385">1</text>
+        <text x="1100" y="384" class="muted">Yesterday</text>
+      </g>
+      <g>
+        <line x1="284" y1="404" x2="1280" y2="404" class="divider"/>
+        <text x="304" y="430">Ms K. Reilly</text>
+        <text x="500" y="430">Pip, Rex, Bo</text>
+        <text x="620" y="430">07900 …507</text>
+        <text x="780" y="430">k.reilly@…</text>
+        <rect x="980" y="416" width="24" height="22" class="pale"/><text x="989" y="431">1</text>
+        <text x="1100" y="430" class="muted">3 days ago</text>
+      </g>
+      <g>
+        <line x1="284" y1="450" x2="1280" y2="450" class="divider"/>
+        <text x="304" y="476">Dr A. Singh</text>
+        <text x="500" y="476">Tilly</text>
+        <text x="620" y="476">07466 …228</text>
+        <text x="780" y="476">a.singh@…</text>
+        <rect x="980" y="462" width="24" height="22" fill="#FFFFFF" stroke="#B3CDD6"/><text x="989" y="477">0</text>
+        <text x="1100" y="476" class="muted">1 week ago</text>
+      </g>
+      <g>
+        <line x1="284" y1="496" x2="1280" y2="496" class="divider"/>
+        <text x="304" y="522">Mr T. Holloway</text>
+        <text x="500" y="522">Otis</text>
+        <text x="620" y="522">07355 …671</text>
+        <text x="780" y="522">t.holloway@…</text>
+        <rect x="980" y="508" width="24" height="22" class="pale"/><text x="989" y="523">1</text>
+        <text x="1100" y="522" class="muted">2 weeks ago</text>
+      </g>
+      <g>
+        <line x1="284" y1="542" x2="1280" y2="542" class="divider"/>
+        <text x="304" y="568" class="muted">… more rows …</text>
+      </g>
+
+      <!-- Pagination -->
+      <line x1="284" y1="828" x2="1280" y2="828" class="divider"/>
+      <text x="304" y="854" class="muted">Showing 1–25 of 142</text>
+      <rect x="1100" y="836" width="40" height="28" class="btn"/><text x="1115" y="855">‹</text>
+      <rect x="1144" y="836" width="40" height="28" class="navActive"/><text x="1159" y="855">1</text>
+      <rect x="1188" y="836" width="40" height="28" class="btn"/><text x="1203" y="855">2</text>
+      <rect x="1232" y="836" width="40" height="28" class="btn"/><text x="1247" y="855">›</text>
+    </g>
+  </g>
+
+  <!-- ============ MOBILE — cards from same partial ============ -->
+  <g id="mobile-owners" transform="translate(1340, 0)">
+    <text x="0" y="28" class="title">Mobile · 360 px</text>
+    <rect x="0" y="40" width="360" height="880" class="bg"/>
+
+    <!-- Sticky header -->
+    <rect x="0" y="40" width="360" height="56" class="panel"/>
+    <rect x="12" y="56" width="24" height="24" class="card"/><text x="18" y="73" font-size="11">≡</text>
+    <text x="48" y="74" class="h2">Owners</text>
+    <rect x="312" y="56" width="36" height="24" class="btnPri"/><text x="324" y="73" class="btnPriText" font-size="14">+</text>
+
+    <!-- Search bar -->
+    <rect x="12" y="108" width="336" height="36" class="input"/>
+    <text x="24" y="131" class="muted">Search owner, pet, email…</text>
+
+    <!-- Filter chips -->
+    <rect x="12" y="152" width="92" height="28" class="card"/><text x="24" y="171" class="muted">Any status ▾</text>
+    <rect x="112" y="152" width="120" height="28" class="card"/><text x="124" y="171" class="muted">Sort: Updated ▾</text>
+    <text x="324" y="171" class="muted">Filter</text>
+
+    <text x="16" y="208" class="muted">142 owners</text>
+
+    <!-- Owner cards (table morphs to cards via same partial) -->
+    <g>
+      <rect x="12" y="220" width="336" height="84" class="card"/>
+      <text x="24" y="244" class="h2">Mrs S. Patel</text>
+      <text x="24" y="264" class="muted">Bella, Murphy · 2 active cases</text>
+      <text x="24" y="284" class="muted">s.patel@… · 07712 …112</text>
+      <rect x="296" y="232" width="40" height="22" class="pale"/><text x="307" y="247" class="muted">Open</text>
+
+      <rect x="12" y="312" width="336" height="84" class="card"/>
+      <text x="24" y="336" class="h2">Mr J. Howard</text>
+      <text x="24" y="356" class="muted">Luna · 1 active case</text>
+      <text x="24" y="376" class="muted">jhoward@… · 07823 …041</text>
+      <rect x="296" y="324" width="40" height="22" class="pale"/><text x="307" y="339" class="muted">Open</text>
+
+      <rect x="12" y="404" width="336" height="84" class="card"/>
+      <text x="24" y="428" class="h2">Ms K. Reilly</text>
+      <text x="24" y="448" class="muted">Pip, Rex, Bo · 1 active case</text>
+      <text x="24" y="468" class="muted">k.reilly@… · 07900 …507</text>
+      <rect x="296" y="416" width="40" height="22" class="pale"/><text x="307" y="431" class="muted">Open</text>
+
+      <rect x="12" y="496" width="336" height="84" class="card"/>
+      <text x="24" y="520" class="h2">Dr A. Singh</text>
+      <text x="24" y="540" class="muted">Tilly · No active cases</text>
+      <text x="24" y="560" class="muted">a.singh@…</text>
+
+      <rect x="12" y="588" width="336" height="84" class="card"/>
+      <text x="24" y="612" class="h2">Mr T. Holloway</text>
+      <text x="24" y="632" class="muted">Otis · 1 active case</text>
+      <text x="24" y="652" class="muted">t.holloway@…</text>
+    </g>
+
+    <!-- Load more -->
+    <rect x="12" y="700" width="336" height="40" class="btn"/>
+    <text x="148" y="724">Load more</text>
+
+    <!-- Bottom tab bar -->
+    <rect x="0" y="848" width="360" height="56" class="panel"/>
+    <text x="20" y="882" font-size="11">Home</text>
+    <text x="86" y="882" font-size="11">Owners</text>
+    <text x="156" y="882" font-size="11">Cases</text>
+    <text x="220" y="882" font-size="11">Library</text>
+    <text x="288" y="882" font-size="11">Programmes</text>
+    <line x1="86" y1="892" x2="124" y2="892" stroke="#6392AE" stroke-width="2"/>
+  </g>
+
+  <text x="20" y="932" class="muted">Layout-only wireframe · same Razor partial renders table (≥768 px) and stacked cards (&lt;768 px) per §18</text>
+</svg>

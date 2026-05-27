@@ -1,0 +1,611 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1720 1240" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#28404F">
+  <defs>
+    <style>
+      .bg { fill:#F4F8FA; }
+      .panel { fill:#FFFFFF; stroke:#6392AE; stroke-width:1; }
+      .card { fill:#FFFFFF; stroke:#B3CDD6; stroke-width:1; }
+      .pale { fill:#D4E0E5; stroke:#B3CDD6; stroke-width:1; }
+      .navItem { fill:#FFFFFF; stroke:none; }
+      .navActive { fill:#D4E0E5; stroke:#6392AE; stroke-width:1; }
+      .btn { fill:#FFFFFF; stroke:#6392AE; stroke-width:1; }
+      .btnPri { fill:#6392AE; stroke:#28404F; stroke-width:1; }
+      .btnPriText { fill:#FFFFFF; font-weight:600; }
+      .muted { fill:#5A6E7A; font-size:11px; }
+      .title { font-size:18px; font-weight:600; }
+      .h1 { font-size:22px; font-weight:700; }
+      .h2 { font-size:14px; font-weight:600; }
+      .h3 { font-size:13px; font-weight:600; }
+      .divider { stroke:#B3CDD6; stroke-width:1; }
+      .input { fill:#FFFFFF; stroke:#6392AE; stroke-width:1; }
+      .session { fill:#F4F8FA; stroke:#6392AE; stroke-width:1; }
+      .ex { fill:#FFFFFF; stroke:#B3CDD6; stroke-width:1; }
+      .thumb { fill:#D4E0E5; stroke:#6392AE; stroke-width:1; }
+      .warn { fill:#FFF7E0; stroke:#B58900; stroke-width:1; }
+      .drag { fill:#FFFFFF; stroke:#5A6E7A; stroke-width:1; }
+    </style>
+  </defs>
+
+  <!-- ============ DESKTOP ============ -->
+  <g id="desktop-builder">
+    <text x="20" y="28" class="title">Desktop · 1280 px · Programme builder</text>
+    <rect x="20" y="40" width="1280" height="1180" class="bg"/>
+
+    <!-- Header & nav -->
+    <rect x="20" y="40" width="1280" height="64" class="panel"/>
+    <circle cx="56" cy="72" r="18" class="pale"/><text x="48" y="76" font-size="11">logo</text>
+    <text x="92" y="78" class="h2">Hello Buddy Admin</text>
+    <text x="1248" y="76" text-anchor="end">Nick G.</text>
+
+    <rect x="20" y="104" width="240" height="1116" class="panel"/>
+    <rect x="32" y="128" width="216" height="36" class="navItem"/><text x="48" y="151">Dashboard</text>
+    <rect x="32" y="172" width="216" height="36" class="navItem"/><text x="48" y="195">Owners</text>
+    <rect x="32" y="216" width="216" height="36" class="navItem"/><text x="48" y="239">Pets</text>
+    <rect x="32" y="260" width="216" height="36" class="navItem"/><text x="48" y="283">Treatment cases</text>
+    <rect x="32" y="304" width="216" height="36" class="navActive"/><text x="48" y="327">Programmes</text>
+    <rect x="32" y="348" width="216" height="36" class="navItem"/><text x="48" y="371">Exercise library</text>
+    <rect x="32" y="392" width="216" height="36" class="navItem"/><text x="48" y="415">Published PDFs</text>
+    <rect x="32" y="436" width="216" height="36" class="navItem"/><text x="48" y="459">Settings</text>
+    <line x1="32" y1="488" x2="248" y2="488" class="divider"/>
+    <text x="48" y="512" class="muted">Wizard steps</text>
+    <rect x="32" y="528" width="216" height="28" class="card"/><text x="48" y="547">1 · Details</text>
+    <rect x="32" y="560" width="216" height="28" class="navActive"/><text x="48" y="579">2 · Sessions &amp; exercises</text>
+    <rect x="32" y="592" width="216" height="28" class="card"/><text x="48" y="611">3 · Preview PDF</text>
+    <rect x="32" y="624" width="216" height="28" class="card"/><text x="48" y="643">4 · Publish</text>
+
+    <!-- Breadcrumb + title -->
+    <text x="284" y="126" class="muted">Cases / #2041 Bella · Post-op cruciate / Programme v3 (draft)</text>
+    <text x="284" y="154" class="h1">Programme builder · v3 draft</text>
+    <text x="284" y="174" class="muted">Bella · Mrs S. Patel · case #2041 · auto-saved 14:02</text>
+
+    <rect x="980" y="132" width="140" height="36" class="btn"/><text x="1018" y="156">Save draft</text>
+    <rect x="1136" y="132" width="144" height="36" class="btnPri"/><text x="1166" y="156" class="btnPriText">Preview PDF →</text>
+
+    <!-- Programme header strip -->
+    <rect x="284" y="196" width="996" height="84" class="pale"/>
+    <text x="304" y="222" class="muted">Programme title</text>
+    <text x="304" y="244" class="h3">Right hind cruciate post-op · weeks 4–8</text>
+    <text x="304" y="270" class="muted">Edit ✎</text>
+    <text x="624" y="222" class="muted">Start date</text>
+    <text x="624" y="244">26 April 2026</text>
+    <text x="780" y="222" class="muted">End date</text>
+    <text x="780" y="244">23 June 2026</text>
+    <text x="924" y="222" class="muted">Status</text>
+    <rect x="924" y="230" width="80" height="22" fill="#FFF7E0" stroke="#B58900"/><text x="936" y="245" class="muted">Draft</text>
+    <text x="1060" y="222" class="muted">Sessions</text>
+    <text x="1060" y="244">2 of 2 (AM, PM)</text>
+
+    <!-- Left rail: programme details + exercise library picker -->
+    <g id="left-rail">
+      <rect x="284" y="296" width="280" height="320" class="card"/>
+      <text x="304" y="320" class="h2">Programme details</text>
+      <line x1="284" y1="334" x2="564" y2="334" class="divider"/>
+      <text x="304" y="358" class="muted">Frequency</text>
+      <rect x="304" y="364" width="240" height="28" class="input"/><text x="312" y="384" class="muted">Daily ▾</text>
+      <text x="304" y="412" class="muted">Practitioner notes (owner-facing)</text>
+      <rect x="304" y="418" width="240" height="80" class="input"/>
+      <text x="312" y="438" class="muted">Keep sessions short. Watch for</text>
+      <text x="312" y="454" class="muted">swelling. Ice if needed…</text>
+      <text x="304" y="518" class="muted">Internal note (not on PDF)</text>
+      <rect x="304" y="524" width="240" height="60" class="input"/>
+
+      <rect x="284" y="636" width="280" height="480" class="card"/>
+      <text x="304" y="660" class="h2">Exercise picker</text>
+      <text x="496" y="660" class="muted">Session popup →</text>
+      <line x1="284" y1="674" x2="564" y2="674" class="divider"/>
+      <rect x="304" y="690" width="240" height="28" class="input"/><text x="312" y="710" class="muted">Search in popup…</text>
+      <rect x="304" y="726" width="120" height="22" class="card"/><text x="316" y="741" class="muted">Strength ▾</text>
+      <rect x="430" y="726" width="114" height="22" class="card"/><text x="442" y="741" class="muted">Has video ▾</text>
+
+      <g>
+        <rect x="304" y="760" width="240" height="64" class="ex"/>
+        <rect x="312" y="770" width="44" height="44" class="thumb"/>
+        <text x="364" y="788" class="h3">Sit-to-stand</text>
+        <text x="364" y="806" class="muted">Strength · video ✓</text>
+        <text x="500" y="794" class="muted">via popup</text>
+
+        <rect x="304" y="832" width="240" height="64" class="ex"/>
+        <rect x="312" y="842" width="44" height="44" class="thumb"/>
+        <text x="364" y="860" class="h3">Cavaletti walk</text>
+        <text x="364" y="878" class="muted">Proprio · video ✓</text>
+        <text x="500" y="866" class="muted">via popup</text>
+
+        <rect x="304" y="904" width="240" height="64" class="ex"/>
+        <rect x="312" y="914" width="44" height="44" class="thumb"/>
+        <text x="364" y="932" class="h3">Wobble cushion</text>
+        <text x="364" y="950" class="muted">Balance · video ✓</text>
+        <text x="500" y="938" class="muted">via popup</text>
+
+        <rect x="304" y="976" width="240" height="64" class="ex"/>
+        <rect x="312" y="986" width="44" height="44" class="thumb"/>
+        <text x="364" y="1004" class="h3">Slow lead walk</text>
+        <text x="364" y="1022" class="muted">Cardio · video ✓</text>
+        <text x="500" y="1010" class="muted">via popup</text>
+      </g>
+      <text x="304" y="1068" class="muted">Open the session popup to filter, tick, and confirm exercises</text>
+    </g>
+
+    <!-- Sessions column -->
+    <g id="sessions">
+      <!-- AM session -->
+      <rect x="584" y="296" width="696" height="360" class="session"/>
+      <text x="604" y="324" class="h2">AM session</text>
+      <text x="704" y="324" class="muted">2 exercises · ~12 min</text>
+      <text x="1088" y="325" class="muted">Drag ⋮⋮ to reorder</text>
+      <rect x="1188" y="306" width="80" height="28" class="btnPri"/><text x="1202" y="325" class="btnPriText">+ Pick</text>
+      <line x1="584" y1="340" x2="1280" y2="340" class="divider"/>
+      <text x="604" y="352" class="muted">Pick multiple in the popup, confirm, then drag them into order below.</text>
+
+      <!-- Exercise 1 -->
+      <g>
+        <rect x="604" y="368" width="660" height="128" class="ex"/>
+        <rect x="616" y="380" width="20" height="104" class="drag"/>
+        <text x="619" y="436" font-size="14">⋮⋮</text>
+        <rect x="644" y="380" width="80" height="80" class="thumb"/>
+        <text x="666" y="424">img</text>
+        <text x="644" y="477" class="muted">Video ▶</text>
+
+        <text x="744" y="398" class="h3">1 · Sit-to-stand</text>
+        <text x="744" y="418" class="muted">Strength · slow eccentric</text>
+        <text x="744" y="438" class="muted">Defaults prefilled from library record</text>
+
+        <text x="744" y="462" class="muted">Reps</text>
+        <rect x="780" y="448" width="50" height="22" class="input"/><text x="794" y="463">10</text>
+        <text x="844" y="462" class="muted">Sets</text>
+        <rect x="880" y="448" width="50" height="22" class="input"/><text x="894" y="463">3</text>
+        <text x="944" y="462" class="muted">Hold (s)</text>
+        <rect x="996" y="448" width="50" height="22" class="input"/><text x="1010" y="463">—</text>
+        <text x="1060" y="462" class="muted">Freq /day</text>
+        <rect x="1116" y="448" width="50" height="22" class="input"/><text x="1130" y="463">1</text>
+
+        <text x="744" y="490" class="muted">Note: pause if shifting weight off R hind</text>
+
+        <rect x="1140" y="370" width="40" height="28" class="btn"/><text x="1152" y="390">Alt</text>
+        <rect x="1184" y="370" width="40" height="28" class="btn"/><text x="1192" y="390">↑↓</text>
+        <rect x="1228" y="370" width="34" height="28" class="btn"/><text x="1240" y="390">✕</text>
+      </g>
+
+      <!-- Exercise 2 -->
+      <g>
+        <rect x="604" y="512" width="660" height="128" class="ex"/>
+        <rect x="616" y="524" width="20" height="104" class="drag"/>
+        <text x="619" y="580" font-size="14">⋮⋮</text>
+        <rect x="644" y="524" width="80" height="80" class="thumb"/>
+        <text x="666" y="568">img</text>
+        <text x="644" y="621" class="muted">Video ▶</text>
+
+        <text x="744" y="542" class="h3">2 · Cavaletti walk</text>
+        <text x="744" y="562" class="muted">Proprioception · low poles</text>
+        <text x="744" y="582" class="muted">Defaults prefilled from library record</text>
+
+        <text x="744" y="606" class="muted">Reps</text>
+        <rect x="780" y="592" width="50" height="22" class="input"/><text x="794" y="607">8</text>
+        <text x="844" y="606" class="muted">Sets</text>
+        <rect x="880" y="592" width="50" height="22" class="input"/><text x="894" y="607">2</text>
+        <text x="944" y="606" class="muted">Hold (s)</text>
+        <rect x="996" y="592" width="50" height="22" class="input"/><text x="1010" y="607">—</text>
+        <text x="1060" y="606" class="muted">Freq /day</text>
+        <rect x="1116" y="592" width="50" height="22" class="input"/><text x="1130" y="607">1</text>
+
+        <text x="744" y="634" class="muted">Note: keep pace slow, even rhythm</text>
+
+        <rect x="1140" y="514" width="40" height="28" class="btn"/><text x="1152" y="534">Alt</text>
+        <rect x="1184" y="514" width="40" height="28" class="btn"/><text x="1192" y="534">↑↓</text>
+        <rect x="1228" y="514" width="34" height="28" class="btn"/><text x="1240" y="534">✕</text>
+      </g>
+
+      <!-- PM session -->
+      <rect x="584" y="676" width="696" height="440" class="session"/>
+      <text x="604" y="704" class="h2">PM session</text>
+      <text x="704" y="704" class="muted">1 exercise · validation pending</text>
+      <rect x="900" y="690" width="120" height="22" class="warn"/><text x="916" y="705" class="muted">Missing exercise</text>
+      <text x="1088" y="705" class="muted">Drag ⋮⋮ to reorder</text>
+      <rect x="1188" y="686" width="80" height="28" class="btnPri"/><text x="1202" y="705" class="btnPriText">+ Pick</text>
+      <line x1="584" y1="720" x2="1280" y2="720" class="divider"/>
+      <text x="604" y="732" class="muted">Open the popup for this session, tick the exercises you want, confirm, then drag to reorder.</text>
+
+      <!-- Exercise -->
+      <g>
+        <rect x="604" y="748" width="660" height="128" class="ex"/>
+        <rect x="616" y="760" width="20" height="104" class="drag"/>
+        <text x="619" y="816" font-size="14">⋮⋮</text>
+        <rect x="644" y="760" width="80" height="80" class="thumb"/>
+        <text x="666" y="804">img</text>
+        <text x="644" y="857" class="muted">Video ⚠</text>
+
+        <text x="744" y="778" class="h3">1 · Wobble cushion (front paws)</text>
+        <text x="744" y="798" class="muted">Balance · short bouts</text>
+        <text x="744" y="818" class="muted">Defaults prefilled from library record</text>
+
+        <text x="744" y="842" class="muted">Reps</text>
+        <rect x="780" y="828" width="50" height="22" class="input"/><text x="794" y="843">—</text>
+        <text x="844" y="842" class="muted">Sets</text>
+        <rect x="880" y="828" width="50" height="22" class="input"/><text x="894" y="843">3</text>
+        <text x="944" y="842" class="muted">Hold (s)</text>
+        <rect x="996" y="828" width="50" height="22" class="input"/><text x="1010" y="843">20</text>
+        <text x="1060" y="842" class="muted">Freq /day</text>
+        <rect x="1116" y="828" width="50" height="22" class="input"/><text x="1130" y="843">1</text>
+
+        <text x="744" y="870" class="muted" fill="#B58900">⚠ Exercise has no video link — will block publish</text>
+
+        <rect x="1140" y="750" width="40" height="28" class="btn"/><text x="1152" y="770">Alt</text>
+        <rect x="1184" y="750" width="40" height="28" class="btn"/><text x="1192" y="770">↑↓</text>
+        <rect x="1228" y="750" width="34" height="28" class="btn"/><text x="1240" y="770">✕</text>
+      </g>
+
+      <!-- Empty slot placeholder -->
+      <g>
+        <rect x="604" y="880" width="660" height="80" class="card" stroke-dasharray="5 3"/>
+        <text x="864" y="924" class="muted">+ Drop or add second exercise</text>
+      </g>
+
+      <!-- Validation summary -->
+      <rect x="604" y="980" width="660" height="120" class="warn"/>
+      <text x="624" y="1006" class="h2">Validation (2 warnings)</text>
+      <text x="624" y="1030" class="muted">⚠ PM session has fewer than 2 exercises</text>
+      <text x="624" y="1050" class="muted">⚠ Wobble cushion (front paws) — video link missing</text>
+      <text x="624" y="1078" class="muted">Fix both warnings before publishing.</text>
+    </g>
+
+    <!-- Sticky bottom action bar -->
+    <rect x="260" y="1140" width="1040" height="60" class="panel"/>
+    <text x="284" y="1176">Auto-saved 14:02 · 3 exercises across 2 sessions</text>
+    <rect x="980" y="1152" width="140" height="36" class="btn"/><text x="1018" y="1176">Save draft</text>
+    <rect x="1136" y="1152" width="144" height="36" class="btnPri"/><text x="1166" y="1176" class="btnPriText">Preview PDF →</text>
+  </g>
+
+  <!-- ============ DESKTOP · multi-select exercise picker (modal) ============ -->
+  <!-- Triggered by "+ Exercise" on a session card. Closed by ✕, Cancel, Esc or click on dim layer. -->
+  <g id="desktop-picker-modal">
+    <!-- Dim layer over main content (nav stays usable per WCAG 2.4.3 focus order) -->
+    <rect x="260" y="104" width="1040" height="1116" fill="#28404F" fill-opacity="0.45"/>
+
+    <!-- Modal panel -->
+    <rect x="380" y="160" width="860" height="800" rx="6" fill="#FFFFFF" stroke="#28404F" stroke-width="1.5"/>
+
+    <!-- Modal header bar -->
+    <rect x="380" y="160" width="860" height="60" fill="#28404F"/>
+    <text x="400" y="187" fill="#FFFFFF" font-size="15" font-weight="700">Add exercises to AM session</text>
+    <text x="400" y="206" fill="#B3CDD6" font-size="11">Multi-select · tick exercises, confirm them into this session, then drag to reorder below if needed</text>
+    <rect x="1196" y="172" width="32" height="32" fill="#FFFFFF" stroke="#B3CDD6"/>
+    <text x="1208" y="194" fill="#28404F" font-weight="700">✕</text>
+
+    <!-- Filters row -->
+    <text x="400" y="248" class="muted">Search</text>
+    <rect x="400" y="254" width="320" height="32" class="input"/>
+    <text x="412" y="276" class="muted">Title, category or instruction text…</text>
+
+    <text x="744" y="248" class="muted">Category</text>
+    <rect x="744" y="258" width="56" height="28" fill="#D4E0E5" stroke="#6392AE"/><text x="762" y="277" class="muted">All</text>
+    <rect x="806" y="258" width="76" height="28" class="btn"/><text x="822" y="277" class="muted">Strength</text>
+    <rect x="888" y="258" width="72" height="28" class="btn"/><text x="902" y="277" class="muted">Balance</text>
+    <rect x="966" y="258" width="72" height="28" class="btn"/><text x="980" y="277" class="muted">Proprio</text>
+    <rect x="1044" y="258" width="64" height="28" class="btn"/><text x="1058" y="277" class="muted">Cardio</text>
+    <rect x="1114" y="258" width="86" height="28" class="btn"/><text x="1128" y="277" class="muted">Has video ▾</text>
+
+    <text x="400" y="310" class="muted">Sort</text>
+    <rect x="400" y="316" width="220" height="24" class="input"/>
+    <text x="412" y="333" class="muted">Most used in similar cases ▾</text>
+    <text x="1220" y="333" text-anchor="end" class="h3">3 selected</text>
+
+    <!-- Selected pills (click ✕ to deselect) -->
+    <rect x="400" y="352" width="170" height="28" rx="14" fill="#D4E0E5" stroke="#6392AE"/>
+    <text x="414" y="370">Sit-to-stand</text>
+    <text x="556" y="370">✕</text>
+
+    <rect x="580" y="352" width="176" height="28" rx="14" fill="#D4E0E5" stroke="#6392AE"/>
+    <text x="594" y="370">Cavaletti walk</text>
+    <text x="742" y="370">✕</text>
+
+    <rect x="766" y="352" width="196" height="28" rx="14" fill="#D4E0E5" stroke="#6392AE"/>
+    <text x="780" y="370">Wobble cushion</text>
+    <text x="948" y="370">✕</text>
+
+    <text x="1220" y="370" text-anchor="end" class="muted">Clear all</text>
+
+    <!-- List header -->
+    <line x1="380" y1="396" x2="1240" y2="396" class="divider"/>
+    <rect x="400" y="402" width="22" height="22" class="input"/>
+    <text x="402" y="418" class="muted">all</text>
+    <text x="448" y="418" class="muted">Exercise</text>
+    <text x="780" y="418" class="muted">Category</text>
+    <text x="900" y="418" class="muted">Video</text>
+    <text x="980" y="418" class="muted">Used in</text>
+    <text x="1100" y="418" class="muted">Default reps · sets</text>
+    <line x1="380" y1="432" x2="1240" y2="432" class="divider"/>
+
+    <!-- Row 1 SELECTED -->
+    <rect x="380" y="432" width="860" height="60" fill="#EEF4F7"/>
+    <rect x="400" y="450" width="22" height="22" fill="#6392AE" stroke="#28404F"/>
+    <text x="405" y="467" fill="#FFFFFF" font-weight="700">✓</text>
+    <rect x="436" y="444" width="36" height="36" class="thumb"/>
+    <text x="488" y="458" class="h3">Sit-to-stand</text>
+    <text x="488" y="476" class="muted">slow eccentric</text>
+    <text x="780" y="468" class="muted">Strength</text>
+    <text x="900" y="468" class="muted">▶ yes</text>
+    <text x="980" y="468" class="muted">14 programmes</text>
+    <text x="1100" y="468" class="muted">10 × 3</text>
+    <line x1="380" y1="492" x2="1240" y2="492" class="divider"/>
+
+    <!-- Row 2 SELECTED -->
+    <rect x="380" y="492" width="860" height="60" fill="#EEF4F7"/>
+    <rect x="400" y="510" width="22" height="22" fill="#6392AE" stroke="#28404F"/>
+    <text x="405" y="527" fill="#FFFFFF" font-weight="700">✓</text>
+    <rect x="436" y="504" width="36" height="36" class="thumb"/>
+    <text x="488" y="518" class="h3">Cavaletti walk</text>
+    <text x="488" y="536" class="muted">low poles, slow rhythm</text>
+    <text x="780" y="528" class="muted">Proprio</text>
+    <text x="900" y="528" class="muted">▶ yes</text>
+    <text x="980" y="528" class="muted">22 programmes</text>
+    <text x="1100" y="528" class="muted">8 × 2</text>
+    <line x1="380" y1="552" x2="1240" y2="552" class="divider"/>
+
+    <!-- Row 3 SELECTED -->
+    <rect x="380" y="552" width="860" height="60" fill="#EEF4F7"/>
+    <rect x="400" y="570" width="22" height="22" fill="#6392AE" stroke="#28404F"/>
+    <text x="405" y="587" fill="#FFFFFF" font-weight="700">✓</text>
+    <rect x="436" y="564" width="36" height="36" class="thumb"/>
+    <text x="488" y="578" class="h3">Wobble cushion (front paws)</text>
+    <text x="488" y="596" class="muted">short bouts, watch balance</text>
+    <text x="780" y="588" class="muted">Balance</text>
+    <text x="900" y="588" fill="#A33A3A">⚠ no</text>
+    <text x="980" y="588" class="muted">9 programmes</text>
+    <text x="1100" y="588" class="muted">— · 3 (hold 20s)</text>
+    <line x1="380" y1="612" x2="1240" y2="612" class="divider"/>
+
+    <!-- Row 4 -->
+    <rect x="400" y="630" width="22" height="22" class="input"/>
+    <rect x="436" y="624" width="36" height="36" class="thumb"/>
+    <text x="488" y="638" class="h3">Slow lead walk</text>
+    <text x="488" y="656" class="muted">controlled, no off-lead</text>
+    <text x="780" y="648" class="muted">Cardio</text>
+    <text x="900" y="648" class="muted">▶ yes</text>
+    <text x="980" y="648" class="muted">31 programmes</text>
+    <text x="1100" y="648" class="muted">15 min · 1</text>
+    <line x1="380" y1="672" x2="1240" y2="672" class="divider"/>
+
+    <!-- Row 5 -->
+    <rect x="400" y="690" width="22" height="22" class="input"/>
+    <rect x="436" y="684" width="36" height="36" class="thumb"/>
+    <text x="488" y="698" class="h3">Three-leg stand</text>
+    <text x="488" y="716" class="muted">hold &amp; release</text>
+    <text x="780" y="708" class="muted">Balance</text>
+    <text x="900" y="708" class="muted">▶ yes</text>
+    <text x="980" y="708" class="muted">6 programmes</text>
+    <text x="1100" y="708" class="muted">— · 3 (hold 15s)</text>
+    <line x1="380" y1="732" x2="1240" y2="732" class="divider"/>
+
+    <!-- Row 6 -->
+    <rect x="400" y="750" width="22" height="22" class="input"/>
+    <rect x="436" y="744" width="36" height="36" class="thumb"/>
+    <text x="488" y="758" class="h3">Figure-of-eight</text>
+    <text x="488" y="776" class="muted">wide arcs, slow</text>
+    <text x="780" y="768" class="muted">Proprio</text>
+    <text x="900" y="768" class="muted">▶ yes</text>
+    <text x="980" y="768" class="muted">18 programmes</text>
+    <text x="1100" y="768" class="muted">5 × 2</text>
+    <line x1="380" y1="792" x2="1240" y2="792" class="divider"/>
+
+    <!-- Row 7 -->
+    <rect x="400" y="810" width="22" height="22" class="input"/>
+    <rect x="436" y="804" width="36" height="36" class="thumb"/>
+    <text x="488" y="818" class="h3">Sit-to-down</text>
+    <text x="488" y="836" class="muted">controlled descent</text>
+    <text x="780" y="828" class="muted">Strength</text>
+    <text x="900" y="828" class="muted">▶ yes</text>
+    <text x="980" y="828" class="muted">11 programmes</text>
+    <text x="1100" y="828" class="muted">10 × 3</text>
+    <line x1="380" y1="852" x2="1240" y2="852" class="divider"/>
+
+    <!-- Pagination hint -->
+    <text x="400" y="878" class="muted">Showing 1–7 of 62 active exercises · scroll for more · ↑↓ to navigate · space to toggle</text>
+    <text x="1230" y="878" text-anchor="end" class="muted">⌄</text>
+
+    <!-- Footer -->
+    <line x1="380" y1="896" x2="1240" y2="896" class="divider"/>
+    <rect x="380" y="896" width="860" height="64" fill="#F4F8FA"/>
+    <text x="400" y="926" class="h3">3 selected · confirm add to AM, then drag them into order in the session</text>
+    <text x="400" y="946" class="muted">Reps, sets and hold pre-fill from each exercise's defaults and remain editable per session</text>
+    <rect x="980" y="912" width="100" height="36" class="btn"/>
+    <text x="1010" y="936">Cancel</text>
+    <rect x="1090" y="912" width="150" height="36" class="btnPri"/>
+    <text x="1106" y="936" class="btnPriText">Add 3 to AM →</text>
+  </g>
+
+  <!-- ============ MOBILE ============ -->
+  <g id="mobile-builder" transform="translate(1340, 0)">
+    <text x="0" y="28" class="title">Mobile · 360 px</text>
+    <rect x="0" y="40" width="360" height="1180" class="bg"/>
+
+    <rect x="0" y="40" width="360" height="56" class="panel"/>
+    <rect x="12" y="56" width="24" height="24" class="card"/><text x="18" y="73" font-size="11">←</text>
+    <text x="48" y="74" class="h2">Programme v3</text>
+    <rect x="312" y="56" width="36" height="24" class="card"/><text x="322" y="73" font-size="11">⋯</text>
+
+    <!-- Wizard progress -->
+    <rect x="0" y="96" width="360" height="32" class="pale"/>
+    <text x="12" y="116" class="muted">Step 2 of 4 · Sessions &amp; exercises</text>
+    <line x1="12" y1="124" x2="180" y2="124" stroke="#6392AE" stroke-width="3"/>
+    <line x1="180" y1="124" x2="348" y2="124" stroke="#B3CDD6" stroke-width="3"/>
+
+    <!-- Programme strip -->
+    <rect x="12" y="140" width="336" height="80" class="card"/>
+    <text x="24" y="162" class="h3">Right hind cruciate post-op</text>
+    <text x="24" y="180" class="muted">Bella · Case #2041</text>
+    <text x="24" y="200" class="muted">26 Apr → 23 Jun · daily</text>
+    <rect x="284" y="150" width="56" height="22" fill="#FFF7E0" stroke="#B58900"/><text x="296" y="165" class="muted">Draft</text>
+
+    <!-- AM session -->
+    <rect x="12" y="232" width="336" height="40" class="pale"/>
+    <text x="24" y="257" class="h2">AM session</text><text x="316" y="257">▾</text>
+
+    <!-- Exercise card mobile -->
+    <g>
+      <rect x="12" y="280" width="336" height="160" class="ex"/>
+      <rect x="24" y="292" width="60" height="60" class="thumb"/>
+      <text x="38" y="328">img</text>
+      <text x="96" y="308" class="h3">1 · Sit-to-stand</text>
+      <text x="96" y="326" class="muted">Strength · video ✓</text>
+
+      <text x="24" y="372" class="muted">Reps</text>
+      <rect x="60" y="358" width="40" height="22" class="input"/><text x="74" y="373">10</text>
+      <text x="112" y="372" class="muted">Sets</text>
+      <rect x="148" y="358" width="40" height="22" class="input"/><text x="162" y="373">3</text>
+      <text x="200" y="372" class="muted">Hold</text>
+      <rect x="234" y="358" width="40" height="22" class="input"/><text x="248" y="373">—</text>
+      <text x="284" y="372" class="muted">Freq</text>
+      <rect x="316" y="358" width="32" height="22" class="input"/><text x="328" y="373">1</text>
+
+      <text x="24" y="402" class="muted">Note: pause if weight shifts off R hind</text>
+
+      <rect x="220" y="412" width="36" height="22" class="btn"/><text x="232" y="427">Alt</text>
+      <rect x="260" y="412" width="36" height="22" class="btn"/><text x="268" y="427">↑↓</text>
+      <rect x="300" y="412" width="40" height="22" class="btn"/><text x="316" y="427">✕</text>
+    </g>
+
+    <g>
+      <rect x="12" y="448" width="336" height="160" class="ex"/>
+      <rect x="24" y="460" width="60" height="60" class="thumb"/>
+      <text x="38" y="496">img</text>
+      <text x="96" y="476" class="h3">2 · Cavaletti walk</text>
+      <text x="96" y="494" class="muted">Proprio · video ✓</text>
+      <text x="24" y="540" class="muted">8 × 2 sets · 1×/day</text>
+      <text x="24" y="570" class="muted">Note: slow even rhythm</text>
+      <rect x="220" y="580" width="36" height="22" class="btn"/><text x="232" y="595">Alt</text>
+      <rect x="260" y="580" width="36" height="22" class="btn"/><text x="268" y="595">↑↓</text>
+      <rect x="300" y="580" width="40" height="22" class="btn"/><text x="316" y="595">✕</text>
+    </g>
+
+    <rect x="12" y="616" width="336" height="40" class="btnPri"/>
+    <text x="118" y="640" class="btnPriText">+ Add exercise to AM</text>
+
+    <!-- PM session collapsed -->
+    <rect x="12" y="672" width="336" height="40" class="pale"/>
+    <text x="24" y="697" class="h2">PM session</text>
+    <rect x="180" y="678" width="100" height="28" class="warn"/><text x="194" y="697" class="muted">1 warning</text>
+    <text x="316" y="697">▸</text>
+
+    <!-- Validation warnings -->
+    <rect x="12" y="720" width="336" height="80" class="warn"/>
+    <text x="24" y="744" class="h3">⚠ 2 warnings</text>
+    <text x="24" y="764" class="muted">PM session has &lt; 2 exercises</text>
+    <text x="24" y="782" class="muted">Wobble cushion — no video link</text>
+
+    <!-- Sticky bottom action bar -->
+    <rect x="0" y="780" width="360" height="68" class="panel"/>
+    <rect x="12" y="794" width="140" height="40" class="btn"/>
+    <text x="44" y="818">Save draft</text>
+    <rect x="164" y="794" width="184" height="40" class="btnPri"/>
+    <text x="200" y="818" class="btnPriText">Preview PDF →</text>
+
+    <!-- Bottom tab bar -->
+    <rect x="0" y="848" width="360" height="56" class="panel"/>
+    <text x="20" y="882" font-size="11">Home</text>
+    <text x="86" y="882" font-size="11">Owners</text>
+    <text x="156" y="882" font-size="11">Cases</text>
+    <text x="220" y="882" font-size="11">Library</text>
+    <text x="288" y="882" font-size="11">Programmes</text>
+    <line x1="288" y1="892" x2="350" y2="892" stroke="#6392AE" stroke-width="2"/>
+  </g>
+
+  <!-- ============ MOBILE · full-screen exercise picker sheet ============ -->
+  <!-- Triggered by "+ Add exercise to AM". Sheet covers whole viewport; Cancel returns to builder. -->
+  <g id="mobile-picker-sheet" transform="translate(1340, 0)">
+    <!-- Sheet (full-screen on mobile) -->
+    <rect x="0" y="40" width="360" height="864" fill="#FFFFFF" stroke="#28404F"/>
+
+    <!-- Sheet header -->
+    <rect x="0" y="40" width="360" height="56" fill="#28404F"/>
+    <text x="12" y="74" fill="#B3CDD6" font-size="12">Cancel</text>
+    <text x="180" y="68" text-anchor="middle" fill="#FFFFFF" font-weight="700">Add to AM session</text>
+    <text x="180" y="86" text-anchor="middle" fill="#B3CDD6" font-size="11">3 selected · confirm then drag to reorder in session</text>
+    <rect x="288" y="52" width="60" height="32" fill="#6392AE" stroke="#28404F"/>
+    <text x="301" y="73" fill="#FFFFFF" font-weight="700">Add 3</text>
+
+    <!-- Search -->
+    <rect x="12" y="108" width="336" height="36" class="input"/>
+    <text x="24" y="131" class="muted">Search exercises…</text>
+
+    <!-- Category chips (wrap, no horizontal scroll) -->
+    <rect x="12" y="156" width="56" height="28" fill="#D4E0E5" stroke="#6392AE"/><text x="28" y="175" class="muted">All</text>
+    <rect x="76" y="156" width="72" height="28" class="btn"/><text x="92" y="175" class="muted">Strength</text>
+    <rect x="156" y="156" width="68" height="28" class="btn"/><text x="172" y="175" class="muted">Balance</text>
+    <rect x="232" y="156" width="64" height="28" class="btn"/><text x="248" y="175" class="muted">Proprio</text>
+    <rect x="304" y="156" width="44" height="28" class="btn"/><text x="316" y="175" class="muted">⋯</text>
+
+    <!-- Selected pills (tap ✕ to deselect) -->
+    <text x="12" y="208" class="muted">Selected · tap to remove, then confirm add</text>
+    <rect x="12" y="216" width="126" height="26" rx="13" fill="#D4E0E5" stroke="#6392AE"/>
+    <text x="22" y="233" font-size="11">Sit-to-stand ✕</text>
+    <rect x="144" y="216" width="130" height="26" rx="13" fill="#D4E0E5" stroke="#6392AE"/>
+    <text x="154" y="233" font-size="11">Cavaletti walk ✕</text>
+    <rect x="12" y="248" width="140" height="26" rx="13" fill="#D4E0E5" stroke="#6392AE"/>
+    <text x="22" y="265" font-size="11">Wobble cushion ✕</text>
+
+    <!-- List divider -->
+    <line x1="12" y1="286" x2="348" y2="286" class="divider"/>
+
+    <!-- Row 1 SELECTED -->
+    <rect x="0" y="286" width="360" height="60" fill="#EEF4F7"/>
+    <rect x="12" y="302" width="24" height="24" fill="#6392AE" stroke="#28404F"/>
+    <text x="17" y="320" fill="#FFFFFF" font-weight="700">✓</text>
+    <rect x="48" y="298" width="36" height="36" class="thumb"/>
+    <text x="96" y="312" class="h3">Sit-to-stand</text>
+    <text x="96" y="330" class="muted">Strength · ▶ video · 10 × 3</text>
+    <line x1="12" y1="346" x2="348" y2="346" class="divider"/>
+
+    <!-- Row 2 SELECTED -->
+    <rect x="0" y="346" width="360" height="60" fill="#EEF4F7"/>
+    <rect x="12" y="362" width="24" height="24" fill="#6392AE" stroke="#28404F"/>
+    <text x="17" y="380" fill="#FFFFFF" font-weight="700">✓</text>
+    <rect x="48" y="358" width="36" height="36" class="thumb"/>
+    <text x="96" y="372" class="h3">Cavaletti walk</text>
+    <text x="96" y="390" class="muted">Proprio · ▶ video · 8 × 2</text>
+    <line x1="12" y1="406" x2="348" y2="406" class="divider"/>
+
+    <!-- Row 3 SELECTED -->
+    <rect x="0" y="406" width="360" height="60" fill="#EEF4F7"/>
+    <rect x="12" y="422" width="24" height="24" fill="#6392AE" stroke="#28404F"/>
+    <text x="17" y="440" fill="#FFFFFF" font-weight="700">✓</text>
+    <rect x="48" y="418" width="36" height="36" class="thumb"/>
+    <text x="96" y="432" class="h3">Wobble cushion</text>
+    <text x="96" y="450" fill="#A33A3A" font-size="11">Balance · ⚠ no video · — × 3 (hold 20s)</text>
+    <line x1="12" y1="466" x2="348" y2="466" class="divider"/>
+
+    <!-- Row 4 -->
+    <rect x="12" y="482" width="24" height="24" class="input"/>
+    <rect x="48" y="478" width="36" height="36" class="thumb"/>
+    <text x="96" y="492" class="h3">Slow lead walk</text>
+    <text x="96" y="510" class="muted">Cardio · ▶ video · 15 min</text>
+    <line x1="12" y1="526" x2="348" y2="526" class="divider"/>
+
+    <!-- Row 5 -->
+    <rect x="12" y="542" width="24" height="24" class="input"/>
+    <rect x="48" y="538" width="36" height="36" class="thumb"/>
+    <text x="96" y="552" class="h3">Three-leg stand</text>
+    <text x="96" y="570" class="muted">Balance · ▶ video · 3 × hold 15s</text>
+    <line x1="12" y1="586" x2="348" y2="586" class="divider"/>
+
+    <!-- Row 6 -->
+    <rect x="12" y="602" width="24" height="24" class="input"/>
+    <rect x="48" y="598" width="36" height="36" class="thumb"/>
+    <text x="96" y="612" class="h3">Figure-of-eight</text>
+    <text x="96" y="630" class="muted">Proprio · ▶ video · 5 × 2</text>
+    <line x1="12" y1="646" x2="348" y2="646" class="divider"/>
+
+    <!-- Row 7 -->
+    <rect x="12" y="662" width="24" height="24" class="input"/>
+    <rect x="48" y="658" width="36" height="36" class="thumb"/>
+    <text x="96" y="672" class="h3">Sit-to-down</text>
+    <text x="96" y="690" class="muted">Strength · ▶ video · 10 × 3</text>
+    <line x1="12" y1="706" x2="348" y2="706" class="divider"/>
+
+    <text x="180" y="732" text-anchor="middle" class="muted">Scroll for more · 62 results</text>
+
+    <!-- Sticky bottom Add button (within thumb reach) -->
+    <rect x="0" y="792" width="360" height="56" fill="#FFFFFF" stroke="#6392AE"/>
+    <rect x="12" y="800" width="336" height="40" fill="#6392AE" stroke="#28404F"/>
+    <text x="180" y="824" text-anchor="middle" fill="#FFFFFF" font-weight="700">Add 3 exercises to AM →</text>
+  </g>
+
+  <text x="20" y="1232" class="muted">Layout-only · session add uses a multi-select picker popup/sheet with filters and tick selection · drag and drop is the primary reorder method · metadata prefills from exercise defaults but stays editable · non-drag reorder remains available for accessibility (WCAG 2.2 SC 2.5.7)</text>
+</svg>

@@ -108,10 +108,13 @@ The practitioner must be able to preview the PDF before publishing.
 
 The preview should:
 
+- render inside the admin preview page rather than as a separate downloadable draft file;
 - show the same structure as the final PDF;
 - highlight missing video links or missing prescription values;
 - allow the practitioner to return to editing;
 - prevent publishing if critical required fields are missing.
+
+The draft preview must not offer print or download actions before publish, to avoid confusion between a draft view and the final issued owner document.
 
 ## Validation rules
 

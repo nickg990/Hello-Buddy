@@ -1,0 +1,234 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1720 940" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#28404F">
+  <defs>
+    <style>
+      .bg { fill:#F4F8FA; }
+      .panel { fill:#FFFFFF; stroke:#6392AE; stroke-width:1; }
+      .card { fill:#FFFFFF; stroke:#B3CDD6; stroke-width:1; }
+      .pale { fill:#D4E0E5; stroke:#B3CDD6; stroke-width:1; }
+      .navItem { fill:#FFFFFF; stroke:none; }
+      .navActive { fill:#D4E0E5; stroke:#6392AE; stroke-width:1; }
+      .btn { fill:#FFFFFF; stroke:#6392AE; stroke-width:1; }
+      .btnPri { fill:#6392AE; stroke:#28404F; stroke-width:1; }
+      .btnPriText { fill:#FFFFFF; font-weight:600; }
+      .muted { fill:#5A6E7A; font-size:11px; }
+      .title { font-size:18px; font-weight:600; }
+      .h1 { font-size:22px; font-weight:700; }
+      .h2 { font-size:14px; font-weight:600; }
+      .h3 { font-size:13px; font-weight:600; }
+      .divider { stroke:#B3CDD6; stroke-width:1; }
+      .input { fill:#FFFFFF; stroke:#6392AE; stroke-width:1; }
+      .thumb { fill:#D4E0E5; stroke:#6392AE; stroke-width:1; }
+      .chip { fill:#FFFFFF; stroke:#6392AE; stroke-width:1; }
+      .chipActive { fill:#D4E0E5; stroke:#6392AE; stroke-width:1; }
+      .inactive { fill:#F4F8FA; stroke:#B3CDD6; stroke-width:1; }
+    </style>
+  </defs>
+
+  <!-- ============ DESKTOP ============ -->
+  <g id="desktop-library">
+    <text x="20" y="28" class="title">Desktop · 1280 px · Exercise library</text>
+    <rect x="20" y="40" width="1280" height="880" class="bg"/>
+
+    <!-- Header & nav -->
+    <rect x="20" y="40" width="1280" height="64" class="panel"/>
+    <circle cx="56" cy="72" r="18" class="pale"/><text x="48" y="76" font-size="11">logo</text>
+    <text x="92" y="78" class="h2">Hello Buddy Admin</text>
+    <text x="1248" y="76" text-anchor="end">Nick G.</text>
+
+    <rect x="20" y="104" width="240" height="816" class="panel"/>
+    <rect x="32" y="128" width="216" height="36" class="navItem"/><text x="48" y="151">Dashboard</text>
+    <rect x="32" y="172" width="216" height="36" class="navItem"/><text x="48" y="195">Owners</text>
+    <rect x="32" y="216" width="216" height="36" class="navItem"/><text x="48" y="239">Pets</text>
+    <rect x="32" y="260" width="216" height="36" class="navItem"/><text x="48" y="283">Treatment cases</text>
+    <rect x="32" y="304" width="216" height="36" class="navItem"/><text x="48" y="327">Programmes</text>
+    <rect x="32" y="348" width="216" height="36" class="navActive"/><text x="48" y="371">Exercise library</text>
+    <rect x="32" y="392" width="216" height="36" class="navItem"/><text x="48" y="415">Published PDFs</text>
+    <rect x="32" y="436" width="216" height="36" class="navItem"/><text x="48" y="459">Settings</text>
+
+    <!-- Breadcrumb + title -->
+    <text x="284" y="126" class="muted">Home / Exercise library</text>
+    <text x="284" y="154" class="h1">Exercise library</text>
+    <text x="284" y="174" class="muted">68 exercises · 62 with video · 5 inactive</text>
+    <rect x="1140" y="132" width="140" height="36" class="btnPri"/>
+    <text x="1170" y="156" class="btnPriText">+ New exercise</text>
+
+    <!-- Filter row -->
+    <g id="filters">
+      <rect x="284" y="196" width="996" height="64" class="card"/>
+      <text x="304" y="218" class="muted">Search</text>
+      <rect x="304" y="224" width="280" height="28" class="input"/>
+      <text x="312" y="244" class="muted">Title or instruction text…</text>
+
+      <text x="604" y="218" class="muted">Category</text>
+      <rect x="604" y="226" width="80" height="24" class="chipActive"/><text x="624" y="243" class="muted">All</text>
+      <rect x="690" y="226" width="84" height="24" class="chip"/><text x="706" y="243" class="muted">Strength</text>
+      <rect x="780" y="226" width="84" height="24" class="chip"/><text x="794" y="243" class="muted">Balance</text>
+      <rect x="870" y="226" width="84" height="24" class="chip"/><text x="884" y="243" class="muted">Proprio</text>
+      <rect x="960" y="226" width="84" height="24" class="chip"/><text x="976" y="243" class="muted">Cardio</text>
+
+      <text x="1060" y="218" class="muted">Has video</text>
+      <rect x="1060" y="226" width="80" height="24" class="chip"/><text x="1078" y="243" class="muted">Yes ▾</text>
+      <text x="1150" y="218" class="muted">Active</text>
+      <rect x="1150" y="226" width="80" height="24" class="chip"/><text x="1170" y="243" class="muted">Yes ▾</text>
+    </g>
+
+    <!-- Grid of exercise cards -->
+    <g id="grid">
+      <!-- Row 1 -->
+      <g>
+        <rect x="284" y="280" width="240" height="200" class="card"/>
+        <rect x="284" y="280" width="240" height="120" class="thumb"/>
+        <text x="382" y="346">img</text>
+        <text x="296" y="424" class="h3">Sit-to-stand</text>
+        <text x="296" y="442" class="muted">Strength · ▶ video · Active</text>
+        <text x="296" y="462" class="muted">Used in 14 programmes</text>
+      </g>
+      <g>
+        <rect x="540" y="280" width="240" height="200" class="card"/>
+        <rect x="540" y="280" width="240" height="120" class="thumb"/>
+        <text x="638" y="346">img</text>
+        <text x="552" y="424" class="h3">Cavaletti walk</text>
+        <text x="552" y="442" class="muted">Proprio · ▶ video · Active</text>
+        <text x="552" y="462" class="muted">Used in 22 programmes</text>
+      </g>
+      <g>
+        <rect x="796" y="280" width="240" height="200" class="card"/>
+        <rect x="796" y="280" width="240" height="120" class="thumb"/>
+        <text x="894" y="346">img</text>
+        <text x="808" y="424" class="h3">Wobble cushion</text>
+        <text x="808" y="442" class="muted">Balance · ⚠ no video · Active</text>
+        <text x="808" y="462" class="muted">Used in 9 programmes</text>
+      </g>
+      <g>
+        <rect x="1052" y="280" width="228" height="200" class="card"/>
+        <rect x="1052" y="280" width="228" height="120" class="thumb"/>
+        <text x="1144" y="346">img</text>
+        <text x="1064" y="424" class="h3">Slow lead walk</text>
+        <text x="1064" y="442" class="muted">Cardio · ▶ video · Active</text>
+        <text x="1064" y="462" class="muted">Used in 31 programmes</text>
+      </g>
+
+      <!-- Row 2 -->
+      <g>
+        <rect x="284" y="496" width="240" height="200" class="card"/>
+        <rect x="284" y="496" width="240" height="120" class="thumb"/>
+        <text x="382" y="562">img</text>
+        <text x="296" y="640" class="h3">Three-leg stand</text>
+        <text x="296" y="658" class="muted">Balance · ▶ video · Active</text>
+        <text x="296" y="678" class="muted">Used in 6 programmes</text>
+      </g>
+      <g>
+        <rect x="540" y="496" width="240" height="200" class="card"/>
+        <rect x="540" y="496" width="240" height="120" class="thumb"/>
+        <text x="638" y="562">img</text>
+        <text x="552" y="640" class="h3">Figure-of-eight</text>
+        <text x="552" y="658" class="muted">Proprio · ▶ video · Active</text>
+        <text x="552" y="678" class="muted">Used in 18 programmes</text>
+      </g>
+      <g>
+        <rect x="796" y="496" width="240" height="200" class="card"/>
+        <rect x="796" y="496" width="240" height="120" class="thumb"/>
+        <text x="894" y="562">img</text>
+        <text x="808" y="640" class="h3">Sit-to-down</text>
+        <text x="808" y="658" class="muted">Strength · ▶ video · Active</text>
+        <text x="808" y="678" class="muted">Used in 11 programmes</text>
+      </g>
+      <g>
+        <rect x="1052" y="496" width="228" height="200" class="inactive"/>
+        <rect x="1052" y="496" width="228" height="120" class="thumb"/>
+        <text x="1144" y="562">img</text>
+        <text x="1064" y="640" class="h3" fill="#5A6E7A">Step-ups (low)</text>
+        <text x="1064" y="658" class="muted">Strength · ▶ video · Inactive</text>
+        <text x="1064" y="678" class="muted">Used in 0 active programmes</text>
+      </g>
+    </g>
+
+    <!-- Pagination -->
+    <line x1="284" y1="724" x2="1280" y2="724" class="divider"/>
+    <text x="284" y="750" class="muted">Showing 1–8 of 68</text>
+    <rect x="1100" y="732" width="40" height="28" class="btn"/><text x="1115" y="751">‹</text>
+    <rect x="1144" y="732" width="40" height="28" class="navActive"/><text x="1159" y="751">1</text>
+    <rect x="1188" y="732" width="40" height="28" class="btn"/><text x="1203" y="751">2</text>
+    <rect x="1232" y="732" width="40" height="28" class="btn"/><text x="1247" y="751">›</text>
+  </g>
+
+  <!-- ============ MOBILE ============ -->
+  <g id="mobile-library" transform="translate(1340, 0)">
+    <text x="0" y="28" class="title">Mobile · 360 px</text>
+    <rect x="0" y="40" width="360" height="880" class="bg"/>
+
+    <rect x="0" y="40" width="360" height="56" class="panel"/>
+    <rect x="12" y="56" width="24" height="24" class="card"/><text x="18" y="73" font-size="11">≡</text>
+    <text x="48" y="74" class="h2">Exercise library</text>
+    <rect x="312" y="56" width="36" height="24" class="btnPri"/><text x="324" y="73" class="btnPriText" font-size="14">+</text>
+
+    <!-- Search -->
+    <rect x="12" y="108" width="336" height="36" class="input"/>
+    <text x="24" y="131" class="muted">Search exercises…</text>
+
+    <!-- Category chips (horizontal but ≤ 360 wraps) -->
+    <rect x="12" y="152" width="56" height="28" class="chipActive"/><text x="28" y="171" class="muted">All</text>
+    <rect x="76" y="152" width="76" height="28" class="chip"/><text x="92" y="171" class="muted">Strength</text>
+    <rect x="160" y="152" width="72" height="28" class="chip"/><text x="174" y="171" class="muted">Balance</text>
+    <rect x="240" y="152" width="68" height="28" class="chip"/><text x="252" y="171" class="muted">Proprio</text>
+    <rect x="316" y="152" width="32" height="28" class="chip"/><text x="328" y="171" class="muted">⋯</text>
+
+    <text x="16" y="208" class="muted">68 exercises</text>
+
+    <!-- Stacked exercise cards (same partial, single-column on mobile) -->
+    <g>
+      <rect x="12" y="220" width="336" height="80" class="card"/>
+      <rect x="20" y="228" width="64" height="64" class="thumb"/>
+      <text x="36" y="262">img</text>
+      <text x="96" y="244" class="h3">Sit-to-stand</text>
+      <text x="96" y="262" class="muted">Strength · ▶ video</text>
+      <text x="96" y="280" class="muted">Used in 14 programmes</text>
+
+      <rect x="12" y="308" width="336" height="80" class="card"/>
+      <rect x="20" y="316" width="64" height="64" class="thumb"/>
+      <text x="36" y="350">img</text>
+      <text x="96" y="332" class="h3">Cavaletti walk</text>
+      <text x="96" y="350" class="muted">Proprio · ▶ video</text>
+      <text x="96" y="368" class="muted">Used in 22 programmes</text>
+
+      <rect x="12" y="396" width="336" height="80" class="card"/>
+      <rect x="20" y="404" width="64" height="64" class="thumb"/>
+      <text x="36" y="438">img</text>
+      <text x="96" y="420" class="h3">Wobble cushion</text>
+      <text x="96" y="438" class="muted" fill="#A33A3A">Balance · ⚠ no video</text>
+      <text x="96" y="456" class="muted">Used in 9 programmes</text>
+
+      <rect x="12" y="484" width="336" height="80" class="card"/>
+      <rect x="20" y="492" width="64" height="64" class="thumb"/>
+      <text x="36" y="526">img</text>
+      <text x="96" y="508" class="h3">Slow lead walk</text>
+      <text x="96" y="526" class="muted">Cardio · ▶ video</text>
+      <text x="96" y="544" class="muted">Used in 31 programmes</text>
+
+      <rect x="12" y="572" width="336" height="80" class="card"/>
+      <rect x="20" y="580" width="64" height="64" class="thumb"/>
+      <text x="36" y="614">img</text>
+      <text x="96" y="596" class="h3">Three-leg stand</text>
+      <text x="96" y="614" class="muted">Balance · ▶ video</text>
+      <text x="96" y="632" class="muted">Used in 6 programmes</text>
+    </g>
+
+    <rect x="12" y="660" width="336" height="40" class="btn"/>
+    <text x="148" y="684">Load more</text>
+
+    <!-- FAB -->
+    <circle cx="320" cy="800" r="28" class="btnPri"/>
+    <text x="312" y="807" class="btnPriText" font-size="24">+</text>
+
+    <!-- Bottom tab bar -->
+    <rect x="0" y="848" width="360" height="56" class="panel"/>
+    <text x="20" y="882" font-size="11">Home</text>
+    <text x="86" y="882" font-size="11">Owners</text>
+    <text x="156" y="882" font-size="11">Cases</text>
+    <text x="220" y="882" font-size="11">Library</text>
+    <text x="288" y="882" font-size="11">Programmes</text>
+    <line x1="220" y1="892" x2="258" y2="892" stroke="#6392AE" stroke-width="2"/>
+  </g>
+
+  <text x="20" y="932" class="muted">Layout-only · responsive grid: 4-col (desktop) · 2-col (tablet, not shown) · single column cards (mobile)</text>
+</svg>

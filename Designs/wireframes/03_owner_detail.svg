@@ -1,0 +1,212 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1720 1060" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#28404F">
+  <defs>
+    <style>
+      .bg { fill:#F4F8FA; }
+      .panel { fill:#FFFFFF; stroke:#6392AE; stroke-width:1; }
+      .card { fill:#FFFFFF; stroke:#B3CDD6; stroke-width:1; }
+      .pale { fill:#D4E0E5; stroke:#B3CDD6; stroke-width:1; }
+      .navItem { fill:#FFFFFF; stroke:none; }
+      .navActive { fill:#D4E0E5; stroke:#6392AE; stroke-width:1; }
+      .btn { fill:#FFFFFF; stroke:#6392AE; stroke-width:1; }
+      .btnPri { fill:#6392AE; stroke:#28404F; stroke-width:1; }
+      .btnPriText { fill:#FFFFFF; font-weight:600; }
+      .muted { fill:#5A6E7A; font-size:11px; }
+      .title { font-size:18px; font-weight:600; }
+      .h1 { font-size:22px; font-weight:700; }
+      .h2 { font-size:14px; font-weight:600; }
+      .divider { stroke:#B3CDD6; stroke-width:1; }
+      .tabActive { fill:#FFFFFF; stroke:#6392AE; stroke-width:1; }
+      .tabIdle { fill:#F4F8FA; stroke:#B3CDD6; stroke-width:1; }
+      .underline { stroke:#6392AE; stroke-width:3; }
+    </style>
+  </defs>
+
+  <!-- ============ DESKTOP ============ -->
+  <g id="desktop-owner-detail">
+    <text x="20" y="28" class="title">Desktop · 1280 px · Owner detail (tabbed)</text>
+    <rect x="20" y="40" width="1280" height="1000" class="bg"/>
+
+    <!-- Header -->
+    <rect x="20" y="40" width="1280" height="64" class="panel"/>
+    <circle cx="56" cy="72" r="18" class="pale"/><text x="48" y="76" font-size="11">logo</text>
+    <text x="92" y="78" class="h2">Hello Buddy Admin</text>
+    <text x="1248" y="76" text-anchor="end">Nick G.</text>
+
+    <!-- Nav -->
+    <rect x="20" y="104" width="240" height="936" class="panel"/>
+    <rect x="32" y="128" width="216" height="36" class="navItem"/><text x="48" y="151">Dashboard</text>
+    <rect x="32" y="172" width="216" height="36" class="navActive"/><text x="48" y="195">Owners</text>
+    <rect x="32" y="216" width="216" height="36" class="navItem"/><text x="48" y="239">Pets</text>
+    <rect x="32" y="260" width="216" height="36" class="navItem"/><text x="48" y="283">Treatment cases</text>
+    <rect x="32" y="304" width="216" height="36" class="navItem"/><text x="48" y="327">Programmes</text>
+    <rect x="32" y="348" width="216" height="36" class="navItem"/><text x="48" y="371">Exercise library</text>
+    <rect x="32" y="392" width="216" height="36" class="navItem"/><text x="48" y="415">Published PDFs</text>
+    <rect x="32" y="436" width="216" height="36" class="navItem"/><text x="48" y="459">Settings</text>
+
+    <!-- Breadcrumb + title -->
+    <text x="284" y="126" class="muted">Home / Owners / Mrs S. Patel</text>
+    <text x="284" y="154" class="h1">Mrs S. Patel</text>
+    <text x="284" y="174" class="muted">Owner #481 · created 12 Jan 2025 · last updated 2h ago</text>
+
+    <rect x="1040" y="132" width="100" height="36" class="btn"/><text x="1066" y="156">Edit owner</text>
+    <rect x="1156" y="132" width="124" height="36" class="btnPri"/><text x="1176" y="156" class="btnPriText">+ Add pet</text>
+
+    <!-- Tabs -->
+    <g id="tabs">
+      <rect x="284" y="196" width="120" height="36" class="tabActive"/>
+      <text x="320" y="219">Contact</text>
+      <line x1="284" y1="232" x2="404" y2="232" class="underline"/>
+      <rect x="408" y="196" width="120" height="36" class="tabIdle"/>
+      <text x="446" y="219">Pets (2)</text>
+      <rect x="532" y="196" width="120" height="36" class="tabIdle"/>
+      <text x="568" y="219">Cases (3)</text>
+      <rect x="656" y="196" width="120" height="36" class="tabIdle"/>
+      <text x="694" y="219">Documents</text>
+      <line x1="284" y1="232" x2="1280" y2="232" class="divider"/>
+    </g>
+
+    <!-- Contact section (active tab) -->
+    <g id="contact-panel">
+      <rect x="284" y="252" width="616" height="320" class="card"/>
+      <text x="304" y="280" class="h2">Contact details</text>
+      <text x="1158" y="280" class="muted">Edit ✎</text>
+      <line x1="284" y1="294" x2="900" y2="294" class="divider"/>
+
+      <text x="304" y="324" class="muted">Full name</text>
+      <text x="304" y="346">Mrs Sarah Patel</text>
+
+      <text x="304" y="378" class="muted">Email</text>
+      <text x="304" y="400">sarah.patel@example.com</text>
+
+      <text x="304" y="432" class="muted">Phone (mobile)</text>
+      <text x="304" y="454">07712 555 112</text>
+
+      <text x="600" y="324" class="muted">Address</text>
+      <text x="600" y="346">14 Birch Lane</text>
+      <text x="600" y="364">Hertford</text>
+      <text x="600" y="382">SG14 2RT</text>
+
+      <text x="600" y="432" class="muted">Preferred contact</text>
+      <text x="600" y="454">WhatsApp</text>
+
+      <text x="304" y="496" class="muted">GDPR consent</text>
+      <text x="304" y="518">Granted 12 Jan 2025 · review due Jan 2026</text>
+      <rect x="304" y="534" width="160" height="28" class="btn"/><text x="320" y="553" class="muted">View consent record</text>
+    </g>
+
+    <!-- Side rail: pets summary + activity -->
+    <g id="side">
+      <rect x="920" y="252" width="360" height="160" class="card"/>
+      <text x="940" y="280" class="h2">Pets</text>
+      <text x="1240" y="280" class="muted">All →</text>
+      <line x1="920" y1="294" x2="1280" y2="294" class="divider"/>
+      <circle cx="952" cy="324" r="14" class="pale"/>
+      <text x="976" y="320">Bella · Labrador · 7y</text>
+      <text x="976" y="338" class="muted">1 active case</text>
+      <circle cx="952" cy="378" r="14" class="pale"/>
+      <text x="976" y="374">Murphy · Cocker · 4y</text>
+      <text x="976" y="392" class="muted">1 active case</text>
+
+      <rect x="920" y="424" width="360" height="148" class="card"/>
+      <text x="940" y="452" class="h2">Recent activity</text>
+      <line x1="920" y1="466" x2="1280" y2="466" class="divider"/>
+      <text x="940" y="490" class="muted">2h ago · case note added (Bella)</text>
+      <text x="940" y="510" class="muted">Yesterday · programme v3 draft started</text>
+      <text x="940" y="530" class="muted">3d ago · pet record updated (Murphy)</text>
+      <text x="940" y="550" class="muted">12 Jan · owner created</text>
+    </g>
+
+    <!-- Lower: linked cases preview -->
+    <g id="cases-preview">
+      <rect x="284" y="592" width="996" height="424" class="card"/>
+      <text x="304" y="620" class="h2">Treatment cases linked through pets</text>
+      <text x="1244" y="620" class="muted">Open Cases tab →</text>
+      <line x1="284" y1="634" x2="1280" y2="634" class="divider"/>
+      <!-- Case row -->
+      <g>
+        <rect x="304" y="654" width="956" height="100" fill="none" stroke="none"/>
+        <text x="304" y="680" class="h2">Bella · Post-op cruciate</text>
+        <text x="304" y="700" class="muted">Case #2041 · opened 4 Apr · last note 2h ago · current programme v2 (published)</text>
+        <rect x="304" y="712" width="60" height="22" class="pale"/><text x="316" y="727" class="muted">Active</text>
+        <rect x="372" y="712" width="100" height="22" class="card"/><text x="386" y="727" class="muted">Review due Fri</text>
+        <rect x="1160" y="700" width="100" height="32" class="btn"/><text x="1186" y="720">Open case</text>
+        <line x1="304" y1="770" x2="1260" y2="770" class="divider"/>
+      </g>
+      <g>
+        <text x="304" y="800" class="h2">Murphy · Hip dysplasia</text>
+        <text x="304" y="820" class="muted">Case #2039 · opened 18 Mar · last note yesterday · current programme v4 (published)</text>
+        <rect x="304" y="832" width="60" height="22" class="pale"/><text x="316" y="847" class="muted">Active</text>
+        <rect x="1160" y="820" width="100" height="32" class="btn"/><text x="1186" y="840">Open case</text>
+        <line x1="304" y1="890" x2="1260" y2="890" class="divider"/>
+      </g>
+      <g>
+        <text x="304" y="920" class="h2">Bella · Soft tissue strain (2024)</text>
+        <text x="304" y="940" class="muted">Case #1907 · closed 8 Oct 2024 · outcome: recovered</text>
+        <rect x="304" y="952" width="70" height="22" class="card"/><text x="316" y="967" class="muted">Closed</text>
+        <rect x="1160" y="940" width="100" height="32" class="btn"/><text x="1186" y="960">View case</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- ============ MOBILE ============ -->
+  <g id="mobile-owner-detail" transform="translate(1340, 0)">
+    <text x="0" y="28" class="title">Mobile · 360 px</text>
+    <rect x="0" y="40" width="360" height="1000" class="bg"/>
+
+    <rect x="0" y="40" width="360" height="56" class="panel"/>
+    <rect x="12" y="56" width="24" height="24" class="card"/><text x="18" y="73" font-size="11">←</text>
+    <text x="48" y="74" class="h2">Mrs S. Patel</text>
+    <rect x="312" y="56" width="36" height="24" class="card"/><text x="322" y="73" font-size="11">⋯</text>
+
+    <text x="16" y="120" class="muted">Owner #481 · 2 pets · 2 active cases</text>
+
+    <!-- Tabs collapse to accordion ( >3 tabs ) per §8 -->
+    <g id="accordion">
+      <rect x="12" y="136" width="336" height="40" class="tabActive"/>
+      <text x="28" y="161" class="h2">Contact</text>
+      <text x="328" y="161">▾</text>
+
+      <!-- Contact panel content -->
+      <rect x="12" y="176" width="336" height="260" class="card"/>
+      <text x="28" y="200" class="muted">Full name</text>
+      <text x="28" y="220">Mrs Sarah Patel</text>
+      <text x="28" y="248" class="muted">Email</text>
+      <text x="28" y="268">sarah.patel@example.com</text>
+      <text x="28" y="296" class="muted">Phone</text>
+      <text x="28" y="316">07712 555 112</text>
+      <text x="28" y="344" class="muted">Address</text>
+      <text x="28" y="364">14 Birch Lane, Hertford SG14 2RT</text>
+      <text x="28" y="392" class="muted">GDPR consent</text>
+      <text x="28" y="412">Granted 12 Jan 2025</text>
+
+      <rect x="12" y="448" width="336" height="40" class="tabIdle"/>
+      <text x="28" y="473" class="h2">Pets (2)</text><text x="328" y="473">▸</text>
+
+      <rect x="12" y="496" width="336" height="40" class="tabIdle"/>
+      <text x="28" y="521" class="h2">Cases (3)</text><text x="328" y="521">▸</text>
+
+      <rect x="12" y="544" width="336" height="40" class="tabIdle"/>
+      <text x="28" y="569" class="h2">Documents</text><text x="328" y="569">▸</text>
+    </g>
+
+    <text x="16" y="616" class="h2">Quick actions</text>
+    <rect x="12" y="628" width="336" height="40" class="btnPri"/>
+    <text x="132" y="652" class="btnPriText">+ Add pet</text>
+    <rect x="12" y="676" width="336" height="40" class="btn"/>
+    <text x="146" y="700">Edit owner</text>
+    <rect x="12" y="724" width="336" height="40" class="btn"/>
+    <text x="118" y="748">+ New treatment case</text>
+
+    <!-- Sticky bottom bar would hold primary action; here secondary actions inline -->
+
+    <rect x="0" y="848" width="360" height="56" class="panel"/>
+    <text x="20" y="882" font-size="11">Home</text>
+    <text x="86" y="882" font-size="11">Owners</text>
+    <text x="156" y="882" font-size="11">Cases</text>
+    <text x="220" y="882" font-size="11">Library</text>
+    <text x="288" y="882" font-size="11">Programmes</text>
+    <line x1="86" y1="892" x2="124" y2="892" stroke="#6392AE" stroke-width="2"/>
+  </g>
+
+  <text x="20" y="1052" class="muted">Layout-only · §8 tabs as facets of one record · accordion at &lt;3 tabs visible on mobile</text>
+</svg>

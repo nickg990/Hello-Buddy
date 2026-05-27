@@ -1,0 +1,200 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1720 1140" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#28404F">
+  <defs>
+    <style>
+      .bg { fill:#F4F8FA; }
+      .panel { fill:#FFFFFF; stroke:#6392AE; stroke-width:1; }
+      .card { fill:#FFFFFF; stroke:#B3CDD6; stroke-width:1; }
+      .pale { fill:#D4E0E5; stroke:#B3CDD6; stroke-width:1; }
+      .navItem { fill:#FFFFFF; stroke:none; }
+      .navActive { fill:#D4E0E5; stroke:#6392AE; stroke-width:1; }
+      .btn { fill:#FFFFFF; stroke:#6392AE; stroke-width:1; }
+      .btnPri { fill:#6392AE; stroke:#28404F; stroke-width:1; }
+      .btnPriText { fill:#FFFFFF; font-weight:600; }
+      .muted { fill:#5A6E7A; font-size:11px; }
+      .title { font-size:18px; font-weight:600; }
+      .h1 { font-size:22px; font-weight:700; }
+      .h2 { font-size:14px; font-weight:600; }
+      .divider { stroke:#B3CDD6; stroke-width:1; }
+      .tabActive { fill:#FFFFFF; stroke:#6392AE; stroke-width:1; }
+      .tabIdle { fill:#F4F8FA; stroke:#B3CDD6; stroke-width:1; }
+      .underline { stroke:#6392AE; stroke-width:3; }
+      .warn { fill:#FFF7E0; stroke:#B58900; stroke-width:1; }
+    </style>
+  </defs>
+
+  <!-- ============ DESKTOP ============ -->
+  <g id="desktop-case-detail">
+    <text x="20" y="28" class="title">Desktop · 1280 px · Treatment case detail (tabbed)</text>
+    <rect x="20" y="40" width="1280" height="1080" class="bg"/>
+
+    <!-- Header & nav (shared shell) -->
+    <rect x="20" y="40" width="1280" height="64" class="panel"/>
+    <circle cx="56" cy="72" r="18" class="pale"/><text x="48" y="76" font-size="11">logo</text>
+    <text x="92" y="78" class="h2">Hello Buddy Admin</text>
+    <text x="1248" y="76" text-anchor="end">Nick G.</text>
+
+    <rect x="20" y="104" width="240" height="1016" class="panel"/>
+    <rect x="32" y="128" width="216" height="36" class="navItem"/><text x="48" y="151">Dashboard</text>
+    <rect x="32" y="172" width="216" height="36" class="navItem"/><text x="48" y="195">Owners</text>
+    <rect x="32" y="216" width="216" height="36" class="navItem"/><text x="48" y="239">Pets</text>
+    <rect x="32" y="260" width="216" height="36" class="navActive"/><text x="48" y="283">Treatment cases</text>
+    <rect x="32" y="304" width="216" height="36" class="navItem"/><text x="48" y="327">Programmes</text>
+    <rect x="32" y="348" width="216" height="36" class="navItem"/><text x="48" y="371">Exercise library</text>
+    <rect x="32" y="392" width="216" height="36" class="navItem"/><text x="48" y="415">Published PDFs</text>
+    <rect x="32" y="436" width="216" height="36" class="navItem"/><text x="48" y="459">Settings</text>
+
+    <!-- Breadcrumb + title -->
+    <text x="284" y="126" class="muted">Home / Treatment cases / #2041 · Bella · Post-op cruciate</text>
+    <text x="284" y="154" class="h1">Bella · Post-op cruciate</text>
+    <text x="284" y="174" class="muted">Case #2041 · Mrs S. Patel · opened 4 Apr · practitioner: N. Gilbert · status: Active · review due Fri</text>
+
+    <rect x="1040" y="132" width="100" height="36" class="btn"/><text x="1056" y="156">+ Add note</text>
+    <rect x="1156" y="132" width="124" height="36" class="btnPri"/><text x="1168" y="156" class="btnPriText">+ New programme</text>
+
+    <!-- Tabs -->
+    <g id="case-tabs">
+      <rect x="284" y="196" width="120" height="36" class="tabActive"/>
+      <text x="318" y="219">Summary</text>
+      <line x1="284" y1="232" x2="404" y2="232" class="underline"/>
+      <rect x="408" y="196" width="120" height="36" class="tabIdle"/>
+      <text x="444" y="219">Notes (7)</text>
+      <rect x="532" y="196" width="160" height="36" class="tabIdle"/>
+      <text x="568" y="219">Programme (v2)</text>
+      <rect x="696" y="196" width="120" height="36" class="tabIdle"/>
+      <text x="730" y="219">History</text>
+      <line x1="284" y1="232" x2="1280" y2="232" class="divider"/>
+    </g>
+
+    <!-- Summary tab content -->
+    <g id="case-summary">
+      <!-- Case meta card -->
+      <rect x="284" y="252" width="616" height="280" class="card"/>
+      <text x="304" y="280" class="h2">Case summary</text>
+      <text x="1158" y="280" class="muted">Edit ✎</text>
+      <line x1="284" y1="294" x2="900" y2="294" class="divider"/>
+      <text x="304" y="324" class="muted">Presenting condition</text>
+      <text x="304" y="346">Post-op cranial cruciate ligament repair, right hind</text>
+      <text x="304" y="376" class="muted">Surgery date</text>
+      <text x="304" y="396">28 March 2026</text>
+      <text x="600" y="324" class="muted">Goals</text>
+      <text x="600" y="346">Restore full weight-bearing, return to off-lead</text>
+      <text x="600" y="366">walks by 12 weeks post-op</text>
+      <text x="304" y="430" class="muted">Practitioner</text>
+      <text x="304" y="450">Nick Gilbert</text>
+      <text x="600" y="430" class="muted">Status</text>
+      <rect x="600" y="436" width="60" height="22" class="pale"/><text x="612" y="451" class="muted">Active</text>
+      <text x="304" y="494" class="muted">Linked owner</text>
+      <text x="304" y="514">Mrs S. Patel → open owner</text>
+      <text x="600" y="494" class="muted">Linked pet</text>
+      <text x="600" y="514">Bella · Labrador · 7y → open pet</text>
+
+      <!-- Active programme card -->
+      <rect x="920" y="252" width="360" height="280" class="card"/>
+      <text x="940" y="280" class="h2">Active programme</text>
+      <line x1="920" y1="294" x2="1280" y2="294" class="divider"/>
+      <text x="940" y="320">Programme v2 (published)</text>
+      <text x="940" y="340" class="muted">Published 22 Apr · 4 sessions · 11 exercises</text>
+      <rect x="940" y="358" width="80" height="22" class="pale"/><text x="954" y="373" class="muted">Published</text>
+      <line x1="940" y1="398" x2="1260" y2="398" class="divider"/>
+      <text x="940" y="424" class="muted">Draft in progress</text>
+      <text x="940" y="446">v3 draft · 3 of 4 sessions populated</text>
+      <rect x="940" y="464" width="140" height="32" class="btn"/><text x="966" y="484">Resume draft</text>
+      <rect x="1090" y="464" width="170" height="32" class="btnPri"/><text x="1108" y="484" class="btnPriText">+ New version from v2</text>
+      <line x1="940" y1="510" x2="1260" y2="510" class="divider"/>
+    </g>
+
+    <!-- Notes timeline preview -->
+    <g id="case-notes-preview">
+      <rect x="284" y="552" width="996" height="460" class="card"/>
+      <text x="304" y="580" class="h2">Recent case notes</text>
+      <text x="1244" y="580" class="muted">Open Notes tab →</text>
+      <line x1="284" y1="594" x2="1280" y2="594" class="divider"/>
+
+      <g>
+        <circle cx="316" cy="624" r="6" fill="#6392AE"/>
+        <text x="332" y="628">Today · 10:42 · Nick Gilbert</text>
+        <text x="332" y="648" class="muted">Bella weight-bearing 80% on R hind. Owner reports compliance ✓ with AM session.</text>
+        <text x="332" y="666" class="muted">Plan: progress to controlled lead trots from week 6. Review Fri.</text>
+        <line x1="332" y1="690" x2="1260" y2="690" class="divider"/>
+      </g>
+      <g>
+        <circle cx="316" cy="714" r="6" fill="#B3CDD6"/>
+        <text x="332" y="718">Yesterday · 16:10 · Nick Gilbert</text>
+        <text x="332" y="738" class="muted">Range of motion improving. Mild swelling post-exercise — ice 10 min.</text>
+        <line x1="332" y1="762" x2="1260" y2="762" class="divider"/>
+      </g>
+      <g>
+        <circle cx="316" cy="786" r="6" fill="#B3CDD6"/>
+        <text x="332" y="790">22 Apr · 09:30 · Nick Gilbert</text>
+        <text x="332" y="810" class="muted">Programme v2 published. Sent to owner via WhatsApp.</text>
+        <line x1="332" y1="834" x2="1260" y2="834" class="divider"/>
+      </g>
+      <g>
+        <circle cx="316" cy="858" r="6" fill="#B3CDD6"/>
+        <text x="332" y="862">14 Apr · 11:05 · Nick Gilbert</text>
+        <text x="332" y="882" class="muted">Initial review. Goals agreed with owner.</text>
+      </g>
+
+      <rect x="304" y="950" width="120" height="36" class="btnPri"/>
+      <text x="328" y="974" class="btnPriText">+ Add note</text>
+      <rect x="440" y="950" width="160" height="36" class="btn"/>
+      <text x="468" y="974">Open Notes timeline</text>
+    </g>
+  </g>
+
+  <!-- ============ MOBILE ============ -->
+  <g id="mobile-case-detail" transform="translate(1340, 0)">
+    <text x="0" y="28" class="title">Mobile · 360 px</text>
+    <rect x="0" y="40" width="360" height="1080" class="bg"/>
+
+    <rect x="0" y="40" width="360" height="56" class="panel"/>
+    <rect x="12" y="56" width="24" height="24" class="card"/><text x="18" y="73" font-size="11">←</text>
+    <text x="48" y="74" class="h2">Case #2041</text>
+    <rect x="312" y="56" width="36" height="24" class="card"/><text x="322" y="73" font-size="11">⋯</text>
+
+    <text x="16" y="120" class="h2">Bella · Post-op cruciate</text>
+    <text x="16" y="140" class="muted">Mrs S. Patel · Labrador · 7y</text>
+    <rect x="16" y="152" width="60" height="22" class="pale"/><text x="28" y="167" class="muted">Active</text>
+    <rect x="84" y="152" width="90" height="22" class="warn"/><text x="92" y="167" class="muted">Review due</text>
+
+    <!-- Accordion tabs -->
+    <rect x="12" y="192" width="336" height="40" class="tabActive"/>
+    <text x="28" y="217" class="h2">Summary</text><text x="328" y="217">▾</text>
+
+    <rect x="12" y="232" width="336" height="232" class="card"/>
+    <text x="28" y="256" class="muted">Condition</text>
+    <text x="28" y="276">Post-op cranial cruciate, R hind</text>
+    <text x="28" y="304" class="muted">Surgery date</text>
+    <text x="28" y="324">28 March 2026</text>
+    <text x="28" y="352" class="muted">Goals</text>
+    <text x="28" y="372">Full weight-bearing by 12 wk</text>
+    <text x="28" y="400" class="muted">Practitioner</text>
+    <text x="28" y="420">Nick Gilbert</text>
+    <text x="28" y="448" class="muted">Active programme: v2 (published)</text>
+
+    <rect x="12" y="476" width="336" height="40" class="tabIdle"/>
+    <text x="28" y="501" class="h2">Notes (7)</text><text x="328" y="501">▸</text>
+    <rect x="12" y="524" width="336" height="40" class="tabIdle"/>
+    <text x="28" y="549" class="h2">Programme (v2)</text><text x="328" y="549">▸</text>
+    <rect x="12" y="572" width="336" height="40" class="tabIdle"/>
+    <text x="28" y="597" class="h2">History</text><text x="328" y="597">▸</text>
+
+    <!-- Sticky bottom action bar (primary action) -->
+    <rect x="0" y="780" width="360" height="68" class="panel"/>
+    <rect x="12" y="794" width="160" height="40" class="btn"/>
+    <text x="44" y="818">+ Add note</text>
+    <rect x="184" y="794" width="164" height="40" class="btnPri"/>
+    <text x="200" y="818" class="btnPriText">+ New programme</text>
+
+    <!-- Bottom tab bar -->
+    <rect x="0" y="848" width="360" height="56" class="panel"/>
+    <text x="20" y="882" font-size="11">Home</text>
+    <text x="86" y="882" font-size="11">Owners</text>
+    <text x="156" y="882" font-size="11">Cases</text>
+    <text x="220" y="882" font-size="11">Library</text>
+    <text x="288" y="882" font-size="11">Programmes</text>
+    <line x1="156" y1="892" x2="194" y2="892" stroke="#6392AE" stroke-width="2"/>
+  </g>
+
+  <text x="20" y="1132" class="muted">Layout-only · case detail uses §8 tabs (Summary / Notes / Programme / History) · primary action sticky on mobile</text>
+</svg>

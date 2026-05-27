@@ -1,0 +1,206 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2720 980" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" fill="#28404F">
+  <defs>
+    <style>
+      .bg { fill:#F4F8FA; }
+      .title { font-size:24px; font-weight:700; }
+      .subtitle { font-size:13px; fill:#5A6E7A; }
+      .lane { fill:#FFFFFF; stroke:#6392AE; stroke-width:1.2; }
+      .laneSystem { fill:#F7FAEE; stroke:#5A6E2D; stroke-width:1.2; }
+      .laneOwner { fill:#FFFCF0; stroke:#B58900; stroke-width:1.2; }
+      .laneLabel { font-size:18px; font-weight:700; }
+      .process { fill:#D4E0E5; stroke:#6392AE; stroke-width:1.2; rx:12; ry:12; }
+      .decision { fill:#B3CDD6; stroke:#28404F; stroke-width:1.2; }
+      .system { fill:#E6EFC2; stroke:#5A6E2D; stroke-width:1.2; rx:12; ry:12; }
+      .external { fill:#FFF7E0; stroke:#B58900; stroke-width:1.2; rx:12; ry:12; }
+      .terminal { fill:#6392AE; stroke:#28404F; stroke-width:1.6; }
+      .terminalText { fill:#FFFFFF; font-weight:700; }
+      .small { font-size:12px; fill:#5A6E7A; }
+      .note { fill:#FFFFFF; stroke:#C8780E; stroke-width:1.2; stroke-dasharray:6 4; }
+      .noteTitle { font-size:12px; font-weight:700; fill:#8A5600; }
+      .noteText { font-size:12px; fill:#5C4A00; }
+      .connector { stroke:#6392AE; stroke-width:2; fill:none; marker-end:url(#arrow); }
+      .connectorSystem { stroke:#5A6E2D; stroke-width:2; fill:none; marker-end:url(#arrowGreen); }
+      .connectorOwner { stroke:#B58900; stroke-width:2; fill:none; marker-end:url(#arrowAmber); }
+      .connectorDashed { stroke:#5A6E7A; stroke-width:1.5; fill:none; stroke-dasharray:7 5; marker-end:url(#arrowGray); }
+      .leader { stroke:#C8780E; stroke-width:1.2; fill:none; stroke-dasharray:5 4; }
+      .legendBox { fill:#FFFFFF; stroke:#B3CDD6; stroke-width:1; }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6392AE"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5A6E2D"/>
+    </marker>
+    <marker id="arrowAmber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#B58900"/>
+    </marker>
+    <marker id="arrowGray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5A6E7A"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="2720" height="980" class="bg"/>
+
+  <text x="40" y="48" class="title">Hello Buddy End-to-End Clinical Workflow</text>
+  <text x="40" y="74" class="subtitle">Left to right = time. Notes identify the relevant wireframe for the adjacent step.</text>
+
+  <rect x="40" y="110" width="2640" height="230" class="lane"/>
+  <rect x="40" y="370" width="2640" height="180" class="laneSystem"/>
+  <rect x="40" y="580" width="2640" height="180" class="laneOwner"/>
+
+  <text x="60" y="142" class="laneLabel">Practitioner</text>
+  <text x="60" y="402" class="laneLabel">System</text>
+  <text x="60" y="612" class="laneLabel">Owner external</text>
+
+  <rect x="40" y="800" width="560" height="132" class="legendBox"/>
+  <text x="60" y="832" class="laneLabel" font-size="16">Notes</text>
+  <text x="60" y="860" class="small">Orange dashed notes show the wireframe that best represents the nearby workflow step.</text>
+  <text x="60" y="886" class="small">Where one step spans several records, the note lists the most relevant screen names together.</text>
+  <text x="60" y="912" class="small">Drag-and-drop ordering is captured inside the Programme Builder wireframe.</text>
+
+  <rect x="160" y="200" width="150" height="56" rx="28" ry="28" class="terminal"/>
+  <text x="235" y="223" text-anchor="middle" class="terminalText">Enquiry or</text>
+  <text x="235" y="241" text-anchor="middle" class="terminalText">referral</text>
+
+  <rect x="380" y="182" width="290" height="92" rx="14" ry="14" fill="#FFF3E0" stroke="#C8780E" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="402" y="210" font-size="15" font-weight="700" fill="#8A5600">New patient journey</text>
+  <rect x="400" y="224" width="74" height="34" class="process"/>
+  <text x="437" y="246" text-anchor="middle">Owner</text>
+  <rect x="488" y="224" width="64" height="34" class="process"/>
+  <text x="520" y="246" text-anchor="middle">Pet</text>
+  <rect x="566" y="224" width="82" height="34" class="process"/>
+  <text x="607" y="246" text-anchor="middle">Case</text>
+
+  <rect x="760" y="190" width="250" height="76" class="process"/>
+  <text x="885" y="217" text-anchor="middle" font-weight="700">Record condition, goals</text>
+  <text x="885" y="237" text-anchor="middle" font-weight="700">and initial note</text>
+
+  <polygon points="1110,228 1175,182 1240,228 1175,274" class="decision"/>
+  <text x="1175" y="223" text-anchor="middle" font-weight="700">Library</text>
+  <text x="1175" y="241" text-anchor="middle" font-weight="700">covers needs?</text>
+
+  <rect x="1310" y="190" width="220" height="76" class="process"/>
+  <text x="1420" y="217" text-anchor="middle" font-weight="700">Add or edit</text>
+  <text x="1420" y="237" text-anchor="middle" font-weight="700">exercise library items</text>
+
+  <rect x="1600" y="176" width="330" height="104" class="process"/>
+  <text x="1765" y="204" text-anchor="middle" font-weight="700">Create draft programme</text>
+  <text x="1765" y="224" text-anchor="middle" font-weight="700">Pick exercises in popup</text>
+  <text x="1765" y="244" text-anchor="middle" font-weight="700">Confirm add and drag to reorder</text>
+  <text x="1765" y="264" text-anchor="middle" class="small">Edit reps, sets, hold, frequency</text>
+
+  <rect x="2000" y="190" width="220" height="76" class="process"/>
+  <text x="2110" y="217" text-anchor="middle" font-weight="700">Open in-page PDF preview</text>
+  <text x="2110" y="237" text-anchor="middle" class="small">Review warnings and fix blockers</text>
+
+  <rect x="2280" y="190" width="210" height="76" class="process"/>
+  <text x="2385" y="217" text-anchor="middle" font-weight="700">Follow-up review</text>
+  <text x="2385" y="237" text-anchor="middle" class="small">progress note or revision</text>
+
+  <polygon points="2540,228 2600,182 2660,228 2600,274" class="decision"/>
+  <text x="2600" y="223" text-anchor="middle" font-weight="700">Recovered</text>
+  <text x="2600" y="241" text-anchor="middle" font-weight="700">or revise?</text>
+
+  <rect x="1600" y="428" width="220" height="70" class="system"/>
+  <text x="1710" y="454" text-anchor="middle" font-weight="700">Validation gate</text>
+  <text x="1710" y="474" text-anchor="middle" class="small">required fields and video links</text>
+
+  <rect x="1950" y="414" width="250" height="98" class="system"/>
+  <text x="2075" y="440" text-anchor="middle" font-weight="700">Create immutable</text>
+  <text x="2075" y="460" text-anchor="middle" font-weight="700">programme version and PDF</text>
+  <text x="2075" y="480" text-anchor="middle" class="small">store metadata and history</text>
+
+  <rect x="2310" y="428" width="200" height="70" class="system"/>
+  <text x="2410" y="454" text-anchor="middle" font-weight="700">Create next version</text>
+  <text x="2410" y="474" text-anchor="middle" class="small">v2, v3 and later</text>
+
+  <rect x="2530" y="428" width="130" height="70" rx="34" ry="34" class="terminal"/>
+  <text x="2595" y="456" text-anchor="middle" class="terminalText">Archive</text>
+  <text x="2595" y="474" text-anchor="middle" class="terminalText">case</text>
+
+  <rect x="2050" y="626" width="170" height="62" class="external"/>
+  <text x="2135" y="651" text-anchor="middle" font-weight="700">Receive PDF</text>
+  <text x="2135" y="671" text-anchor="middle" class="small">WhatsApp or email</text>
+
+  <rect x="2280" y="626" width="170" height="62" class="external"/>
+  <text x="2365" y="651" text-anchor="middle" font-weight="700">Follow programme</text>
+  <text x="2365" y="671" text-anchor="middle" class="small">at home</text>
+
+  <rect x="2510" y="626" width="150" height="62" class="external"/>
+  <text x="2585" y="651" text-anchor="middle" font-weight="700">Receive update</text>
+  <text x="2585" y="671" text-anchor="middle" class="small">when revised</text>
+
+  <path d="M310 228 H380" class="connector"/>
+  <path d="M670 228 H760" class="connector"/>
+  <path d="M1010 228 H1110" class="connector"/>
+  <path d="M1240 228 H1600" class="connector"/>
+  <path d="M1175 274 V318 H1420 V266" class="connector"/>
+  <path d="M1530 228 H1600" class="connector"/>
+  <path d="M1930 228 H2000" class="connector"/>
+  <path d="M2220 228 H2280" class="connector"/>
+  <path d="M2490 228 H2540" class="connector"/>
+
+  <path d="M1765 280 V428" class="connectorSystem"/>
+  <path d="M1820 463 H1950" class="connectorSystem"/>
+  <path d="M2200 463 H2310" class="connectorSystem"/>
+  <path d="M2200 463 V626 H2050" class="connectorOwner"/>
+  <path d="M2220 657 H2280" class="connectorOwner"/>
+  <path d="M2450 657 H2510" class="connectorOwner"/>
+
+  <path d="M2365 626 V548 H2385 V266" class="connector"/>
+  <path d="M2600 274 V360 H2410 V414" class="connectorSystem"/>
+  <path d="M2600 274 V340 H2595 V428" class="connectorSystem"/>
+  <path d="M2310 463 V548 H2585 V626" class="connectorOwner"/>
+  <path d="M2540 228 H2420 V152 H2385 V190" class="connectorDashed"/>
+  <path d="M2595 498 V540 H2660 V720 H760 V266" class="connectorDashed"/>
+
+  <rect x="370" y="92" width="260" height="74" rx="10" ry="10" class="note"/>
+  <text x="388" y="116" class="noteTitle">Wireframe note</text>
+  <text x="388" y="138" class="noteText">10_new_patient_wizard.svg</text>
+  <text x="388" y="156" class="noteText">Also lands into 03_owner_detail.svg,</text>
+  <text x="388" y="172" class="noteText">08_pet_detail.svg and 04_case_detail.svg</text>
+  <path d="M500 166 V182" class="leader"/>
+
+  <rect x="760" y="92" width="220" height="60" rx="10" ry="10" class="note"/>
+  <text x="778" y="116" class="noteTitle">Wireframe note</text>
+  <text x="778" y="138" class="noteText">04_case_detail.svg</text>
+  <text x="778" y="156" class="noteText">condition, goals, notes</text>
+  <path d="M870 152 V190" class="leader"/>
+
+  <rect x="1298" y="92" width="220" height="60" rx="10" ry="10" class="note"/>
+  <text x="1316" y="116" class="noteTitle">Wireframe note</text>
+  <text x="1316" y="138" class="noteText">07_exercise_library.svg</text>
+  <text x="1316" y="156" class="noteText">browse, add, edit exercises</text>
+  <path d="M1408 152 V190" class="leader"/>
+
+  <rect x="1620" y="84" width="290" height="78" rx="10" ry="10" class="note"/>
+  <text x="1638" y="108" class="noteTitle">Wireframe note</text>
+  <text x="1638" y="130" class="noteText">05_programme_builder.svg</text>
+  <text x="1638" y="148" class="noteText">popup multi-select, prefill defaults,</text>
+  <text x="1638" y="166" class="noteText">drag-and-drop reorder within session</text>
+  <path d="M1765 162 V176" class="leader"/>
+
+  <rect x="1998" y="92" width="220" height="60" rx="10" ry="10" class="note"/>
+  <text x="2016" y="116" class="noteTitle">Wireframe note</text>
+  <text x="2016" y="138" class="noteText">06_pdf_preview.svg</text>
+    <text x="2016" y="156" class="noteText">in-page draft preview, no download</text>
+  <path d="M2108 152 V190" class="leader"/>
+
+  <rect x="2290" y="92" width="220" height="60" rx="10" ry="10" class="note"/>
+  <text x="2308" y="116" class="noteTitle">Wireframe note</text>
+  <text x="2308" y="138" class="noteText">04_case_detail.svg</text>
+  <text x="2308" y="156" class="noteText">follow-up and progress review</text>
+  <path d="M2400 152 V190" class="leader"/>
+
+  <rect x="1960" y="528" width="230" height="60" rx="10" ry="10" class="note"/>
+  <text x="1978" y="552" class="noteTitle">Wireframe note</text>
+  <text x="1978" y="574" class="noteText">09_published_programme.svg</text>
+  <text x="1978" y="592" class="noteText">version detail and history</text>
+  <path d="M2075 528 V512" class="leader"/>
+
+  <rect x="2280" y="528" width="230" height="60" rx="10" ry="10" class="note"/>
+  <text x="2298" y="552" class="noteTitle">Wireframe note</text>
+  <text x="2298" y="574" class="noteText">09_published_programme.svg</text>
+  <text x="2298" y="592" class="noteText">new draft from published version</text>
+  <path d="M2395 528 V498" class="leader"/>
+</svg>
