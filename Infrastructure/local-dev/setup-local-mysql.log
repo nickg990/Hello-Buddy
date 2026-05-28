@@ -1,0 +1,45 @@
+**********************
+PowerShell transcript start
+Start time: 20260528095731
+Username: BHF-ADS\gilbertn
+RunAs User: BHF-ADS\gilbertn
+Configuration Name: 
+Machine: CPC-gilbe-I4807 (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -NoProfile -ExecutionPolicy Bypass -File C:\Projects\Hello-Buddy\Infrastructure\local-dev\setup-local-mysql.ps1
+Process ID: 23180
+PSVersion: 7.5.5
+PSEdition: Core
+GitCommitId: 7.5.5
+OS: Microsoft Windows 10.0.26200
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+Wrote C:\ProgramData\MySQL\MySQL Server 8.4\my.ini
+Initialising data directory (insecure)...
+2026-05-28T08:57:32.241611Z 0 [System] [MY-015017] [Server] MySQL Server Initialization - start.
+2026-05-28T08:57:32.251369Z 0 [System] [MY-013169] [Server] C:\Program Files\MySQL\MySQL Server 8.4\bin\mysqld.exe (mysqld 8.4.9) initializing of server in progress as process 728
+2026-05-28T08:57:32.274029Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2026-05-28T08:57:33.429797Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2026-05-28T08:57:35.664781Z 6 [Warning] [MY-010453] [Server] root@localhost is created with an empty password ! Please consider switching off the --initialize-insecure option.
+2026-05-28T08:57:38.389722Z 0 [System] [MY-015018] [Server] MySQL Server Initialization - end.
+Installing service MySQL84...
+Service successfully installed.f 174.3 MB (2222.6 MB/s)                                                              ]
+Starting service MySQL84...
+
+Name     Status StartType
+----     ------ ---------
+MySQL84 Running Automatic
+
+Setting root password...
+mysql: [Warning] Using a password on the command line interface can be insecure.
+Adding C:\Program Files\MySQL\MySQL Server 8.4\bin to user PATH...
+
+Done. Open a new shell so PATH picks up mysql.exe, or refresh in-place:
+  $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+**********************
+PowerShell transcript end
+End time: 20260528095741
+**********************

@@ -1,0 +1,163 @@
+@model HelloBuddy.Admin.Models.ProgrammeVm
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>@Model.ProgrammeName — @Model.PetName</title>
+    <style>
+            @@page {
+                size: A4;
+                margin: 0;
+            }
+
+            body {
+                font-family: 'Segoe UI', Arial, sans-serif;
+                color: #222;
+                margin: 0;
+                padding: 0;
+                font-size: 11pt;
+                line-height: 1.4;
+            }
+
+            .container {
+                padding: 0 4mm;
+            }
+
+            h1 {
+                margin: 0 0 4px 0;
+                font-size: 20pt;
+            }
+
+            h2 {
+                margin: 16px 0 4px 0;
+                font-size: 14pt;
+                border-bottom: 1px solid #ccc;
+                padding-bottom: 2px;
+            }
+
+            .subhead {
+                color: #666;
+                margin-bottom: 12px;
+            }
+
+            .meta {
+                display: flex;
+                gap: 24px;
+                margin-bottom: 12px;
+            }
+
+            .meta div {
+                flex: 1;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 4px;
+            }
+
+            th,
+            td {
+                text-align: left;
+                padding: 6px 8px;
+                border-bottom: 1px solid #eee;
+                vertical-align: top;
+            }
+
+            th {
+                background: #f4f4f4;
+                font-weight: 600;
+                font-size: 10pt;
+            }
+
+            .ex-title {
+                font-weight: 600;
+            }
+
+            .ex-obj {
+                color: #666;
+                font-size: 10pt;
+            }
+
+            .session {
+                break-inside: avoid;
+                margin-bottom: 12px;
+            }
+
+            .footer {
+                color: #888;
+                font-size: 9pt;
+                margin-top: 24px;
+                text-align: center;
+            }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>@Model.ProgrammeName</h1>
+        <div class="subhead">@Model.CaseTitle · Programme #@Model.ProgrammeId · @Model.Status</div>
+
+        <div class="meta">
+            <div><strong>Patient:</strong> @Model.PetName</div>
+            <div><strong>Owner:</strong> @Model.OwnerName</div>
+            <div><strong>Starts:</strong> @Model.StartDate.ToString("yyyy-MM-dd")@(Model.EndDate is { } end ? " – " +
+                                end.ToString("yyyy-MM-dd") : "")</div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Notes))
+            {
+                <p><strong>Notes:</strong> @Model.Notes</p>
+            }
+
+            @foreach (var session in Model.Sessions)
+            {
+                <div class="session">
+                    <h2>Session @session.SortOrder &mdash; @session.Period</h2>
+                    @if (!string.IsNullOrWhiteSpace(session.Objective))
+                    {
+                        <div class="subhead">@session.Objective</div>
+                    }
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:40%">Exercise</th>
+                                <th style="width:10%">Reps</th>
+                                <th style="width:10%">Sets</th>
+                                <th style="width:12%">Hold (s)</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ex in session.Exercises)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="ex-title">@ex.ExerciseTitle</div>
+                                        @if (!string.IsNullOrWhiteSpace(ex.ObjectiveSummary))
+                                        {
+                                            <div class="ex-obj">@ex.ObjectiveSummary</div>
+                                        }
+                                    </td>
+                                    <td>@(ex.Reps?.ToString() ?? "—")</td>
+                                    <td>@(ex.Sets?.ToString() ?? "—")</td>
+                                    <td>@(ex.HoldSeconds?.ToString() ?? "—")</td>
+                                    <td>@(ex.Notes ?? "")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            <div class="footer">
+                Generated @DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm 'UTC'") · Hello Buddy Cloud Admin
+            </div>
+        </div>
+    </body>
+
+</html>

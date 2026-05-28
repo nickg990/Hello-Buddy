@@ -109,3 +109,38 @@ On Friday the firewall posture is tightened:
 **Note for report:** This decision is documented as a deliberate, time-bounded compromise for the assessment seed workflow. The lockdown step on Friday is the evidence that the production posture differs from the development posture.
 
 ---
+
+## DEC-005 — Local MySQL on DevBox for application development loop
+
+**Date:** 27 May 2026
+**Area:** Developer environment
+**Decision:** Install MySQL Server 8.0 natively on the DevBox (via `winget install Oracle.MySQL`) and seed it from the same three SQL scripts that initialise Azure MySQL. The .NET web application uses this local instance for the F5 debug loop on Day 2–3. Azure MySQL remains the deployment target from Thursday onwards.
+
+**Rationale:**
+The DevBox blocks outbound TCP/3306 to `*.mysql.database.azure.com` (corporate egress firewall — see DEC-004 context). Without local MySQL, the F5 debug loop cannot run because the application cannot reach a database. The Windows laptop alternative is unavailable because the .NET runtime is disabled by corporate policy. Codespaces was considered but adds an extra hosted environment and would consume free quota for a problem that a native install solves at zero cost.
+
+A native install (not a Docker container) was chosen at the user's request to keep the dev environment as conventional as possible and avoid coupling the inner dev loop to a container runtime.
+
+**Configuration split:**
+
+| File                           | Connection target                                                           | Active when                          |
+| ------------------------------ | --------------------------------------------------------------------------- | ------------------------------------ |
+| `appsettings.Development.json` | `Server=localhost;Database=canine_physiotherapy;Uid=root;Pwd=<dev-only>;`   | `ASPNETCORE_ENVIRONMENT=Development` |
+| `appsettings.json`             | Pulled from Key Vault secret `mysql-connection-string` via Managed Identity | `ASPNETCORE_ENVIRONMENT=Production`  |
+
+Application code does not branch on environment — only the configuration source changes.
+
+**Schema parity:**
+Both the local and Azure databases are built from the same three scripts (`v2.3 (fresh).sql`, `Day 1 Initialise v2.4.sql`, `MSc Assessment Seed v1.sql`). Any schema change goes into a versioned script and is applied to both environments in the same order. This is the lightweight migration pattern for the assessment; a production deployment would adopt EF Core migrations or Flyway.
+
+**Convergence point:**
+Thursday (US-15–US-19) is the first time the app talks to the real Azure MySQL — via the container deployment, where Container Apps' outbound networking does have line-of-sight to MySQL. Risks deferred to Thursday:
+
+- SSL/TLS certificate-trust chain (Azure MySQL requires SSL; the connection string in Key Vault includes `SslMode=Required`)
+- Azure-MySQL-specific behaviour quirks (case sensitivity, `lower_case_table_names`, etc.)
+
+**Mitigation:** Wednesday afternoon spot-check via Cloud Shell — run a handful of representative queries from Cloud Shell against Azure MySQL to confirm behaviour matches local before the Thursday container build.
+
+**Note for report:** This is a development-environment decision driven by infrastructure constraint, not an architectural choice about the runtime data tier. The production target is unambiguously Azure MySQL Flexible Server (DEC-001). The local MySQL instance has no deployment role and no Day-1 cost.
+
+---
