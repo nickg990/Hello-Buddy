@@ -1,0 +1,60 @@
+=== 1. Container Apps ingress topology ===
+Name                External    Fqdn                                                                           TargetPort    Transport    AllowInsecure
+------------------  ----------  -----------------------------------------------------------------------------  ------------  -----------  ---------------
+ca-hello-buddy-pdf  False       ca-hello-buddy-pdf.internal.mangocliff-d46e000d.uksouth.azurecontainerapps.io  8080          Auto         False
+ca-hello-buddy-api  False       ca-hello-buddy-api.internal.mangocliff-d46e000d.uksouth.azurecontainerapps.io  8080          Auto         False
+ca-hello-buddy-ui   True        ca-hello-buddy-ui.mangocliff-d46e000d.uksouth.azurecontainerapps.io            8080          Auto         False
+
+=== 2. Container App Environment internal vs external ===
+Name                 DefaultDomain                                      StaticIp
+-------------------  -------------------------------------------------  -------------
+cae-hellobuddy-prod  mangocliff-d46e000d.uksouth.azurecontainerapps.io  4.250.188.245
+
+=== 3. Storage account network + access posture ===
+C:\Projects\Hello-Buddy>  "C:\Program Files (x86)\Microsoft SDKs\Azure\CLI2\wbin\\..\python.exe" -IBm azure.cli storage account show -n sthellobuddyprod -g rg-hellobuddy-prod --query {publicNetworkAccess:publicNetworkAccess,allowBlobPublicAccess:allowBlobPublicAccess,allowSharedKeyAccess:allowSharedKeyAccess,minTlsVersion:minimumTlsVersion,defaultAction:networkRuleSet.defaultAction,bypass:networkRuleSet.bypass,ipRulesCount:length(networkRuleSet.ipRules)} -o json
+} was unexpected at this time.
+
+=== 4. Storage containers public-access level ===
+Name
+--------------------
+published-programmes
+
+=== 5. Key Vault network + access ===
+enableRbacAuthorization:properties.enableRbacAuthorization} was unexpected at this time.
+C:\Projects\Hello-Buddy>  "C:\Program Files (x86)\Microsoft SDKs\Azure\CLI2\wbin\\..\python.exe" -IBm azure.cli keyvault show -n kv-hellobuddy-prod -g rg-hellobuddy-prod --query {publicNetworkAccess:properties.publicNetworkAccess,defaultAction:properties.networkAcls.defaultAction,bypass:properties.networkAcls.bypass,ipRulesCount:length(properties.networkAcls.ipRules),enableRbacAuthorization:properties.enableRbacAuthorization} -o json
+Access policies:
+ObjectId
+------------------------------------
+763db99f-b8c6-4f1b-b6ec-bdf79d187c6b
+e7493662-a581-46c5-bc53-24ddfab56692
+
+=== 6. ACR public access + admin user ===
+{
+  "adminUserEnabled": false,
+  "anonymousPullEnabled": false,
+  "publicNetworkAccess": "Enabled",
+  "sku": "Basic"
+}
+
+=== 7. MySQL firewall + public access ===
+Name                Start           End
+------------------  --------------  --------------
+developer-ip-temp   109.158.71.135  109.158.71.135
+devbox-ip-temp      20.90.136.3     20.90.136.3
+AllowAzureServices  0.0.0.0         0.0.0.0
+{
+  "publicAccess": "Enabled",
+  "state": "Ready"
+}
+
+=== 8. External browser reachability test (each Container App from the public internet) ===
+  ca-hello-buddy-pdf         external=False expected=NOT reachable (internal-only)    actual=ERR: The remote server returned an error: (404) Not Found.
+  ca-hello-buddy-api         external=False expected=NOT reachable (internal-only)    actual=ERR: The remote server returned an error: (404) Not Found.
+  ca-hello-buddy-ui          external=True  expected=reachable (external)             actual=HTTP 200
+
+=== 9. Probe an internal FQDN from the public internet (must FAIL or NXDOMAIN) ===
+  ca-hello-buddy-pdf.internal.mangocliff-d46e000d.uksouth.azurecontainerapps.io resolves to: 4.250.188.245
+  ca-hello-buddy-api.internal.mangocliff-d46e000d.uksouth.azurecontainerapps.io resolves to: 4.250.188.245
+
+=== 10. Anonymous blob read attempt (should FAIL pre-change) ===
+  ANON GET https://sthellobuddyprod.blob.core.windows.net/published-programmes/programme-1-20260528-121537.pdf -> blocked (The remote server returned an error: (409) Conflict.) - good, container is private

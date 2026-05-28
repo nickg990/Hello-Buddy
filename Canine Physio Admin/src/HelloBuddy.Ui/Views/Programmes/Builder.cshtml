@@ -1,0 +1,101 @@
+@model HelloBuddy.Contracts.ProgrammeVm
+@{
+    ViewData["Title"] = $"Builder: {Model.ProgrammeName}";
+}
+
+<p><a asp-controller="CaseDetail" asp-action="Index" asp-route-id="@Model.TreatmentCaseId">&larr; Back to case</a></p>
+
+<h1>@Model.ProgrammeName</h1>
+<p class="text-muted">Programme #@Model.ProgrammeId · @Model.CaseTitle · @Model.PetName (@Model.OwnerName)</p>
+
+<div class="mb-3">
+    <a class="btn btn-outline-secondary" asp-action="Preview" asp-route-id="@Model.ProgrammeId" target="_blank">Open
+        in-page preview</a>
+        <form method="post" asp-action="Publish" asp-route-id="@Model.ProgrammeId" class="d-inline">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-success">Publish PDF</button>
+        </form>
+    </div>
+
+    <form method="post" asp-action="Builder" asp-route-id="@Model.ProgrammeId">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="ProgrammeId" value="@Model.ProgrammeId" />
+
+        @{
+            var rowIndex = 0;
+        }
+        @foreach (var session in Model.Sessions)
+        {
+            <div class="card mb-3">
+                <div class="card-header">
+                    <strong>Session @session.SortOrder</strong> &mdash; @session.Period
+                    @if (!string.IsNullOrWhiteSpace(session.Objective))
+                    {
+                        <span class="text-muted">· @session.Objective</span>
+                    }
+                    <span class="badge bg-secondary float-end">@session.Status</span>
+                </div>
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width:30%">Exercise</th>
+                            <th style="width:8%">Sort</th>
+                            <th style="width:8%">Reps</th>
+                            <th style="width:8%">Sets</th>
+                            <th style="width:10%">Hold (s)</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var ex in session.Exercises)
+                        {
+                            var prefix = $"Exercises[{rowIndex}]";
+                            var sortId = $"ex-{rowIndex}-sort";
+                            var repsId = $"ex-{rowIndex}-reps";
+                            var setsId = $"ex-{rowIndex}-sets";
+                            var holdId = $"ex-{rowIndex}-hold";
+                            var notesId = $"ex-{rowIndex}-notes";
+                            <tr>
+                                <td>
+                                    <strong>@ex.ExerciseTitle</strong>
+                                    @if (!string.IsNullOrWhiteSpace(ex.ObjectiveSummary))
+                                    {
+                                        <div class="text-muted small">@ex.ObjectiveSummary</div>
+                                    }
+                                    <input type="hidden" name="@(prefix).SessionExerciseId" value="@ex.SessionExerciseId" />
+                                </td>
+                                <td>
+                                    <label for="@sortId" class="visually-hidden">Sort order for @ex.ExerciseTitle</label>
+                                    <input id="@sortId" type="number" min="0" max="65535" class="form-control form-control-sm"
+                                           name="@(prefix).SortOrder" value="@ex.SortOrder" />
+                                </td>
+                                <td>
+                                    <label for="@repsId" class="visually-hidden">Reps for @ex.ExerciseTitle</label>
+                                    <input id="@repsId" type="number" min="0" max="65535" class="form-control form-control-sm"
+                                           name="@(prefix).Reps" value="@ex.Reps" />
+                                </td>
+                                <td>
+                                    <label for="@setsId" class="visually-hidden">Sets for @ex.ExerciseTitle</label>
+                                    <input id="@setsId" type="number" min="0" max="65535" class="form-control form-control-sm"
+                                           name="@(prefix).Sets" value="@ex.Sets" />
+                                </td>
+                                <td>
+                                    <label for="@holdId" class="visually-hidden">Hold seconds for @ex.ExerciseTitle</label>
+                                    <input id="@holdId" type="number" min="0" max="65535" class="form-control form-control-sm"
+                                           name="@(prefix).HoldSeconds" value="@ex.HoldSeconds" />
+                                </td>
+                                <td>
+                                    <label for="@notesId" class="visually-hidden">Notes for @ex.ExerciseTitle</label>
+                                    <input id="@notesId" type="text" class="form-control form-control-sm" name="@(prefix).Notes"
+                                           value="@ex.Notes" />
+                                </td>
+                            </tr>
+                            rowIndex++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <button type="submit" class="btn btn-primary">Save changes</button>
+    </form>

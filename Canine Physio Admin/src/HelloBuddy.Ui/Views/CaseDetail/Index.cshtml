@@ -1,0 +1,84 @@
+@model HelloBuddy.Contracts.CaseDetailVm
+@{
+    ViewData["Title"] = $"Case: {Model.CaseTitle}";
+}
+
+<p><a asp-controller="Cases" asp-action="Index">&larr; All cases</a></p>
+
+<h1>@Model.CaseTitle</h1>
+<p class="text-muted">Case #@Model.TreatmentCaseId · <strong>@Model.Status</strong> ·
+    @Model.StartDate.ToString("yyyy-MM-dd")@(Model.EndDate is { } end ? " – " + end.ToString("yyyy-MM-dd") : "")</p>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h3>Patient</h3>
+            <dl class="row">
+                <dt class="col-sm-4">Name</dt>
+                <dd class="col-sm-8">@Model.PetName</dd>
+                <dt class="col-sm-4">Breed</dt>
+                <dd class="col-sm-8">@(Model.PetBreed ?? "—")</dd>
+                <dt class="col-sm-4">Sex</dt>
+                <dd class="col-sm-8">@(Model.PetSex ?? "—")</dd>
+                <dt class="col-sm-4">Weight</dt>
+                <dd class="col-sm-8">@(Model.PetWeight is { } w ? $"{w:0.0} kg" : "—")</dd>
+                <dt class="col-sm-4">Age</dt>
+                <dd class="col-sm-8">@(Model.PetAge is { } a ? a.ToString() : "—")</dd>
+            </dl>
+        </div>
+        <div class="col-md-6">
+            <h3>Owner</h3>
+            <dl class="row">
+                <dt class="col-sm-4">Name</dt>
+                <dd class="col-sm-8">@Model.OwnerName</dd>
+                <dt class="col-sm-4">Email</dt>
+                <dd class="col-sm-8">@Model.OwnerEmail</dd>
+            </dl>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.ClinicalSummary))
+    {
+        <h3>Clinical summary</h3>
+        <p>@Model.ClinicalSummary</p>
+    }
+
+    <h3>Programmes</h3>
+    @if (Model.Programmes.Count == 0)
+    {
+        <div class="alert alert-info">No programmes on this case yet.</div>
+    }
+    else
+    {
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Sessions</th>
+                    <th>Exercises</th>
+                    <th>Start</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model.Programmes)
+                {
+                    <tr>
+                        <td>@p.ProgrammeId</td>
+                        <td>@p.ProgrammeName</td>
+                        <td>@p.Status</td>
+                        <td>@p.SessionCount</td>
+                        <td>@p.ExerciseCount</td>
+                        <td>@p.StartDate.ToString("yyyy-MM-dd")</td>
+                        <td>
+                            <a class="btn btn-sm btn-primary" asp-controller="Programmes" asp-action="Builder"
+                               asp-route-id="@p.ProgrammeId">Builder</a>
+                            <a class="btn btn-sm btn-outline-secondary" asp-controller="Programmes" asp-action="Preview"
+                               asp-route-id="@p.ProgrammeId" target="_blank">Preview</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }

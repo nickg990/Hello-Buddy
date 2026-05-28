@@ -1,0 +1,41 @@
+@model IReadOnlyList<HelloBuddy.Contracts.CaseRow>
+@{
+    ViewData["Title"] = "Cases";
+}
+
+<h1>Treatment cases</h1>
+<p class="text-muted">Smoke-test page: lists all cases owned by the seeded practitioner.</p>
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-info">No cases found for the seeded practitioner.</div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Title</th>
+                <th>Pet</th>
+                <th>Owner</th>
+                <th>Status</th>
+                <th>Start</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in Model)
+            {
+                <tr>
+                    <td>@row.TreatmentCaseId</td>
+                    <td><a asp-controller="CaseDetail" asp-action="Index" asp-route-id="@row.TreatmentCaseId">@row.CaseTitle</a>
+                    </td>
+                    <td>@row.PetName</td>
+                    <td>@row.OwnerName</td>
+                    <td>@row.Status</td>
+                    <td>@row.StartDate.ToString("yyyy-MM-dd")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

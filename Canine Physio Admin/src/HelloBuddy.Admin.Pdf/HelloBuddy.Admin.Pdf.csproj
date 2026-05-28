@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\HelloBuddy.Admin.Core\HelloBuddy.Admin.Core.csproj" />
+    <ProjectReference Include="..\HelloBuddy.Contracts\HelloBuddy.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>

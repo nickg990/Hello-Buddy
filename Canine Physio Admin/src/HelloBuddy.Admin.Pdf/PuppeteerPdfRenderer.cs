@@ -42,11 +42,21 @@ public sealed class PuppeteerPdfRenderer : IPdfRenderer, IAsyncDisposable
         try
         {
             if (_browser is not null) return _browser;
-            var bf = new BrowserFetcher();
-            await bf.DownloadAsync();
+
+            // In container images we pre-install Chromium via apt and point
+            // PuppeteerSharp at it via PUPPETEER_EXECUTABLE_PATH to avoid the
+            // ~150 MB first-render download (cold start would time out).
+            var executablePath = Environment.GetEnvironmentVariable("PUPPETEER_EXECUTABLE_PATH");
+            if (string.IsNullOrWhiteSpace(executablePath))
+            {
+                var bf = new BrowserFetcher();
+                await bf.DownloadAsync();
+            }
+
             _browser = await Puppeteer.LaunchAsync(new LaunchOptions
             {
                 Headless = true,
+                ExecutablePath = string.IsNullOrWhiteSpace(executablePath) ? null : executablePath,
                 Args = new[] { "--no-sandbox", "--disable-dev-shm-usage" }
             });
             return _browser;

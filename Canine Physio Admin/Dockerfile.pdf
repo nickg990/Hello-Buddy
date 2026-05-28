@@ -1,0 +1,61 @@
+# syntax=docker/dockerfile:1.7
+# PDF service image — PuppeteerSharp + Chromium. Same pattern as the
+# Day 3 admin Dockerfile so cold-start does not trigger a Chromium download.
+
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+
+COPY src/HelloBuddy.Contracts/HelloBuddy.Contracts.csproj         src/HelloBuddy.Contracts/
+COPY src/HelloBuddy.Admin.Pdf/HelloBuddy.Admin.Pdf.csproj         src/HelloBuddy.Admin.Pdf/
+COPY src/HelloBuddy.PdfService/HelloBuddy.PdfService.csproj       src/HelloBuddy.PdfService/
+RUN dotnet restore src/HelloBuddy.PdfService/HelloBuddy.PdfService.csproj
+
+COPY src/ src/
+RUN dotnet publish src/HelloBuddy.PdfService/HelloBuddy.PdfService.csproj \
+    -c Release \
+    -o /app/publish \
+    --no-restore \
+    /p:UseAppHost=false
+
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
+WORKDIR /app
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# CloudFront mirror — DevBox networks intermittently fail Fastly mirror (HTTP 470).
+RUN if [ -f /etc/apt/sources.list.d/debian.sources ]; then \
+    sed -i 's|deb.debian.org|cloudfront.debian.net|g' /etc/apt/sources.list.d/debian.sources; \
+    fi \
+    && if [ -f /etc/apt/sources.list ]; then \
+    sed -i 's|deb.debian.org|cloudfront.debian.net|g' /etc/apt/sources.list; \
+    fi \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+    chromium \
+    ca-certificates \
+    fonts-liberation \
+    fonts-dejavu-core \
+    libnss3 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libgbm1 \
+    libpango-1.0-0 \
+    libcairo2 \
+    libasound2 \
+    libx11-xcb1 \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
+    ASPNETCORE_URLS=http://+:8080 \
+    DOTNET_RUNNING_IN_CONTAINER=true
+
+COPY --from=build /app/publish ./
+
+EXPOSE 8080
+ENTRYPOINT ["dotnet", "HelloBuddy.PdfService.dll"]

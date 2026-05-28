@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+**/published-programmes/
+**/.vs/
+**/.vscode/
+**/*.user
+**/.git/
+**/.gitignore
+**/.dockerignore
+**/Dockerfile
