@@ -1,5 +1,7 @@
 using Azure.Identity;
 using HelloBuddy.Ui.Services;
+using HelloBuddy.Ui.Telemetry;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +14,7 @@ if (!string.IsNullOrWhiteSpace(keyVaultUri))
         new DefaultAzureCredential());
 }
 
+builder.Services.AddSingleton<ITelemetryInitializer>(new CloudRoleNameInitializer("hello-buddy-ui"));
 builder.Services.AddApplicationInsightsTelemetry();
 
 // -----------------------------------------------------------------

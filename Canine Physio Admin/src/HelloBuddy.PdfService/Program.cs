@@ -1,8 +1,11 @@
 using HelloBuddy.Admin.Pdf;
 using HelloBuddy.Contracts;
+using HelloBuddy.PdfService.Telemetry;
+using Microsoft.ApplicationInsights.Extensibility;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddSingleton<ITelemetryInitializer>(new CloudRoleNameInitializer("hello-buddy-pdf"));
 builder.Services.AddApplicationInsightsTelemetry();
 builder.Services.AddSingleton<IPdfRenderer, PuppeteerPdfRenderer>();
 

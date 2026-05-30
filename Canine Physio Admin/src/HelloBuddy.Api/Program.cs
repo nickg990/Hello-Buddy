@@ -5,6 +5,8 @@ using HelloBuddy.Admin.Core.Identity;
 using HelloBuddy.Admin.Pdf;
 using HelloBuddy.Api.Endpoints;
 using HelloBuddy.Api.Services;
+using HelloBuddy.Api.Telemetry;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.EntityFrameworkCore;
 
 const string PractitionerHeader = "X-Practitioner-Id";
@@ -35,6 +37,7 @@ builder.Services.AddDbContext<CaninePhysioDbContext>(options =>
 builder.Services.AddScoped<ICurrentPractitionerAccessor, HeaderPractitionerAccessor>();
 builder.Services.AddHttpContextAccessor();
 
+builder.Services.AddSingleton<ITelemetryInitializer>(new CloudRoleNameInitializer("hello-buddy-api"));
 builder.Services.AddApplicationInsightsTelemetry();
 
 // -----------------------------------------------------------------
