@@ -4,15 +4,9 @@ variable "subscription_id" {
 }
 
 variable "resource_group_name" {
-  description = "Name of the resource group."
+  description = "Existing resource group from the vnet-tier module."
   type        = string
   default     = "rg-hellobuddy-prod"
-}
-
-variable "location" {
-  description = "Azure region for all resources."
-  type        = string
-  default     = "uksouth"
 }
 
 variable "key_vault_name" {
@@ -39,13 +33,12 @@ variable "mysql_admin_password" {
   sensitive   = true
 }
 
-variable "developer_ip" {
-  description = "Developer machine public IP for the temporary MySQL firewall rule. Remove before final evidence capture (US-29)."
+variable "mysql_subnet_id" {
+  description = "Subnet ID delegated to MySQL Flexible Server (from vnet-tier output)."
   type        = string
 }
 
-variable "mysql_location" {
-  description = "Azure region for the MySQL Flexible Server. May differ from the main location if quota is unavailable in that region."
+variable "mysql_private_dns_zone_id" {
+  description = "Private DNS zone ID for MySQL (from vnet-tier output)."
   type        = string
-  default     = ""
 }

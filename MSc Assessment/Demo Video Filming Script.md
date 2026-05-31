@@ -40,12 +40,11 @@ Use synthetic data only.
 | 2    | 0:15-0:35 | Azure portal resource overview showing the deployed services and environment                                             | "The solution is deployed in Azure with the web application and PDF service running as separate containerised services, supported by managed storage, monitoring, and database services."                                        | Deployment evidence, cloud configuration                       |
 | 3    | 0:35-0:55 | Container service details showing image, revision, ingress URL, and healthy running state                                | "Here the deployed revision is live, reachable over HTTPS, and configured from container images rather than manual server setup."                                                                                                | Working deployment, reproducibility, service status            |
 | 4    | 0:55-1:30 | Open the public URL and perform the core end-to-end workflow: case detail to programme builder to PDF preview            | "This is the assessed vertical slice. Starting from a seeded treatment case, I open the draft programme, review the builder, and move into the owner-facing PDF preview before publish."                                         | Working application, end-to-end flow, realistic scenario       |
-| 5    | 1:30-1:50 | Show a blocked publish state, such as missing prescription data or missing video link, then fix it                       | "I also tested a failure path. Publish is blocked when required data is missing. After correcting the issue, the system returns to a valid publishable state."                                                                   | Troubleshooting, validation, fault handling                    |
-| 6    | 1:50-2:10 | Trigger publish and show the confirmation result or stored document outcome                                              | "Publishing creates a version, calls the separate PDF service, and stores the generated programme output. This demonstrates service interaction rather than a single monolithic container."                                      | Multi-service behaviour, PDF service boundary, storage outcome |
-| 7    | 2:10-2:35 | Azure log stream, Log Analytics, or Application Insights showing a publish request and related service logs              | "These logs show the request path through the deployed services. I can trace the publish action, verify successful processing, and inspect failures when needed."                                                                | Logs, monitoring, observability                                |
-| 8    | 2:35-2:55 | Azure Monitor or Application Insights charts for requests, latency, CPU, memory, failures, and if possible replica count | "These metrics provide measurable evidence of runtime behaviour, including request volume, latency, and resource usage, rather than relying only on screenshots of a working page."                                              | Metrics, monitoring, performance evidence                      |
-| 9    | 2:55-3:15 | Scaling configuration and, if available, a scale event, replica change, or load test result                              | "This is the scaling policy and supporting evidence. Under load, the service can scale according to configured thresholds, and I used monitoring output to verify the behaviour."                                                | Scaling, load response, operations evidence                    |
-| 10   | 3:15-3:20 | Closing frame with key outcomes                                                                                          | "In summary, the submission demonstrates cloud deployment, service separation, monitoring, troubleshooting, and measurable operational evidence."                                                                                | Strong finish, communication                                   |
+| 5    | 1:30-1:50 | Trigger publish and show the confirmation result or stored document outcome                                              | "Publishing creates a version, calls the separate PDF service, and stores the generated programme output. This demonstrates service interaction rather than a single monolithic container."                                      | Multi-service behaviour, PDF service boundary, storage outcome |
+| 6    | 1:50-2:20 | Azure log stream, Log Analytics, or Application Insights showing a publish request and related service logs              | "These logs show the request path through the deployed services. I can trace the publish action, verify successful processing, and inspect failures when needed."                                                                | Logs, monitoring, observability                                |
+| 7    | 2:20-2:45 | Azure Monitor or Application Insights charts for requests, latency, CPU, memory, failures, and if possible replica count | "These metrics provide measurable evidence of runtime behaviour, including request volume, latency, and resource usage, rather than relying only on screenshots of a working page."                                              | Metrics, monitoring, performance evidence                      |
+| 8    | 2:45-3:10 | Scaling configuration and, if available, a scale event, replica change, or load test result                              | "This is the scaling policy and supporting evidence. Under load, the service can scale according to configured thresholds, and I used monitoring output to verify the behaviour."                                                | Scaling, load response, operations evidence                    |
+| 9    | 3:10-3:20 | Closing frame with key outcomes                                                                                          | "In summary, the submission demonstrates cloud deployment, service separation, monitoring, and measurable operational evidence."                                                                                                 | Strong finish, communication                                   |
 
 ## Clip-by-clip recording script
 
@@ -113,37 +112,18 @@ Support the report's build and deploy section with visible runtime proof.
 
 - open seeded case detail;
 - move into programme builder;
-- show session and exercise selection;
+- edit a seeded exercise (reps / sets / hold / notes) and save;
 - open PDF preview.
 
 **Suggested wording:**
 
-"For the application slice itself, I start with a seeded treatment case, open the draft programme workflow, adjust the programme content, and preview the owner-facing PDF. This keeps the demo focused on one coherent end-to-end value path."
+"For the application slice itself, I start with a seeded treatment case, open the draft programme builder, adjust the prescription detail on a seeded exercise, and preview the owner-facing PDF. This keeps the demo focused on one coherent end-to-end value path."
 
 **Evidence goal:**
 
 Prove the vertical slice is functional and connected to a believable user workflow.
 
-### Clip 5: Validation failure and fix
-
-**Duration:** 20 seconds
-
-**On screen:**
-
-- blocked publish state;
-- validation message or warning list;
-- fix the missing field;
-- state changes to publishable.
-
-**Suggested wording:**
-
-"I tested a realistic failure condition by leaving required programme data incomplete. The system blocks publish, surfaces the issue clearly, and then allows the workflow to continue once the data is corrected."
-
-**Evidence goal:**
-
-This directly supports troubleshooting and resilience evidence instead of showing only a happy path.
-
-### Clip 6: Publish and separate PDF service result
+### Clip 5: Publish and separate PDF service result
 
 **Duration:** 20 seconds
 
@@ -161,7 +141,7 @@ This directly supports troubleshooting and resilience evidence instead of showin
 
 Demonstrate the second container is meaningful, not artificial.
 
-### Clip 7: Logs and trace evidence
+### Clip 6: Logs and trace evidence
 
 **Duration:** 25 seconds
 
@@ -179,7 +159,7 @@ Demonstrate the second container is meaningful, not artificial.
 
 Cover the brief's explicit mention of logs and support the report's test, monitor, and fix section.
 
-### Clip 8: Metrics dashboard
+### Clip 7: Metrics dashboard
 
 **Duration:** 20 seconds
 
@@ -199,7 +179,7 @@ Cover the brief's explicit mention of logs and support the report's test, monito
 
 Hit the application-of-evidence rubric with real measurements.
 
-### Clip 9: Scaling evidence
+### Clip 8: Scaling evidence
 
 **Duration:** 20 seconds
 
@@ -226,7 +206,7 @@ Option B, fallback:
 
 Show scaling as an operational concern, not just a checkbox.
 
-### Clip 10: Close
+### Clip 9: Close
 
 **Duration:** 5 seconds
 
@@ -238,6 +218,32 @@ Show scaling as an operational concern, not just a checkbox.
 
 "This submission demonstrates deployment, service separation, monitoring, scaling evidence, and fault-aware design in a reproducible containerised cloud workflow."
 
+## Pre-recording tab preparation
+
+Open these browser tabs in order before recording so each clip is one click away. Keeping the same tab order as the clip sequence avoids fumbling on camera.
+
+- **Tab 1** — Title/architecture slide (or the README header).
+- **Tab 2** — Azure portal: `rg-hellobuddy-prod` Overview.
+- **Tab 3** — Azure portal: `ca-hello-buddy-ui` Overview (revision, ingress URL, status).
+- **Tab 4** — UI app: a seeded **case detail** page, ready to open the draft programme.
+- **Tab 5** — UI app: **programme builder / PDF preview** for the seeded draft programme, ready to edit and publish (see steps below).
+- **Tab 6** — Azure portal: Storage `published-programmes` (to show the stored output after publish).
+- **Tab 7** — App Insights: Transaction search / end-to-end transaction view.
+- **Tab 8** — App Insights: Metrics charts (requests, latency, CPU/memory, failures).
+- **Tab 9** — `ca-hello-buddy-ui` → Scale (rules) and Revisions and replicas.
+
+### Tab 5 setup — stage the builder and preview for Clips 4 and 5
+
+The goal is that when you switch to Tab 5 on camera, the seeded draft programme is already open on the builder so you can show a quick edit and the live preview, then publish, without any fumbling. Prepare it like this:
+
+1. **Warm the UI first.** Hit `GET https://<ui-fqdn>/healthz` and confirm `{"status":"ok"}` so there is no cold-start pause during the take.
+2. **Open the seeded case** and open its **draft** programme (status must be *draft*, not already published, so the publish action is still available for Clip 5).
+3. **Land on the builder step** with the seeded exercises visible. The editable fields are **reps, sets, hold seconds, sort order, and notes** on the already-seeded exercises — have one small edit in mind (for example bump reps or add a note) so the builder is clearly interactive on camera.
+4. **Open the live Preview** once off-camera to confirm the owner-facing PDF preview renders, then return to the builder. This proves the preview round-trips before you record.
+5. **Position the page with the Publish button visible** but do not click Publish yet — that is the on-camera action for Clip 5.
+
+On camera: Clip 4 shows the seeded case → builder edit → live PDF preview. Clip 5 then clicks **Publish** and shows the stored output (Tab 6) and the inter-service call into the PDF service.
+
 ## Minimal evidence checklist before recording
 
 Record only after these are ready:
@@ -245,7 +251,6 @@ Record only after these are ready:
 - deployed public URL works over HTTPS;
 - both application services are visibly running;
 - one seeded case supports the full demo path;
-- one blocked publish scenario is ready to trigger;
 - one successful publish has been tested already;
 - logs for a publish request are queryable;
 - metrics dashboard is populated with recent data;
@@ -254,13 +259,13 @@ Record only after these are ready:
 
 ## Fast retake guidance
 
-If time is tight, keep Clips 1 to 8 and shorten or merge Clips 9 and 10.
+If time is tight, keep Clips 1 to 7 and shorten or merge Clips 8 and 9.
 
 That still gives a strong three-minute submission covering:
 
 - deployment;
 - end-to-end workflow;
-- troubleshooting;
+- publish and service separation;
 - logs;
 - metrics.
 
@@ -270,7 +275,7 @@ If you want the video to support distinction-level evidence, prioritise these vi
 
 - not just that the app works, but that the deployment is clearly cloud-hosted;
 - real monitoring output rather than static UI screenshots only;
-- one demonstrated fault or blocked state;
+- the inter-service publish path crossing into the separate PDF service;
 - measured data such as latency, CPU, memory, request count, or replica count;
 - a brief sign of reproducibility, such as image-based deployment, revision history, or consistent configuration.
 
@@ -280,9 +285,8 @@ If you want the video to support distinction-level evidence, prioritise these vi
 - `02-azure-overview.mp4`
 - `03-running-service.mp4`
 - `04-end-to-end-flow.mp4`
-- `05-validation-fix.mp4`
-- `06-publish-result.mp4`
-- `07-logs.mp4`
-- `08-metrics.mp4`
-- `09-scaling.mp4`
-- `10-close.mp4`
+- `05-publish-result.mp4`
+- `06-logs.mp4`
+- `07-metrics.mp4`
+- `08-scaling.mp4`
+- `09-close.mp4`

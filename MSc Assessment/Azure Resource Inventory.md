@@ -4,7 +4,7 @@
 
 ## Purpose
 
-This document lists the recommended Azure resources for the Hello Buddy Cloud Admin production environment, with each resource's purpose, exposure level, and justification.
+This document is the **as-built** inventory of the Azure resources deployed for the Hello Buddy Cloud Admin production environment (UK West, resource group `rg-hellobuddy-prod`), with each resource's purpose, exposure level, and justification. All resources below are provisioned via Terraform and verified in the Azure portal / CLI.
 
 It is intended to support:
 
@@ -117,12 +117,13 @@ Purpose:
 
 Ingress:
 
-- internal only.
+- internal only (`external = false`, target port `8080`).
 
-Scaling intent:
+Scaling:
 
-- minimum `0` replicas;
-- maximum `3` replicas.
+- minimum `1` replica;
+- maximum `3` replicas;
+- HTTP scale rule at `50` concurrent requests.
 
 Why required:
 
@@ -136,16 +137,15 @@ Recommended name:
 
 Purpose:
 
-- internal PDF rendering service.
+- internal PDF rendering service (PuppeteerSharp / Chromium, `POST /render`).
 
 Ingress:
 
 - internal only.
 
-Scaling intent:
+Scaling:
 
-- minimum `0` replicas;
-- maximum `2` replicas.
+- fixed at `1` replica (min `1` / max `1`) to keep the Chromium-backed renderer warm.
 
 Why required:
 
@@ -161,13 +161,17 @@ Purpose:
 
 - durable structured persistence for case, programme, session, exercise-selection, and publish metadata.
 
-Tier intent:
+Tier:
 
-- Burstable `B1ms` to start.
+- Burstable `B_Standard_B1ms`, MySQL `8.0.21`.
 
 Exposure:
 
-- private only.
+- private only — VNet-integrated into the delegated subnet `subnet-mysql` (no public endpoint), resolved via the private DNS zone `privatelink.mysql.database.azure.com`, TLS enforced.
+
+Database:
+
+- `canine_physiotherapy`.
 
 Why required:
 
@@ -193,19 +197,16 @@ Why required:
 
 - provides durable object storage for published programme PDFs.
 
-### 8. Blob Container
+### 8. Blob Containers
 
-Recommended name:
+Two private containers in `sthellobuddyprod`:
 
-- `published-programmes`
-
-Purpose:
-
-- stores generated PDF outputs for the application.
+- `published-programmes` — stores generated programme PDFs; downloads issued via time-limited SAS URLs (no anonymous access).
+- `dataprotection-keys` — stores the ASP.NET Core Data Protection key ring written/read by the UI's managed identity (enables stable cookie/antiforgery protection across UI replicas).
 
 Why required:
 
-- creates a clear and controlled object store boundary for owner-facing documents.
+- creates clear, separately scoped object-store boundaries for owner-facing documents and platform key material.
 
 ### 9. Azure Key Vault
 
@@ -215,13 +216,16 @@ Recommended name:
 
 Purpose:
 
-- stores database connection secrets, storage configuration, and any other sensitive settings.
+- stores database connection secrets and the Application Insights connection string.
+
+Secrets present:
+
+- `ConnectionStrings--CaninePhysioDb`, `mysql-connection-string`, `mysql-admin-password`, `ApplicationInsights--ConnectionString`.
 
 Used by:
 
-- API container app;
-- PDF container app if needed;
-- deployment pipeline.
+- **API** and **PDF** container apps — they read secrets **directly from Key Vault via their user-assigned managed identity** (using `KeyVault__Uri` + `AZURE_CLIENT_ID`), not via Container Apps secret references.
+- The **UI does not read Key Vault** in production; it relies on the Data Protection blob container instead.
 
 Why required:
 
@@ -254,6 +258,58 @@ Purpose:
 Why required:
 
 - provides observability evidence beyond basic platform metrics.
+
+### 12. Virtual Network and Subnets
+
+Recommended name:
+
+- `vnet-hellobuddy-prod` (`10.10.0.0/16`).
+
+Subnets:
+
+- `subnet-apps` (`10.10.2.0/24`) — delegated to `Microsoft.App/environments`; hosts the Container Apps environment and the three apps.
+- `subnet-mysql` (`10.10.1.0/24`) — delegated to `Microsoft.DBforMySQL/flexibleServers`; hosts the private MySQL Flexible Server.
+
+Why required:
+
+- provides the private network boundary that keeps MySQL and the internal apps off the public internet.
+
+### 13. Private DNS Zone
+
+Recommended name:
+
+- `privatelink.mysql.database.azure.com`, linked to the VNet.
+
+Why required:
+
+- resolves the MySQL private endpoint name to its private IP inside the VNet.
+
+### 14. Network Security Group (MySQL tier)
+
+Recommended name:
+
+- `nsg-subnet-mysql`, associated to `subnet-mysql`.
+
+Rules:
+
+- `Allow-Apps-To-MySQL-3306` (priority 100) — inbound TCP `3306` from `subnet-apps` (`10.10.2.0/24`) only.
+- `Deny-All-Other-Inbound` (priority 4000) — explicit deny of all other inbound to the subnet.
+
+Why required:
+
+- adds an explicit, auditable L4 defence-in-depth rule on top of MySQL's private-access design. No NSG is placed on `subnet-apps` because it is delegated to `Microsoft.App/environments` (platform-managed networking) and HTTPS is enforced at the Container Apps ingress (`allowInsecure = false`).
+
+### 15. User-Assigned Managed Identities
+
+Three identities, one per app — `uami-hellobuddy-ui`, `uami-hellobuddy-api`, `uami-hellobuddy-pdf`:
+
+- `uami-hellobuddy-ui` — `AcrPull` on the registry + `Storage Blob Data Contributor` scoped to the `dataprotection-keys` container only (exactly two role assignments — least privilege).
+- `uami-hellobuddy-api` — `AcrPull` + `Key Vault Secrets User` + `Storage Blob Data Contributor` (programme blob access).
+- `uami-hellobuddy-pdf` — `AcrPull` + `Key Vault Secrets User`.
+
+Why required:
+
+- removes stored credentials from app configuration; each app authenticates to Azure resources with its own least-privilege identity.
 
 ## Optional Azure Resources
 
@@ -291,19 +347,17 @@ Use if:
 
 ### Managed identity strategy
 
-Use managed identities for container apps where possible.
+Each container app has its own user-assigned managed identity (see resource 15):
 
-Recommended identity usage:
+- UI: `AcrPull` + `Storage Blob Data Contributor` scoped to the `dataprotection-keys` container only; does **not** read Key Vault.
+- API: `AcrPull` + `Key Vault Secrets User` + `Storage Blob Data Contributor` (programme blob).
+- PDF: `AcrPull` + `Key Vault Secrets User`.
 
-- UI: minimal access, likely none beyond internal API calls;
-- API: access to Key Vault and Blob Storage;
-- PDF: access only if direct write or secret lookup is required.
+### Role assignment summary
 
-### Role assignment intent
-
-- Blob Storage contributor or narrower scoped role for API where needed;
-- Key Vault secrets access for API and PDF where needed;
-- least privilege applied consistently.
+- least privilege applied consistently — roles scoped to the specific resource/container rather than the resource group;
+- secrets read directly from Key Vault by API and PDF via managed identity;
+- no shared credentials or connection strings stored in app configuration.
 
 ## Networking Model
 
@@ -322,27 +376,36 @@ Only:
 
 ### Security model summary
 
-- public edge restricted to UI only;
-- internal services never called directly by users;
-- database not publicly accessible;
-- secrets stored outside application code.
+Defence is layered:
+
+- **L7** — HTTPS enforced at the Container Apps ingress (`allowInsecure = false`); public edge restricted to the UI only;
+- **App boundary** — API and PDF are internal-only and never called directly by users;
+- **Data tier** — MySQL has no public endpoint (private access in a delegated subnet) and is further protected by `nsg-subnet-mysql`, which allows inbound `3306` only from `subnet-apps`;
+- **Identity** — per-app managed identities with least-privilege RBAC; secrets read from Key Vault, never stored in application code.
 
 ## Resource Summary Table
 
-| Resource                | Type                       | Exposure | Purpose                                      |
-| ----------------------- | -------------------------- | -------- | -------------------------------------------- |
-| `rg-hellobuddy-prod`    | Resource Group             | n/a      | Production resource boundary                 |
-| `acrhellobuddyprod`     | Azure Container Registry   | private  | Stores container images                      |
-| `cae-hellobuddy-prod`   | Container Apps Environment | private  | Shared managed app runtime                   |
-| `ca-hello-buddy-ui`     | Container App              | public   | Practitioner frontend                        |
-| `ca-hello-buddy-api`    | Container App              | internal | Business logic and persistence orchestration |
-| `ca-hello-buddy-pdf`    | Container App              | internal | PDF rendering service                        |
-| `mysql-hellobuddy-prod` | MySQL Flexible Server      | private  | Structured business persistence              |
-| `sthellobuddyprod`      | Storage Account            | private  | PDF object storage                           |
-| `published-programmes`  | Blob Container             | private  | Published PDF files                          |
-| `kv-hellobuddy-prod`    | Key Vault                  | private  | Secrets management                           |
-| `log-hellobuddy-prod`   | Log Analytics              | private  | Central logging                              |
-| `appi-hellobuddy-prod`  | Application Insights       | private  | Telemetry and tracing                        |
+| Resource                                | Type                       | Exposure | Purpose                                      |
+| --------------------------------------- | -------------------------- | -------- | -------------------------------------------- |
+| `rg-hellobuddy-prod`                    | Resource Group             | n/a      | Production resource boundary                 |
+| `acrhellobuddyprod`                     | Azure Container Registry   | private  | Stores container images (UI / API / PDF)     |
+| `cae-hellobuddy-prod`                   | Container Apps Environment | private  | Shared managed app runtime                   |
+| `ca-hello-buddy-ui`                     | Container App              | public   | Practitioner frontend (min 1 / max 3)        |
+| `ca-hello-buddy-api`                    | Container App              | internal | Business logic & persistence (min 1 / max 3) |
+| `ca-hello-buddy-pdf`                    | Container App              | internal | PDF rendering service (fixed 1)              |
+| `mysql-hellobuddy-prod`                 | MySQL Flexible Server      | private  | Structured business persistence              |
+| `sthellobuddyprod`                      | Storage Account            | private  | Blob object storage                          |
+| `published-programmes`                  | Blob Container             | private  | Published programme PDFs (SAS download)      |
+| `dataprotection-keys`                   | Blob Container             | private  | ASP.NET Core Data Protection key ring        |
+| `kv-hellobuddy-prod`                    | Key Vault                  | private  | Secrets (read by API & PDF via MI)           |
+| `log-hellobuddy-prod`                   | Log Analytics              | private  | Central logging                              |
+| `appi-hellobuddy-prod`                  | Application Insights       | private  | Telemetry and tracing                        |
+| `vnet-hellobuddy-prod`                  | Virtual Network            | n/a      | `10.10.0.0/16` private network boundary      |
+| `subnet-apps`                           | Subnet (delegated)         | n/a      | `10.10.2.0/24` Container Apps environment    |
+| `subnet-mysql`                          | Subnet (delegated)         | n/a      | `10.10.1.0/24` MySQL Flexible Server         |
+| `privatelink.mysql.database.azure.com`  | Private DNS Zone           | private  | MySQL private name resolution                |
+| `nsg-subnet-mysql`                      | Network Security Group     | n/a      | L4 allow apps→3306, deny other inbound       |
+| `uami-hellobuddy-ui/api/pdf`            | Managed Identity (x3)      | n/a      | Per-app least-privilege RBAC                 |
 
 ## Minimum Required For The Assessment
 

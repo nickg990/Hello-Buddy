@@ -6,10 +6,6 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 3.110"
     }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.6"
-    }
   }
 }
 
@@ -29,31 +25,25 @@ provider "azurerm" {
 data "azurerm_client_config" "current" {}
 
 # ---------------------------------------------------------------------------
-# Resource Group
+# Data: resource group created by vnet-tier
 # ---------------------------------------------------------------------------
-resource "azurerm_resource_group" "main" {
-  name     = var.resource_group_name
-  location = var.location
-
-  tags = local.tags
+data "azurerm_resource_group" "main" {
+  name = var.resource_group_name
 }
 
 # ---------------------------------------------------------------------------
 # Key Vault
 # ---------------------------------------------------------------------------
 resource "azurerm_key_vault" "main" {
-  name                        = var.key_vault_name
-  location                    = azurerm_resource_group.main.location
-  resource_group_name         = azurerm_resource_group.main.name
-  tenant_id                   = data.azurerm_client_config.current.tenant_id
-  sku_name                    = "standard"
-  soft_delete_retention_days  = 7
-  purge_protection_enabled    = false
-  enable_rbac_authorization   = false
+  name                       = var.key_vault_name
+  location                   = data.azurerm_resource_group.main.location
+  resource_group_name        = data.azurerm_resource_group.main.name
+  tenant_id                  = data.azurerm_client_config.current.tenant_id
+  sku_name                   = "standard"
+  soft_delete_retention_days = 7
+  purge_protection_enabled   = false
+  enable_rbac_authorization  = false
 
-  # Deploying principal gets full secret access so we can write the
-  # MySQL connection string. Additional access policies (for Container Apps
-  # managed identity) will be added in the container-platform module.
   access_policy {
     tenant_id = data.azurerm_client_config.current.tenant_id
     object_id = data.azurerm_client_config.current.object_id
@@ -67,25 +57,25 @@ resource "azurerm_key_vault" "main" {
 }
 
 # ---------------------------------------------------------------------------
-# MySQL Flexible Server
+# MySQL Flexible Server — VNet-integrated (private access only, no public IP)
 # ---------------------------------------------------------------------------
-locals {
-  mysql_location = var.mysql_location != "" ? var.mysql_location : azurerm_resource_group.main.location
-}
-
 resource "azurerm_mysql_flexible_server" "main" {
   name                   = var.mysql_server_name
-  location               = local.mysql_location
-  resource_group_name    = azurerm_resource_group.main.name
+  location               = data.azurerm_resource_group.main.location
+  resource_group_name    = data.azurerm_resource_group.main.name
   administrator_login    = var.mysql_admin_username
   administrator_password = var.mysql_admin_password
   sku_name               = "B_Standard_B1ms"
   version                = "8.0.21"
-  backup_retention_days       = 1
+
+  delegated_subnet_id = var.mysql_subnet_id
+  private_dns_zone_id = var.mysql_private_dns_zone_id
+
+  backup_retention_days        = 1
   geo_redundant_backup_enabled = false
 
   storage {
-    size_gb = 20  # Azure minimum; 5 GB is not a valid option for MySQL Flexible Server
+    size_gb = 20
   }
 
   tags = local.tags
@@ -96,23 +86,10 @@ resource "azurerm_mysql_flexible_server" "main" {
 # ---------------------------------------------------------------------------
 resource "azurerm_mysql_flexible_database" "canine_physio" {
   name                = "canine_physiotherapy"
-  resource_group_name = azurerm_resource_group.main.name
+  resource_group_name = data.azurerm_resource_group.main.name
   server_name         = azurerm_mysql_flexible_server.main.name
   charset             = "utf8mb4"
   collation           = "utf8mb4_0900_ai_ci"
-}
-
-# ---------------------------------------------------------------------------
-# MySQL Firewall — temporary developer-IP rule
-# NOTE: This rule is intentionally temporary. It must be removed before
-# final assessment evidence capture (US-29 / Friday COB).
-# ---------------------------------------------------------------------------
-resource "azurerm_mysql_flexible_server_firewall_rule" "developer_ip" {
-  name                = "developer-ip-temp"
-  resource_group_name = azurerm_resource_group.main.name
-  server_name         = azurerm_mysql_flexible_server.main.name
-  start_ip_address    = var.developer_ip
-  end_ip_address      = var.developer_ip
 }
 
 # ---------------------------------------------------------------------------
@@ -128,8 +105,7 @@ resource "azurerm_key_vault_secret" "mysql_connection_string" {
 }
 
 # ---------------------------------------------------------------------------
-# Key Vault Secret: MySQL admin password (also stored individually for
-# use by scripts and for display in outputs without embedding in conn string)
+# Key Vault Secret: MySQL admin password
 # ---------------------------------------------------------------------------
 resource "azurerm_key_vault_secret" "mysql_admin_password" {
   name         = "mysql-admin-password"
@@ -140,14 +116,12 @@ resource "azurerm_key_vault_secret" "mysql_admin_password" {
 }
 
 # ---------------------------------------------------------------------------
-# Automation Account — scheduled MySQL start / stop
-# Scripts use Connect-AzAccount -Identity + Invoke-AzRestMethod so no
-# extra modules are required; Az.Accounts is pre-installed in all accounts.
+# Automation Account — scheduled MySQL start / stop (DEC-002)
 # ---------------------------------------------------------------------------
 resource "azurerm_automation_account" "main" {
   name                = "aa-hellobuddy-prod"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
+  location            = data.azurerm_resource_group.main.location
+  resource_group_name = data.azurerm_resource_group.main.name
   sku_name            = "Basic"
 
   identity {
@@ -157,8 +131,6 @@ resource "azurerm_automation_account" "main" {
   tags = local.tags
 }
 
-# Least-privilege: Contributor scoped to the MySQL server only, which grants
-# the start/stop actions (Microsoft.DBforMySQL/flexibleServers/start|stop/action).
 resource "azurerm_role_assignment" "automation_mysql_contributor" {
   scope                = azurerm_mysql_flexible_server.main.id
   role_definition_name = "Contributor"
@@ -170,8 +142,8 @@ resource "azurerm_role_assignment" "automation_mysql_contributor" {
 # ---------------------------------------------------------------------------
 resource "azurerm_automation_runbook" "start_mysql" {
   name                    = "Start-MySqlServer"
-  location                = azurerm_resource_group.main.location
-  resource_group_name     = azurerm_resource_group.main.name
+  location                = data.azurerm_resource_group.main.location
+  resource_group_name     = data.azurerm_resource_group.main.name
   automation_account_name = azurerm_automation_account.main.name
   log_verbose             = false
   log_progress            = false
@@ -181,7 +153,7 @@ resource "azurerm_automation_runbook" "start_mysql" {
   content = <<-SCRIPT
     Connect-AzAccount -Identity
     $sub = "${var.subscription_id}"
-    $rg  = "${azurerm_resource_group.main.name}"
+    $rg  = "${data.azurerm_resource_group.main.name}"
     $srv = "${azurerm_mysql_flexible_server.main.name}"
     $uri = "/subscriptions/$sub/resourceGroups/$rg/providers/Microsoft.DBforMySQL/flexibleServers/$srv/start?api-version=2021-05-01"
     Write-Output "Starting: $srv"
@@ -195,8 +167,8 @@ resource "azurerm_automation_runbook" "start_mysql" {
 
 resource "azurerm_automation_runbook" "stop_mysql" {
   name                    = "Stop-MySqlServer"
-  location                = azurerm_resource_group.main.location
-  resource_group_name     = azurerm_resource_group.main.name
+  location                = data.azurerm_resource_group.main.location
+  resource_group_name     = data.azurerm_resource_group.main.name
   automation_account_name = azurerm_automation_account.main.name
   log_verbose             = false
   log_progress            = false
@@ -206,7 +178,7 @@ resource "azurerm_automation_runbook" "stop_mysql" {
   content = <<-SCRIPT
     Connect-AzAccount -Identity
     $sub = "${var.subscription_id}"
-    $rg  = "${azurerm_resource_group.main.name}"
+    $rg  = "${data.azurerm_resource_group.main.name}"
     $srv = "${azurerm_mysql_flexible_server.main.name}"
     $uri = "/subscriptions/$sub/resourceGroups/$rg/providers/Microsoft.DBforMySQL/flexibleServers/$srv/stop?api-version=2021-05-01"
     Write-Output "Stopping: $srv"
@@ -220,20 +192,10 @@ resource "azurerm_automation_runbook" "stop_mysql" {
 
 # ---------------------------------------------------------------------------
 # Schedules
-# timezone = "Europe/London" handles BST/GMT automatically.
-# Weekly frequency + week_days controls which days each schedule fires.
-#
-# Pattern:
-#   Mon          — start 06:00
-#   Tue–Fri      — start 07:00
-#   Mon–Thu      — stop  19:00
-#   Fri          — stop  18:00
-#   Sat–Sun      — server stays off
 # ---------------------------------------------------------------------------
-
 resource "azurerm_automation_schedule" "start_monday" {
   name                    = "weekly-start-mon-0600"
-  resource_group_name     = azurerm_resource_group.main.name
+  resource_group_name     = data.azurerm_resource_group.main.name
   automation_account_name = azurerm_automation_account.main.name
   frequency               = "Week"
   interval                = 1
@@ -245,66 +207,66 @@ resource "azurerm_automation_schedule" "start_monday" {
 
 resource "azurerm_automation_schedule" "start_tue_fri" {
   name                    = "weekly-start-tue-fri-0700"
-  resource_group_name     = azurerm_resource_group.main.name
+  resource_group_name     = data.azurerm_resource_group.main.name
   automation_account_name = azurerm_automation_account.main.name
   frequency               = "Week"
   interval                = 1
   timezone                = "Europe/London"
-  start_time              = "2026-05-28T07:00:00+01:00"
+  start_time              = "2026-06-02T07:00:00+01:00"
   week_days               = ["Tuesday", "Wednesday", "Thursday", "Friday"]
-  description             = "Starts MySQL at 07:00 Tue–Fri (Europe/London)."
+  description             = "Starts MySQL at 07:00 Tue-Fri (Europe/London)."
 }
 
 resource "azurerm_automation_schedule" "stop_mon_thu" {
   name                    = "weekly-stop-mon-thu-1900"
-  resource_group_name     = azurerm_resource_group.main.name
+  resource_group_name     = data.azurerm_resource_group.main.name
   automation_account_name = azurerm_automation_account.main.name
   frequency               = "Week"
   interval                = 1
   timezone                = "Europe/London"
-  start_time              = "2026-05-28T19:00:00+01:00"
+  start_time              = "2026-06-01T19:00:00+01:00"
   week_days               = ["Monday", "Tuesday", "Wednesday", "Thursday"]
-  description             = "Stops MySQL at 19:00 Mon–Thu (Europe/London)."
+  description             = "Stops MySQL at 19:00 Mon-Thu (Europe/London)."
 }
 
 resource "azurerm_automation_schedule" "stop_friday" {
   name                    = "weekly-stop-fri-1800"
-  resource_group_name     = azurerm_resource_group.main.name
+  resource_group_name     = data.azurerm_resource_group.main.name
   automation_account_name = azurerm_automation_account.main.name
   frequency               = "Week"
   interval                = 1
   timezone                = "Europe/London"
-  start_time              = "2026-05-29T18:00:00+01:00"
+  start_time              = "2026-06-05T18:00:00+01:00"
   week_days               = ["Friday"]
   description             = "Stops MySQL at 18:00 on Fridays (Europe/London)."
 }
 
 # ---------------------------------------------------------------------------
-# Job schedules — link each runbook to its schedule(s)
+# Job schedules
 # ---------------------------------------------------------------------------
 resource "azurerm_automation_job_schedule" "start_mysql_monday" {
-  resource_group_name     = azurerm_resource_group.main.name
+  resource_group_name     = data.azurerm_resource_group.main.name
   automation_account_name = azurerm_automation_account.main.name
   schedule_name           = azurerm_automation_schedule.start_monday.name
   runbook_name            = azurerm_automation_runbook.start_mysql.name
 }
 
 resource "azurerm_automation_job_schedule" "start_mysql_tue_fri" {
-  resource_group_name     = azurerm_resource_group.main.name
+  resource_group_name     = data.azurerm_resource_group.main.name
   automation_account_name = azurerm_automation_account.main.name
   schedule_name           = azurerm_automation_schedule.start_tue_fri.name
   runbook_name            = azurerm_automation_runbook.start_mysql.name
 }
 
 resource "azurerm_automation_job_schedule" "stop_mysql_mon_thu" {
-  resource_group_name     = azurerm_resource_group.main.name
+  resource_group_name     = data.azurerm_resource_group.main.name
   automation_account_name = azurerm_automation_account.main.name
   schedule_name           = azurerm_automation_schedule.stop_mon_thu.name
   runbook_name            = azurerm_automation_runbook.stop_mysql.name
 }
 
 resource "azurerm_automation_job_schedule" "stop_mysql_friday" {
-  resource_group_name     = azurerm_resource_group.main.name
+  resource_group_name     = data.azurerm_resource_group.main.name
   automation_account_name = azurerm_automation_account.main.name
   schedule_name           = azurerm_automation_schedule.stop_friday.name
   runbook_name            = azurerm_automation_runbook.stop_mysql.name
@@ -319,5 +281,6 @@ locals {
     environment = "prod"
     managed_by  = "terraform"
     assessment  = "com712"
+    module      = "data-tier"
   }
 }

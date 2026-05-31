@@ -12,6 +12,7 @@
 [CmdletBinding()]
 param(
     [string] $ImageTag,
+    [string] $SubnetAppsId,
     [switch] $SkipBuild,
     [switch] $FoundationOnly
 )
@@ -75,8 +76,10 @@ try {
 
     Write-Host "==> Phase A: terraform apply (foundation, deploy_container_apps=false)" -ForegroundColor Cyan
     $imgArgs = Get-ImageVarArgs
+    $subnetArg = if ($SubnetAppsId) { @("-var", "subnet_apps_id=$SubnetAppsId") } else { @() }
     terraform apply -auto-approve `
         -var "deploy_container_apps=false" `
+        @subnetArg `
         @imgArgs | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "Phase A apply failed." }
 }
@@ -120,8 +123,10 @@ Push-Location $tfDir
 try {
     Write-Host "==> Phase B: terraform apply (Container Apps, deploy_container_apps=true)" -ForegroundColor Cyan
     $imgArgs = Get-ImageVarArgs
+    $subnetArg = if ($SubnetAppsId) { @("-var", "subnet_apps_id=$SubnetAppsId") } else { @() }
     terraform apply -auto-approve `
         -var "deploy_container_apps=true" `
+        @subnetArg `
         @imgArgs | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "Phase B apply failed." }
 
