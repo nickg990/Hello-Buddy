@@ -2,6 +2,8 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Sas;
 
+using HelloBuddy.Admin.Pdf;
+
 namespace HelloBuddy.Api.Services;
 
 /// <summary>

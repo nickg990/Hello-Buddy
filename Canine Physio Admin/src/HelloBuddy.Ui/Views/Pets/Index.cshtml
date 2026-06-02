@@ -1,0 +1,47 @@
+@model IReadOnlyList<PetListItem>
+@{
+    ViewData["Title"] = "Pets";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1>Pets</h1>
+        <p class="text-muted mb-0">Maintain patient records and move into treatment cases.</p>
+    </div>
+    <a class="btn btn-primary" asp-action="Create">Add pet</a>
+</div>
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-info">No pets have been added yet.</div>
+}
+else
+{
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Owner</th>
+                <th>Breed</th>
+                <th>Status</th>
+                <th>Cases</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var pet in Model)
+            {
+                <tr>
+                    <td>@pet.Name</td>
+                    <td>@pet.OwnerName</td>
+                    <td>@(pet.Breed ?? "-")</td>
+                    <td>@(pet.IsActive ? "Active" : "Inactive")</td>
+                    <td>@pet.CaseCount</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@pet.PetId">Open</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

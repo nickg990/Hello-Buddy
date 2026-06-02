@@ -1,0 +1,84 @@
+@model PetDetailVm
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<p><a asp-action="Index">&larr; All pets</a></p>
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1>@Model.Name</h1>
+        <p class="text-muted mb-0">Pet #@Model.PetId</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" asp-action="Edit" asp-route-id="@Model.PetId">Edit pet</a>
+        <a class="btn btn-primary" asp-controller="Cases" asp-action="Create" asp-route-petId="@Model.PetId">Add treatment case</a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h4">Patient details</h2>
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Owner</dt>
+                    <dd class="col-sm-8"><a asp-controller="Owners" asp-action="Details" asp-route-id="@Model.OwnerId">@Model.OwnerName</a></dd>
+                    <dt class="col-sm-4">Breed</dt>
+                    <dd class="col-sm-8">@(Model.Breed ?? "-")</dd>
+                    <dt class="col-sm-4">Sex</dt>
+                    <dd class="col-sm-8">@Model.Sex</dd>
+                    <dt class="col-sm-4">DOB</dt>
+                    <dd class="col-sm-8">@(Model.DateOfBirth?.ToString("yyyy-MM-dd") ?? "-")</dd>
+                    <dt class="col-sm-4">Age</dt>
+                    <dd class="col-sm-8">@(Model.Age?.ToString() ?? "-")</dd>
+                    <dt class="col-sm-4">Weight</dt>
+                    <dd class="col-sm-8">@(Model.Weight?.ToString("0.##") ?? "-")</dd>
+                    <dt class="col-sm-4">Status</dt>
+                    <dd class="col-sm-8">@(Model.IsActive ? "Active" : "Inactive")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h4">Owner contact</h2>
+                <p class="mb-1"><strong>@Model.OwnerName</strong></p>
+                <p class="mb-0">@Model.OwnerEmail</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h2 class="h4">Treatment cases</h2>
+@if (Model.Cases.Count == 0)
+{
+    <div class="alert alert-info">No treatment cases have been created for this pet yet.</div>
+}
+else
+{
+    <table class="table table-sm align-middle">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Start</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var treatmentCase in Model.Cases)
+            {
+                <tr>
+                    <td>@treatmentCase.CaseTitle</td>
+                    <td>@treatmentCase.Status</td>
+                    <td>@treatmentCase.StartDate.ToString("yyyy-MM-dd")</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" asp-controller="CaseDetail" asp-action="Index" asp-route-id="@treatmentCase.TreatmentCaseId">Open</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

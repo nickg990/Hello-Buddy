@@ -1,49 +1,97 @@
-@model HelloBuddy.Contracts.CaseDetailVm
+@model CaseDetailPageVm
 @{
-    ViewData["Title"] = $"Case: {Model.CaseTitle}";
+    ViewData["Title"] = $"Case: {Model.Case.CaseTitle}";
 }
 
 <p><a asp-controller="Cases" asp-action="Index">&larr; All cases</a></p>
 
-<h1>@Model.CaseTitle</h1>
-<p class="text-muted">Case #@Model.TreatmentCaseId · <strong>@Model.Status</strong> ·
-    @Model.StartDate.ToString("yyyy-MM-dd")@(Model.EndDate is { } end ? " – " + end.ToString("yyyy-MM-dd") : "")</p>
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1>@Model.Case.CaseTitle</h1>
+        <p class="text-muted">Case #@Model.Case.TreatmentCaseId · <strong>@Model.Case.Status</strong> ·
+            @Model.Case.StartDate.ToString("yyyy-MM-dd")@(Model.Case.EndDate is { } end ? " – " + end.ToString("yyyy-MM-dd") : "")</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-controller="Cases" asp-action="Edit" asp-route-id="@Model.Case.TreatmentCaseId">Edit case</a>
+</div>
 
     <div class="row mb-4">
         <div class="col-md-6">
             <h3>Patient</h3>
             <dl class="row">
                 <dt class="col-sm-4">Name</dt>
-                <dd class="col-sm-8">@Model.PetName</dd>
+                <dd class="col-sm-8"><a asp-controller="Pets" asp-action="Details" asp-route-id="@Model.Case.PetId">@Model.Case.PetName</a></dd>
                 <dt class="col-sm-4">Breed</dt>
-                <dd class="col-sm-8">@(Model.PetBreed ?? "—")</dd>
+                <dd class="col-sm-8">@(Model.Case.PetBreed ?? "—")</dd>
                 <dt class="col-sm-4">Sex</dt>
-                <dd class="col-sm-8">@(Model.PetSex ?? "—")</dd>
+                <dd class="col-sm-8">@(Model.Case.PetSex ?? "—")</dd>
                 <dt class="col-sm-4">Weight</dt>
-                <dd class="col-sm-8">@(Model.PetWeight is { } w ? $"{w:0.0} kg" : "—")</dd>
+                <dd class="col-sm-8">@(Model.Case.PetWeight is { } w ? $"{w:0.0} kg" : "—")</dd>
                 <dt class="col-sm-4">Age</dt>
-                <dd class="col-sm-8">@(Model.PetAge is { } a ? a.ToString() : "—")</dd>
+                <dd class="col-sm-8">@(Model.Case.PetAge is { } a ? a.ToString() : "—")</dd>
             </dl>
         </div>
         <div class="col-md-6">
             <h3>Owner</h3>
             <dl class="row">
                 <dt class="col-sm-4">Name</dt>
-                <dd class="col-sm-8">@Model.OwnerName</dd>
+                <dd class="col-sm-8">@Model.Case.OwnerName</dd>
                 <dt class="col-sm-4">Email</dt>
-                <dd class="col-sm-8">@Model.OwnerEmail</dd>
+                <dd class="col-sm-8">@Model.Case.OwnerEmail</dd>
             </dl>
         </div>
     </div>
 
-    @if (!string.IsNullOrWhiteSpace(Model.ClinicalSummary))
+    @if (!string.IsNullOrWhiteSpace(Model.Case.ClinicalSummary))
     {
         <h3>Clinical summary</h3>
-        <p>@Model.ClinicalSummary</p>
+        <p>@Model.Case.ClinicalSummary</p>
     }
 
+    <div class="row g-4 mb-4">
+        <div class="col-lg-7">
+            <h3>Case notes</h3>
+            @if (Model.Case.Notes.Count == 0)
+            {
+                <div class="alert alert-info">No case notes recorded yet.</div>
+            }
+            else
+            {
+                <div class="list-group">
+                    @foreach (var note in Model.Case.Notes)
+                    {
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <strong>@(string.IsNullOrWhiteSpace(note.NoteType) ? "Clinical note" : note.NoteType)</strong>
+                                <span class="text-muted">@note.CreatedDate.ToString("yyyy-MM-dd HH:mm")</span>
+                            </div>
+                            <p class="mb-0 mt-2">@note.NoteText</p>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+        <div class="col-lg-5">
+            <h3>Add case note</h3>
+            <form asp-action="Notes" asp-route-id="@Model.Case.TreatmentCaseId" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                <div class="mb-3">
+                    <label asp-for="NewNote.NoteType" class="form-label"></label>
+                    <input asp-for="NewNote.NoteType" class="form-control" />
+                    <span asp-validation-for="NewNote.NoteType" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="NewNote.NoteText" class="form-label"></label>
+                    <textarea asp-for="NewNote.NoteText" class="form-control" rows="6"></textarea>
+                    <span asp-validation-for="NewNote.NoteText" class="text-danger"></span>
+                </div>
+                <button type="submit" class="btn btn-primary">Add note</button>
+            </form>
+        </div>
+    </div>
+
     <h3>Programmes</h3>
-    @if (Model.Programmes.Count == 0)
+    @if (Model.Case.Programmes.Count == 0)
     {
         <div class="alert alert-info">No programmes on this case yet.</div>
     }
@@ -62,7 +110,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var p in Model.Programmes)
+                @foreach (var p in Model.Case.Programmes)
                 {
                     <tr>
                         <td>@p.ProgrammeId</td>
@@ -82,3 +130,7 @@
             </tbody>
         </table>
     }
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

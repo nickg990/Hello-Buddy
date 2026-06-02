@@ -5,7 +5,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="PuppeteerSharp" Version="20.1.3" />
+    <PackageReference Include="PuppeteerSharp" />
+    <PackageReference Include="RazorEngineCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Templates\Programme.cshtml" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -29,3 +29,14 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+/* Programme builder/preview column sizing (moved out of inline styles per coding standards #8). */
+.programme-table .col-exercise-wide { width: 40%; }
+.programme-table .col-exercise      { width: 30%; }
+.programme-table .col-sort          { width: 8%; }
+.programme-table .col-reps          { width: 10%; }
+.programme-table .col-reps-sm       { width: 8%; }
+.programme-table .col-sets          { width: 10%; }
+.programme-table .col-sets-sm       { width: 8%; }
+.programme-table .col-hold          { width: 12%; }
+.programme-table .col-hold-sm       { width: 10%; }

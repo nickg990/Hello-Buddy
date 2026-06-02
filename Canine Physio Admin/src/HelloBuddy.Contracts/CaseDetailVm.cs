@@ -7,6 +7,7 @@ public sealed record CaseDetailVm(
     DateOnly StartDate,
     DateOnly? EndDate,
     string? ClinicalSummary,
+    ulong PetId,
     string PetName,
     string? PetBreed,
     string? PetSex,
@@ -14,8 +15,15 @@ public sealed record CaseDetailVm(
     byte? PetAge,
     string OwnerName,
     string OwnerEmail,
+    IReadOnlyList<CaseDetailVm.NoteRow> Notes,
     IReadOnlyList<CaseDetailVm.ProgrammeRow> Programmes)
 {
+    public sealed record NoteRow(
+        ulong TreatmentCaseNoteId,
+        DateTime CreatedDate,
+        string? NoteType,
+        string NoteText);
+
     public sealed record ProgrammeRow(
         ulong ProgrammeId,
         string ProgrammeName,

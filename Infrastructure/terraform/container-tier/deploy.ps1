@@ -14,7 +14,8 @@ param(
     [string] $ImageTag,
     [string] $SubnetAppsId,
     [switch] $SkipBuild,
-    [switch] $FoundationOnly
+    [switch] $FoundationOnly,
+    [switch] $AppsOnly
 )
 
 $ErrorActionPreference = "Stop"
@@ -65,37 +66,60 @@ function Get-ImageVarArgs {
 }
 
 # ----------------------------------------------------------------------------
-# Phase A — foundation
+# Phase A — foundation (skipped when -AppsOnly is set)
 # ----------------------------------------------------------------------------
-Push-Location $tfDir
-try {
-    if (-not (Test-Path .terraform)) {
-        Write-Host "==> terraform init"
-        terraform init | Out-Host
+if ($AppsOnly) {
+    Write-Host "==> AppsOnly set; skipping Phase A foundation apply." -ForegroundColor Yellow
+
+    Push-Location $tfDir
+    try {
+        if (-not (Test-Path .terraform)) {
+            Write-Host "==> terraform init"
+            terraform init | Out-Host
+        }
+    }
+    finally {
+        Pop-Location
+    }
+}
+else {
+    Push-Location $tfDir
+    try {
+        if (-not (Test-Path .terraform)) {
+            Write-Host "==> terraform init"
+            terraform init | Out-Host
+        }
+
+        Write-Host "==> Phase A: terraform apply (foundation, deploy_container_apps=false)" -ForegroundColor Cyan
+        $imgArgs = Get-ImageVarArgs
+        $subnetArg = if ($SubnetAppsId) { @("-var", "subnet_apps_id=$SubnetAppsId") } else { @() }
+        terraform apply -auto-approve `
+            -var "deploy_container_apps=false" `
+            @subnetArg `
+            @imgArgs | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Phase A apply failed." }
+    }
+    finally {
+        Pop-Location
     }
 
-    Write-Host "==> Phase A: terraform apply (foundation, deploy_container_apps=false)" -ForegroundColor Cyan
-    $imgArgs = Get-ImageVarArgs
-    $subnetArg = if ($SubnetAppsId) { @("-var", "subnet_apps_id=$SubnetAppsId") } else { @() }
-    terraform apply -auto-approve `
-        -var "deploy_container_apps=false" `
-        @subnetArg `
-        @imgArgs | Out-Host
-    if ($LASTEXITCODE -ne 0) { throw "Phase A apply failed." }
-}
-finally {
-    Pop-Location
-}
-
-if ($FoundationOnly) {
-    Write-Host "==> FoundationOnly set; stopping here." -ForegroundColor Yellow
-    return
+    if ($FoundationOnly) {
+        Write-Host "==> FoundationOnly set; stopping here." -ForegroundColor Yellow
+        return
+    }
 }
 
 # ----------------------------------------------------------------------------
 # Build + push images (az acr build — DEC-006)
 # ----------------------------------------------------------------------------
 if (-not $SkipBuild) {
+    # az CLI streams remote build logs through a Python process that defaults
+    # to cp1252 on Windows; non-ANSI bytes (e.g. apt's '→') crash the CLI even
+    # though the ACR build itself is fine. Force UTF-8 for both the child
+    # process and our own console.
+    $env:PYTHONIOENCODING = 'utf-8'
+    try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
+
     Push-Location $adminSolution
     try {
         foreach ($img in $images) {

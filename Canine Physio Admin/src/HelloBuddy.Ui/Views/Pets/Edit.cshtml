@@ -1,0 +1,72 @@
+@model PetEditorVm
+@{
+    var isCreate = !Model.PetId.HasValue;
+    ViewData["Title"] = isCreate ? "Add pet" : "Edit pet";
+}
+
+<p><a asp-action="Index">&larr; All pets</a></p>
+
+<h1>@ViewData["Title"]</h1>
+
+<form method="post">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="Form.OwnerId" class="form-label">Owner</label>
+            <select asp-for="Form.OwnerId" asp-items="Model.OwnerOptions" class="form-select"></select>
+            <span asp-validation-for="Form.OwnerId" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Form.Name" class="form-label"></label>
+            <input asp-for="Form.Name" class="form-control" />
+            <span asp-validation-for="Form.Name" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Form.Breed" class="form-label"></label>
+            <input asp-for="Form.Breed" class="form-control" />
+            <span asp-validation-for="Form.Breed" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Form.Sex" class="form-label"></label>
+            <select asp-for="Form.Sex" class="form-select">
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="unknown">Unknown</option>
+            </select>
+            <span asp-validation-for="Form.Sex" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Form.Weight" class="form-label"></label>
+            <input asp-for="Form.Weight" class="form-control" />
+            <span asp-validation-for="Form.Weight" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Form.DateOfBirth" class="form-label"></label>
+            <input asp-for="Form.DateOfBirth" class="form-control" />
+            <span asp-validation-for="Form.DateOfBirth" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Form.Age" class="form-label"></label>
+            <input asp-for="Form.Age" class="form-control" />
+            <span asp-validation-for="Form.Age" class="text-danger"></span>
+        </div>
+        <div class="col-12 form-check mt-3 ms-2">
+            <input asp-for="Form.IsActive" class="form-check-input" />
+            <label asp-for="Form.IsActive" class="form-check-label"></label>
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Save pet</button>
+        @if (!isCreate)
+        {
+            <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.PetId">Cancel</a>
+        }
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

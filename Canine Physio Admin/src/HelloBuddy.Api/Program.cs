@@ -1,11 +1,13 @@
 using Azure.Identity;
 using Azure.Storage.Blobs;
+using HelloBuddy.Application.Records;
 using HelloBuddy.Admin.Core.Data;
 using HelloBuddy.Admin.Core.Identity;
 using HelloBuddy.Admin.Pdf;
 using HelloBuddy.Api.Endpoints;
 using HelloBuddy.Api.Services;
 using HelloBuddy.Api.Telemetry;
+using HelloBuddy.Infrastructure.Records;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.EntityFrameworkCore;
 
@@ -29,8 +31,15 @@ var connectionString = builder.Configuration.GetConnectionString("CaninePhysioDb
     ?? throw new InvalidOperationException(
         "ConnectionStrings:CaninePhysioDb is not configured.");
 
-builder.Services.AddDbContext<CaninePhysioDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+builder.Services.AddSingleton<AuditSaveChangesInterceptor>();
+builder.Services.AddDbContext<CaninePhysioDbContext>((sp, options) =>
+    options
+        .UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
+        .AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>()));
+builder.Services.AddProblemDetails();
+builder.Services.AddHelloBuddyApplication();
+builder.Services.AddHelloBuddyInfrastructure();
+builder.Services.AddSingleton<IProgrammePdfTemplate, RazorProgrammePdfTemplate>();
 
 // Practitioner identity is supplied per-request by the UI via the
 // X-Practitioner-Id header (Release 1 service-to-service identity, TD-005).
@@ -79,6 +88,8 @@ else
 
 var app = builder.Build();
 
+app.UseExceptionHandler();
+
 // -----------------------------------------------------------------
 // X-Practitioner-Id gate: reject API calls without the header.
 // Health probes are exempt.
@@ -100,6 +111,8 @@ app.Use(async (ctx, next) =>
 
 app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
 
+app.MapOwnerEndpoints();
+app.MapPetEndpoints();
 app.MapCaseEndpoints();
 app.MapProgrammeEndpoints();
 
@@ -119,3 +132,5 @@ if (app.Environment.IsDevelopment())
 }
 
 app.Run();
+
+public partial class Program;

@@ -1,3 +1,5 @@
+using HelloBuddy.Admin.Pdf;
+
 namespace HelloBuddy.Api.Services;
 
 /// <summary>

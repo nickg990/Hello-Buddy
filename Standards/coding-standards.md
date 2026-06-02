@@ -68,8 +68,8 @@ For pure prototyping (Increment 0/1 design-validation), put everything in `Hello
 
 ## 3. Language, formatting and tooling
 
-- **Target framework:** `net8.0` (LTS).
-- **C# language version:** `latest` (12).
+- **Target framework:** `net9.0` (current platform baseline for Hello Buddy Admin; ADR-002 supersedes the original `net8.0` LTS preference for Increments 1–3 to align with .NET 9 minimal-API and EF Core 9 features).
+- **C# language version:** `latest` (13).
 - **Nullable reference types:** `enable` solution-wide.
 - **Implicit usings:** `enable`.
 - **File-scoped namespaces** everywhere.

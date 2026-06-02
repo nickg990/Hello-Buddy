@@ -1,0 +1,101 @@
+@model OwnerDetailVm
+@{
+    ViewData["Title"] = Model.FullName;
+}
+
+<p><a asp-action="Index">&larr; All owners</a></p>
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1>@Model.FullName</h1>
+        <p class="text-muted mb-0">Owner #@Model.OwnerId</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" asp-action="Edit" asp-route-id="@Model.OwnerId">Edit owner</a>
+        <a class="btn btn-primary" asp-controller="Pets" asp-action="Create" asp-route-ownerId="@Model.OwnerId">Add pet</a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h4">Contact</h2>
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Email</dt>
+                    <dd class="col-sm-8">@Model.Email</dd>
+                    <dt class="col-sm-4">Phone</dt>
+                    <dd class="col-sm-8">@(Model.PhoneNumber ?? "-")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h4">Address</h2>
+                @if (string.IsNullOrWhiteSpace(Model.AddressLine1) && string.IsNullOrWhiteSpace(Model.AddressLine2) && string.IsNullOrWhiteSpace(Model.Town) && string.IsNullOrWhiteSpace(Model.Postcode))
+                {
+                    <p class="text-muted mb-0">No address recorded.</p>
+                }
+                else
+                {
+                    <address class="mb-0">
+                        @if (!string.IsNullOrWhiteSpace(Model.AddressLine1))
+                        {
+                            @Model.AddressLine1<br />
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.AddressLine2))
+                        {
+                            @Model.AddressLine2<br />
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.Town))
+                        {
+                            @Model.Town<br />
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.Postcode))
+                        {
+                            @Model.Postcode
+                        }
+                    </address>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<h2 class="h4">Pets</h2>
+@if (Model.Pets.Count == 0)
+{
+    <div class="alert alert-info">This owner does not have any pets yet.</div>
+}
+else
+{
+    <table class="table table-sm align-middle">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Breed</th>
+                <th>Sex</th>
+                <th>Status</th>
+                <th>Cases</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var pet in Model.Pets)
+            {
+                <tr>
+                    <td>@pet.Name</td>
+                    <td>@(pet.Breed ?? "-")</td>
+                    <td>@pet.Sex</td>
+                    <td>@(pet.IsActive ? "Active" : "Inactive")</td>
+                    <td>@pet.CaseCount</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" asp-controller="Pets" asp-action="Details" asp-route-id="@pet.PetId">Open</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
