@@ -46,18 +46,17 @@
             </div>
         </div>
         <div class="col-12">
-            <div class="row g-3">
+            <div class="d-flex flex-wrap gap-3">
                 @if (!isCreate)
                 {
-                    <div class="col-md-6">
+                    <div>
                         <label class="form-label">Current image</label>
-                        <div class="border rounded p-2 d-flex flex-column align-items-center justify-content-center bg-light" style="min-height: 240px;">
+                        <div class="border rounded p-2 d-flex align-items-center justify-content-center bg-light" style="width: 240px; height: 240px;">
                             @if (!string.IsNullOrWhiteSpace(Model.Form.ImageUrl))
                             {
-                                <img src="@Url.Action("Image", "Exercises", new { id = Model.ExerciseId })" alt="Current exercise image" class="img-fluid" style="max-height: 220px;" />
-                                <div class="mt-2">
-                                    <a asp-action="Image" asp-route-id="@Model.ExerciseId" target="_blank" rel="noopener noreferrer">View image</a>
-                                </div>
+                                <a asp-action="Image" asp-route-id="@Model.ExerciseId" target="_blank" rel="noopener noreferrer" title="Open full-size image in new tab">
+                                    <img src="@Url.Action("Image", "Exercises", new { id = Model.ExerciseId })" alt="Current exercise image" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+                                </a>
                             }
                             else
                             {
@@ -66,15 +65,17 @@
                         </div>
                     </div>
                 }
-                <div class="@(isCreate ? "col-md-6" : "col-md-6")">
+                <div>
                     <label class="form-label">@(isCreate ? "Selected image" : "Selected image (pending save)")</label>
-                    <div id="selected-image-panel" class="border rounded p-2 d-flex flex-column align-items-center justify-content-center bg-light" style="min-height: 240px;">
+                    <div id="selected-image-panel" class="border rounded p-2 d-flex align-items-center justify-content-center bg-light position-relative" style="width: 240px; height: 240px;">
                         <div id="selected-image-empty" class="text-center">
                             <partial name="_NoImagePlaceholder" model="@("No image selected")" />
                         </div>
-                        <img id="selected-image-preview" src="#" alt="Selected image preview" class="img-fluid d-none" style="max-height: 220px;" />
-                        <div id="selected-image-filename" class="form-text mt-2 d-none"></div>
+                        <a id="selected-image-link" href="#" target="_blank" rel="noopener noreferrer" class="d-none" title="Open full-size preview in new tab" style="max-width: 100%; max-height: 100%;">
+                            <img id="selected-image-preview" src="#" alt="Selected image preview" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+                        </a>
                     </div>
+                    <div id="selected-image-filename" class="form-text mt-1 d-none" style="max-width: 240px; word-break: break-all;"></div>
                 </div>
             </div>
         </div>
@@ -137,23 +138,26 @@
         (function () {
             const input = document.getElementById('UploadImage');
             const empty = document.getElementById('selected-image-empty');
+            const link = document.getElementById('selected-image-link');
             const preview = document.getElementById('selected-image-preview');
             const filename = document.getElementById('selected-image-filename');
-            if (!input || !preview || !empty || !filename) { return; }
+            if (!input || !preview || !empty || !filename || !link) { return; }
 
             input.addEventListener('change', function () {
                 const file = input.files && input.files[0];
                 if (!file) {
-                    preview.classList.add('d-none');
+                    link.classList.add('d-none');
                     filename.classList.add('d-none');
                     empty.classList.remove('d-none');
                     preview.src = '#';
+                    link.href = '#';
                     return;
                 }
                 const reader = new FileReader();
                 reader.onload = function (e) {
                     preview.src = e.target.result;
-                    preview.classList.remove('d-none');
+                    link.href = e.target.result;
+                    link.classList.remove('d-none');
                     filename.textContent = file.name;
                     filename.classList.remove('d-none');
                     empty.classList.add('d-none');

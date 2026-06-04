@@ -19,9 +19,10 @@ Business and UX benefit:
 ## Scope
 
 In scope:
-- Exercise edit screen (`/Exercises/{id}/Edit`) shows two side-by-side panels:
+- Exercise edit screen (`/Exercises/{id}/Edit`) shows two fixed-size (240x240) panels side by side with a small gap, wrapping to a new line on narrow screens:
   - Current image (from storage via the existing image proxy), or a placeholder with a sitting-dog silhouette and "No image" caption when none is set;
-  - Selected image (pending save), populated client-side via `FileReader` the moment a file is chosen, with the file name displayed beneath the preview.
+  - Selected image (pending save), populated client-side via `FileReader` the moment a file is chosen, with the file name displayed beneath the panel.
+- Both the current image and the selected image are clickable: clicking the image itself opens the full-size version in a new tab. No separate "View image" text link.
 - Multiple file selections are supported: each new selection replaces the preview, no commit required.
 - Exercise create screen (`/Exercises/Create`, served by the same view in create mode) shows only the Selected panel with the placeholder until a file is picked. No current panel is rendered in create mode.
 - Shared placeholder partial (`_NoImagePlaceholder.cshtml`) with an inline SVG sitting-dog silhouette and caption text, reusable on other screens.
@@ -67,3 +68,4 @@ Out of scope:
 ## Status
 
 - 2026-06-04: View and placeholder partial implemented; pending build, smoke-test run, and deployment.
+- 2026-06-04: Refinement applied — panels constrained to a fixed 240x240 size and laid out side by side with a small gap, image itself is the clickable target (separate "View image" link removed). Pending rebuild and redeploy.
