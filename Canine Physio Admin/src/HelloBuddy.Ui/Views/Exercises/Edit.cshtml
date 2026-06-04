@@ -32,9 +32,9 @@
         </div>
         <div class="col-md-6">
             <label asp-for="UploadImage" class="form-label">Upload image</label>
-            <input asp-for="UploadImage" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
+            <input asp-for="UploadImage" id="UploadImage" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
             <span asp-validation-for="UploadImage" class="text-danger"></span>
-            <div class="form-text">Supported formats: JPG, PNG, WEBP. Max file size is validated by the API.</div>
+            <div class="form-text">Supported formats: JPG, PNG, WEBP. Max file size is validated by the API. Pick a different file to replace the preview before saving.</div>
         </div>
         <div class="col-md-6">
             <label asp-for="Form.ImageUrl" class="form-label">Image URL (optional manual override)</label>
@@ -45,18 +45,39 @@
                 <label asp-for="RemoveImage" class="form-check-label">Remove current image on save</label>
             </div>
         </div>
-        @if (!string.IsNullOrWhiteSpace(Model.Form.ImageUrl))
-        {
-            <div class="col-12">
-                <label class="form-label">Current image preview</label>
-                <div class="mb-2">
-                    <a asp-action="Image" asp-route-id="@Model.ExerciseId" target="_blank" rel="noopener noreferrer">View image</a>
-                </div>
-                <div>
-                    <img src="@Url.Action("Image", "Exercises", new { id = Model.ExerciseId })" alt="Current exercise image" class="img-thumbnail" style="max-height: 220px;" />
+        <div class="col-12">
+            <div class="row g-3">
+                @if (!isCreate)
+                {
+                    <div class="col-md-6">
+                        <label class="form-label">Current image</label>
+                        <div class="border rounded p-2 d-flex flex-column align-items-center justify-content-center bg-light" style="min-height: 240px;">
+                            @if (!string.IsNullOrWhiteSpace(Model.Form.ImageUrl))
+                            {
+                                <img src="@Url.Action("Image", "Exercises", new { id = Model.ExerciseId })" alt="Current exercise image" class="img-fluid" style="max-height: 220px;" />
+                                <div class="mt-2">
+                                    <a asp-action="Image" asp-route-id="@Model.ExerciseId" target="_blank" rel="noopener noreferrer">View image</a>
+                                </div>
+                            }
+                            else
+                            {
+                                <partial name="_NoImagePlaceholder" model="@("No image")" />
+                            }
+                        </div>
+                    </div>
+                }
+                <div class="@(isCreate ? "col-md-6" : "col-md-6")">
+                    <label class="form-label">@(isCreate ? "Selected image" : "Selected image (pending save)")</label>
+                    <div id="selected-image-panel" class="border rounded p-2 d-flex flex-column align-items-center justify-content-center bg-light" style="min-height: 240px;">
+                        <div id="selected-image-empty" class="text-center">
+                            <partial name="_NoImagePlaceholder" model="@("No image selected")" />
+                        </div>
+                        <img id="selected-image-preview" src="#" alt="Selected image preview" class="img-fluid d-none" style="max-height: 220px;" />
+                        <div id="selected-image-filename" class="form-text mt-2 d-none"></div>
+                    </div>
                 </div>
             </div>
-        }
+        </div>
         <div class="col-md-6">
             <label asp-for="Form.VideoUrl" class="form-label"></label>
             <input asp-for="Form.VideoUrl" class="form-control" />
@@ -112,4 +133,33 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const input = document.getElementById('UploadImage');
+            const empty = document.getElementById('selected-image-empty');
+            const preview = document.getElementById('selected-image-preview');
+            const filename = document.getElementById('selected-image-filename');
+            if (!input || !preview || !empty || !filename) { return; }
+
+            input.addEventListener('change', function () {
+                const file = input.files && input.files[0];
+                if (!file) {
+                    preview.classList.add('d-none');
+                    filename.classList.add('d-none');
+                    empty.classList.remove('d-none');
+                    preview.src = '#';
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    preview.src = e.target.result;
+                    preview.classList.remove('d-none');
+                    filename.textContent = file.name;
+                    filename.classList.remove('d-none');
+                    empty.classList.add('d-none');
+                };
+                reader.readAsDataURL(file);
+            });
+        })();
+    </script>
 }
