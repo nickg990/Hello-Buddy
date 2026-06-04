@@ -122,6 +122,8 @@ Do not implement PDF generation yet.
 
 ## Prompt 7 — Add exercise library
 
+> Authoritative delivery plan: [Planning/Increment-3-Exercise-Library-Plan.md](../Planning/Increment-3-Exercise-Library-Plan.md). The prompt below remains for high-level context only.
+
 ```text
 Implement Increment 3: exercise library management.
 

@@ -62,6 +62,18 @@
                                     {
                                         <div class="text-muted small">@ex.ObjectiveSummary</div>
                                     }
+                                    @if (!string.IsNullOrWhiteSpace(ex.ImageUrl))
+                                    {
+                                        <div class="mt-2">
+                                            <img src="@ex.ImageUrl" alt="@ex.ExerciseTitle image" class="img-thumbnail" style="max-height: 90px;" />
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(ex.VideoUrl))
+                                    {
+                                        <div class="small mt-1">
+                                            <a href="@ex.VideoUrl" target="_blank" rel="noopener noreferrer">Watch video</a>
+                                        </div>
+                                    }
                                     <input type="hidden" name="@(prefix).SessionExerciseId" value="@ex.SessionExerciseId" />
                                 </td>
                                 <td>

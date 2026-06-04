@@ -1,0 +1,112 @@
+@model ExerciseDetailVm
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<p><a asp-action="Index">&larr; Exercise library</a></p>
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1>@Model.Title</h1>
+        <p class="text-muted mb-0">Exercise key: @Model.ExerciseKey</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" asp-action="Edit" asp-route-id="@Model.ExerciseId">Edit exercise</a>
+        <form method="post" asp-action="SetActive" asp-route-id="@Model.ExerciseId">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="isActive" value="@(!Model.IsActive).ToString().ToLowerInvariant()" />
+            <button type="submit" class="btn btn-outline-primary">@(Model.IsActive ? "Deactivate" : "Activate")</button>
+        </form>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h4">Exercise details</h2>
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Category</dt>
+                    <dd class="col-sm-8">@(Model.CategoryName ?? "-")</dd>
+                    <dt class="col-sm-4">Status</dt>
+                    <dd class="col-sm-8">@(Model.IsActive ? "Active" : "Inactive")</dd>
+                    <dt class="col-sm-4">Summary</dt>
+                    <dd class="col-sm-8">@(Model.ObjectiveSummary ?? "-")</dd>
+                    <dt class="col-sm-4">Updated</dt>
+                    <dd class="col-sm-8">@Model.UpdatedDate.ToString("dd MMM yyyy HH:mm")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h4">Prescription defaults</h2>
+                <dl class="row mb-3">
+                    <dt class="col-sm-4">Reps</dt>
+                    <dd class="col-sm-8">@(Model.DefaultReps?.ToString() ?? "-")</dd>
+                    <dt class="col-sm-4">Sets</dt>
+                    <dd class="col-sm-8">@(Model.DefaultSets?.ToString() ?? "-")</dd>
+                    <dt class="col-sm-4">Hold seconds</dt>
+                    <dd class="col-sm-8">@(Model.DefaultHoldSeconds?.ToString() ?? "-")</dd>
+                </dl>
+
+                <h2 class="h4">Media links</h2>
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Image URL</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+                        {
+                            <a asp-action="Image" asp-route-id="@Model.ExerciseId" target="_blank" rel="noopener noreferrer">View image</a>
+                            <div class="mt-2">
+                                <img src="@Url.Action("Image", "Exercises", new { id = Model.ExerciseId })" alt="@Model.Title image" class="img-thumbnail" style="max-height: 220px;" />
+                            </div>
+                        }
+                        else
+                        {
+                            <span>-</span>
+                        }
+                    </dd>
+                    <dt class="col-sm-4">Video URL</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrWhiteSpace(Model.VideoUrl))
+                        {
+                            <a href="@Model.VideoUrl" target="_blank" rel="noopener noreferrer">Open video</a>
+                        }
+                        else
+                        {
+                            <span>-</span>
+                        }
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h2 class="h4">Ordered instructions</h2>
+        @if (Model.Instructions.Count == 0)
+        {
+            <p class="text-muted mb-0">No instructions saved.</p>
+        }
+        else
+        {
+            <ol class="mb-0">
+                @foreach (var step in Model.Instructions.OrderBy(x => x.StepNumber))
+                {
+                    <li>@step.InstructionText</li>
+                }
+            </ol>
+        }
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.LegacyInstructionsText))
+{
+    <div class="alert alert-secondary mb-0">
+        <h2 class="h6">Legacy free-text instructions</h2>
+        <p class="mb-0">@Model.LegacyInstructionsText</p>
+    </div>
+}

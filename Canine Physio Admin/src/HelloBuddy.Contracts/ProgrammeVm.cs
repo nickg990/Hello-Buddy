@@ -26,6 +26,8 @@ public sealed record ProgrammeVm(
         ulong ExerciseId,
         string ExerciseTitle,
         string? ObjectiveSummary,
+        string? ImageUrl,
+        string? VideoUrl,
         ushort? Reps,
         ushort? Sets,
         ushort? HoldSeconds,

@@ -53,7 +53,7 @@ public sealed class ProgrammeService : IProgrammeService
 
         var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
         var fileName = $"programme-{programmeId}-{timestamp}.pdf";
-        var uri = await _fileStore.WriteAsync(fileName, pdf, ct);
+        var uri = await _fileStore.WriteAsync(fileName, pdf, "application/pdf", ct);
 
         _logger.LogInformation(
             "Published programme {ProgrammeId} as {FileName} ({Bytes} bytes)",

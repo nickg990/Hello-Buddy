@@ -17,6 +17,50 @@ Containerised canine-physiotherapy admin running on Azure Container Apps: a publ
 4.  **Seed & verify:** run the database seed, then warm the UI: `GET https://<ui-fqdn>/healthz` → `{"status":"ok"}`.
 5.  **Use it:** open the UI URL → seeded case → programme builder → preview → publish.
 
+## Local Azurite-first storage (CR-003)
+
+Local development now defaults to Azurite for blob-backed functionality.
+
+Local tooling canonical path: `Infrastructure/local-dev` is the only supported local tooling folder. The legacy `docal-dev` folder has been removed.
+
+- Script: `Infrastructure/local-dev/run-local-admin-stack.ps1`
+- Default behavior: starts Azurite container (`hellobuddy-azurite`) and then UI/API/PDF.
+- API Development config uses:
+	- `Storage:Mode=Azurite`
+	- `Storage:ConnectionString=UseDevelopmentStorage=true`
+	- `Storage:PublishedProgrammesContainer=published-programmes`
+
+Exercise media governance policy (CR-002 hardening):
+
+- `Storage:ExerciseMediaMalwareScanMode`:
+	- `StubAllowAll` (default stub hook, logs scan call)
+	- `Disabled`
+	- `Required` (startup fails until a real scanner integration is added)
+- `Storage:ExerciseMediaOrphanCleanupMode`:
+	- `Retain`
+	- `DeleteManagedOrphans` (delete previous managed `exercise-media/...` object when image URL changes)
+- `Storage:ExerciseMediaMaxBytes` must be > 0.
+- `Storage:ExerciseMediaBaseUrl` must be absolute when using `Azurite` or `Azure` storage mode.
+
+Optional switches:
+
+- `-SkipAzurite` to skip emulator startup (requires explicit filesystem mode config to avoid startup mismatch).
+- `-ResetAzurite` to recreate the Azurite container from scratch.
+
+Manual teardown/reset (clear local manual test data back to baseline seed):
+
+```powershell
+Set-Location "C:\Projects\Hello Buddy\Infrastructure\local-dev"
+.\teardown-local-admin-data.ps1
+
+use this command as a fallback if necessary: .\teardown-local-admin-data.ps1 -Password <local database password> -Force
+```
+
+Notes:
+
+- Use `-Force` to skip confirmation prompt.
+- Uses local `mysql.exe` when available, otherwise falls back to Docker mysql client.
+
 ## Container-tier deployment script
 
 Use the combined deployment script at:
@@ -113,6 +157,17 @@ Set-Location "C:\Projects\Hello Buddy\Infrastructure\terraform\container-tier"
 - **API returns 401:** requests need the `X-Practitioner-Id` header (the UI injects it; see DEC-010). Calling the API directly without it is rejected by design.
 - **Case load returns 500:** usually an empty database or a bad `ConnectionStrings` secret — reseed, or fix the Key Vault value.
 - **SAS download returns 403:** the link has expired (30-minute TTL by design, DEC-011) — republish the programme to regenerate a fresh link.
+
+### Container App startup / hanging UI pages
+
+When UI pages hang on every API-dependent screen (owners, pets, cases, exercise library), the UI is almost always waiting on a crash-looping API container. Use these three commands in order to triage:
+
+1. `az containerapp revision list -g rg-hellobuddy-prod -n ca-hello-buddy-api -o table`
+   Instantly tells you which app is unhealthy. `Activating` + `HealthState: None` = startup crash loop. `Healthy` + `Running` = app is fine, look elsewhere.
+2. `az containerapp logs show -g rg-hellobuddy-prod -n ca-hello-buddy-api --revision <revision-name> --tail 100 --type console`
+   Surfaces the actual exception from stdout — typically an unhandled `InvalidOperationException` from `Program.cs` startup validation.
+3. `az containerapp revision show -g rg-hellobuddy-prod -n ca-hello-buddy-api --revision <revision-name> --query "properties.template.containers[0].env" -o table`
+   Confirms whether config drift between the repo and the live revision is the cause. If a required env var is missing here, the Terraform definition wasn't applied (or was edited in the wrong file — the live container apps are defined in `container-tier/main.tf`, not in the unused `app-api/` / `app-ui/` / `app-pdf/` submodules).
 
 ## Cost estimate
 

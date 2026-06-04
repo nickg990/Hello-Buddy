@@ -10,6 +10,7 @@ using HelloBuddy.Api.Telemetry;
 using HelloBuddy.Infrastructure.Records;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 
 const string PractitionerHeader = "X-Practitioner-Id";
 
@@ -48,6 +49,7 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddSingleton<ITelemetryInitializer>(new CloudRoleNameInitializer("hello-buddy-api"));
 builder.Services.AddApplicationInsightsTelemetry();
+builder.Services.AddHostedService<ExerciseLibrarySeedHostedService>();
 
 // -----------------------------------------------------------------
 // PDF rendering: remote PDF service via typed HttpClient.
@@ -61,32 +63,71 @@ builder.Services.AddHttpClient<IPdfRenderer, HttpPdfRenderer>(client =>
 });
 
 // -----------------------------------------------------------------
-// IFileStore: Azure Blob in cloud, local filesystem in Development.
+// IFileStore: Azurite-first in Development, Azure Blob in cloud,
+// and explicit local filesystem fallback for emergency unblock.
 // -----------------------------------------------------------------
 var blobServiceUri = builder.Configuration["Storage:BlobServiceUri"];
+var storageMode = ResolveStorageMode(builder.Configuration["Storage:Mode"], builder.Environment, blobServiceUri);
+var storageConnectionString = builder.Configuration["Storage:ConnectionString"];
 var publishedContainer = builder.Configuration["Storage:PublishedProgrammesContainer"] ?? "published-programmes";
-if (!string.IsNullOrWhiteSpace(blobServiceUri))
+
+ValidateExerciseMediaPolicy(builder.Configuration, storageMode);
+
+switch (storageMode)
 {
-    builder.Services.AddSingleton(_ => new BlobServiceClient(new Uri(blobServiceUri), new DefaultAzureCredential()));
-    builder.Services.AddSingleton(sp =>
-    {
-        var service = sp.GetRequiredService<BlobServiceClient>();
-        return service.GetBlobContainerClient(publishedContainer);
-    });
-    builder.Services.AddSingleton<IFileStore, AzureBlobFileStore>();
+    case "Azurite":
+        var azuriteConnectionString = storageConnectionString ?? "UseDevelopmentStorage=true";
+        builder.Services.AddSingleton(_ => new BlobServiceClient(azuriteConnectionString));
+        builder.Services.AddSingleton(sp =>
+        {
+            var service = sp.GetRequiredService<BlobServiceClient>();
+            return service.GetBlobContainerClient(publishedContainer);
+        });
+        builder.Services.AddSingleton<IFileStore, AzureBlobFileStore>();
+        break;
+
+    case "Azure":
+        if (string.IsNullOrWhiteSpace(blobServiceUri))
+        {
+            throw new InvalidOperationException(
+                "Storage:BlobServiceUri must be configured when Storage:Mode is Azure.");
+        }
+
+        builder.Services.AddSingleton(_ => new BlobServiceClient(new Uri(blobServiceUri), new DefaultAzureCredential()));
+        builder.Services.AddSingleton(sp =>
+        {
+            var service = sp.GetRequiredService<BlobServiceClient>();
+            return service.GetBlobContainerClient(publishedContainer);
+        });
+        builder.Services.AddSingleton<IFileStore, AzureBlobFileStore>();
+        break;
+
+    case "FileSystem":
+        builder.Services.AddSingleton<IFileStore>(sp =>
+        {
+            var env = sp.GetRequiredService<IWebHostEnvironment>();
+            var logger = sp.GetRequiredService<ILogger<LocalFileStore>>();
+            var root = Path.Combine(env.ContentRootPath, "published-programmes");
+            return new LocalFileStore(root, logger);
+        });
+        break;
+
+    default:
+        throw new InvalidOperationException($"Unsupported storage mode '{storageMode}'.");
 }
-else
+
+builder.Services.AddScoped<IExerciseMediaGovernanceService, ExerciseMediaGovernanceService>();
+
+var scanMode = (builder.Configuration["Storage:ExerciseMediaMalwareScanMode"] ?? "StubAllowAll").Trim();
+if (scanMode.Equals("Disabled", StringComparison.OrdinalIgnoreCase)
+    || scanMode.Equals("StubAllowAll", StringComparison.OrdinalIgnoreCase))
 {
-    builder.Services.AddSingleton<IFileStore>(sp =>
-    {
-        var env = sp.GetRequiredService<IWebHostEnvironment>();
-        var logger = sp.GetRequiredService<ILogger<LocalFileStore>>();
-        var root = Path.Combine(env.ContentRootPath, "published-programmes");
-        return new LocalFileStore(root, logger);
-    });
+    builder.Services.AddSingleton<IExerciseMediaMalwareScanner, StubAllowAllExerciseMediaMalwareScanner>();
 }
 
 var app = builder.Build();
+
+app.Logger.LogInformation("Storage mode: {StorageMode} (container: {Container})", storageMode, publishedContainer);
 
 app.UseExceptionHandler();
 
@@ -114,12 +155,13 @@ app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
 app.MapOwnerEndpoints();
 app.MapPetEndpoints();
 app.MapCaseEndpoints();
+app.MapExerciseEndpoints();
 app.MapProgrammeEndpoints();
 
-// Dev-only: stream files from the local published-programmes folder so the
-// UI's "Download PDF" link works end-to-end in Development. In Azure the
-// equivalent path is a user-delegation SAS URL minted by AzureBlobFileStore.
-if (app.Environment.IsDevelopment())
+// Non-production helper route: stream files from the local
+// published-programmes folder when FileSystem mode is active.
+// In Azure/Azurite blob modes, download URLs come from AzureBlobFileStore.
+if (!app.Environment.IsProduction())
 {
     app.MapGet("/dev-published/{fileName}", (string fileName, IFileStore fileStore) =>
     {
@@ -132,5 +174,73 @@ if (app.Environment.IsDevelopment())
 }
 
 app.Run();
+
+static string ResolveStorageMode(string? configuredMode, IHostEnvironment environment, string? blobServiceUri)
+{
+    if (!string.IsNullOrWhiteSpace(configuredMode))
+    {
+        var normalized = configuredMode.Trim();
+        if (!normalized.Equals("Azurite", StringComparison.OrdinalIgnoreCase)
+            && !normalized.Equals("Azure", StringComparison.OrdinalIgnoreCase)
+            && !normalized.Equals("FileSystem", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                "Storage:Mode must be one of: Azurite, Azure, FileSystem.");
+        }
+
+        if (normalized.Equals("Azurite", StringComparison.OrdinalIgnoreCase)) return "Azurite";
+        if (normalized.Equals("Azure", StringComparison.OrdinalIgnoreCase)) return "Azure";
+        return "FileSystem";
+    }
+
+    if (environment.IsDevelopment())
+    {
+        return "Azurite";
+    }
+
+    return string.IsNullOrWhiteSpace(blobServiceUri) ? "FileSystem" : "Azure";
+}
+
+static void ValidateExerciseMediaPolicy(IConfiguration configuration, string storageMode)
+{
+    var maxBytes = configuration.GetValue<long?>("Storage:ExerciseMediaMaxBytes") ?? 0;
+    if (maxBytes <= 0)
+    {
+        throw new InvalidOperationException("Storage:ExerciseMediaMaxBytes must be configured and greater than zero.");
+    }
+
+    var orphanMode = (configuration["Storage:ExerciseMediaOrphanCleanupMode"] ?? string.Empty).Trim();
+    if (!orphanMode.Equals("Retain", StringComparison.OrdinalIgnoreCase)
+        && !orphanMode.Equals("DeleteManagedOrphans", StringComparison.OrdinalIgnoreCase))
+    {
+        throw new InvalidOperationException(
+            "Storage:ExerciseMediaOrphanCleanupMode must be either 'Retain' or 'DeleteManagedOrphans'.");
+    }
+
+    var scanMode = (configuration["Storage:ExerciseMediaMalwareScanMode"] ?? string.Empty).Trim();
+    if (!scanMode.Equals("Disabled", StringComparison.OrdinalIgnoreCase)
+        && !scanMode.Equals("StubAllowAll", StringComparison.OrdinalIgnoreCase)
+        && !scanMode.Equals("Required", StringComparison.OrdinalIgnoreCase))
+    {
+        throw new InvalidOperationException(
+            "Storage:ExerciseMediaMalwareScanMode must be one of: Disabled, StubAllowAll, Required.");
+    }
+
+    if (scanMode.Equals("Required", StringComparison.OrdinalIgnoreCase))
+    {
+        throw new InvalidOperationException(
+            "Storage:ExerciseMediaMalwareScanMode=Required is not supported until a real scanner integration is configured.");
+    }
+
+    if (!storageMode.Equals("FileSystem", StringComparison.OrdinalIgnoreCase))
+    {
+        var baseUrl = (configuration["Storage:ExerciseMediaBaseUrl"] ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(baseUrl) || !Uri.TryCreate(baseUrl, UriKind.Absolute, out _))
+        {
+            throw new InvalidOperationException(
+                "Storage:ExerciseMediaBaseUrl must be an absolute URL when Storage:Mode is Azurite or Azure.");
+        }
+    }
+}
 
 public partial class Program;

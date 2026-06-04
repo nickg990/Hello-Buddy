@@ -21,8 +21,10 @@ public sealed class AzureBlobFileStore : IFileStore
     private readonly BlobContainerClient _container;
     private readonly BlobServiceClient _service;
     private readonly ILogger<AzureBlobFileStore> _logger;
+    private readonly SemaphoreSlim _containerInitLock = new(1, 1);
     private readonly SemaphoreSlim _udkLock = new(1, 1);
 
+    private bool _containerInitialized;
     private UserDelegationKey? _cachedKey;
     private DateTimeOffset _cachedKeyExpiresOn;
 
@@ -33,15 +35,17 @@ public sealed class AzureBlobFileStore : IFileStore
         _logger = logger;
     }
 
-    public async Task<Uri> WriteAsync(string key, byte[] bytes, CancellationToken ct = default)
+    public async Task<Uri> WriteAsync(string key, byte[] bytes, string contentType, CancellationToken ct = default)
     {
+        await EnsureContainerExistsAsync(ct);
+
         var blob = _container.GetBlobClient(key);
         using var stream = new MemoryStream(bytes, writable: false);
         await blob.UploadAsync(
             stream,
             new BlobUploadOptions
             {
-                HttpHeaders = new BlobHttpHeaders { ContentType = "application/pdf" }
+                HttpHeaders = new BlobHttpHeaders { ContentType = contentType }
             },
             ct);
         _logger.LogInformation(
@@ -54,11 +58,11 @@ public sealed class AzureBlobFileStore : IFileStore
 
     public async Task<Uri> GetReadUrlAsync(string key, TimeSpan ttl, CancellationToken ct = default)
     {
+        await EnsureContainerExistsAsync(ct);
+
         var blob = _container.GetBlobClient(key);
         var startsOn = DateTimeOffset.UtcNow.AddMinutes(-5);
         var expiresOn = DateTimeOffset.UtcNow.Add(ttl);
-
-        var udk = await GetUserDelegationKeyAsync(expiresOn, ct);
 
         var sasBuilder = new BlobSasBuilder
         {
@@ -67,18 +71,84 @@ public sealed class AzureBlobFileStore : IFileStore
             Resource = "b",
             StartsOn = startsOn,
             ExpiresOn = expiresOn,
-            Protocol = SasProtocol.Https
+            Protocol = blob.Uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)
+                ? SasProtocol.Https
+                : SasProtocol.HttpsAndHttp
         };
         sasBuilder.SetPermissions(BlobSasPermissions.Read);
 
-        var sasQuery = sasBuilder.ToSasQueryParameters(udk, _service.AccountName).ToString();
-        var uri = new UriBuilder(blob.Uri) { Query = sasQuery }.Uri;
+        Uri uri;
+        if (blob.CanGenerateSasUri)
+        {
+            uri = blob.GenerateSasUri(sasBuilder);
+        }
+        else
+        {
+            var udk = await GetUserDelegationKeyAsync(expiresOn, ct);
+            var sasQuery = sasBuilder.ToSasQueryParameters(udk, _service.AccountName).ToString();
+            uri = new UriBuilder(blob.Uri) { Query = sasQuery }.Uri;
+        }
+
         _logger.LogInformation(
             "Issued read SAS for {Container}/{Key} expiring at {ExpiresOn:o}",
             _container.Name,
             key,
             expiresOn);
         return uri;
+    }
+
+    public async Task<bool> DeleteIfExistsAsync(string key, CancellationToken ct = default)
+    {
+        await EnsureContainerExistsAsync(ct);
+        var blob = _container.GetBlobClient(key);
+        var response = await blob.DeleteIfExistsAsync(cancellationToken: ct);
+        if (response.Value)
+        {
+            _logger.LogInformation("Deleted blob {Container}/{Key}", _container.Name, key);
+        }
+
+        return response.Value;
+    }
+
+    public async Task<ArtefactReadResult?> OpenReadAsync(string key, CancellationToken ct = default)
+    {
+        await EnsureContainerExistsAsync(ct);
+        var blob = _container.GetBlobClient(key);
+        if (!await blob.ExistsAsync(ct))
+        {
+            return null;
+        }
+
+        var download = await blob.DownloadStreamingAsync(cancellationToken: ct);
+        var contentType = download.Value.Details.ContentType;
+        return new ArtefactReadResult(
+            download.Value.Content,
+            string.IsNullOrWhiteSpace(contentType) ? "application/octet-stream" : contentType);
+    }
+
+    private async Task EnsureContainerExistsAsync(CancellationToken ct)
+    {
+        if (_containerInitialized)
+        {
+            return;
+        }
+
+        await _containerInitLock.WaitAsync(ct);
+        try
+        {
+            if (_containerInitialized)
+            {
+                return;
+            }
+
+            await _container.CreateIfNotExistsAsync(cancellationToken: ct);
+            _containerInitialized = true;
+            _logger.LogInformation("Verified blob container {Container} exists", _container.Name);
+        }
+        finally
+        {
+            _containerInitLock.Release();
+        }
     }
 
     private async Task<UserDelegationKey> GetUserDelegationKeyAsync(DateTimeOffset minimumExpiry, CancellationToken ct)

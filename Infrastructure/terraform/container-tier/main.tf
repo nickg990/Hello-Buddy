@@ -354,6 +354,16 @@ resource "azurerm_container_app" "api" {
         value = azurerm_storage_container.published_programmes.name
       }
 
+      # Required by ValidateExerciseMediaPolicy (CR-002): must be an absolute
+      # URL when Storage:Mode resolves to Azure. Exercise media is written to
+      # the same container as published programmes under an "exercise-media/"
+      # key prefix, so the canonical base is the blob service endpoint + the
+      # container name (no trailing slash).
+      env {
+        name  = "Storage__ExerciseMediaBaseUrl"
+        value = "${trimsuffix(azurerm_storage_account.main.primary_blob_endpoint, "/")}/${azurerm_storage_container.published_programmes.name}"
+      }
+
       env {
         name  = "PdfService__Uri"
         value = "https://${azurerm_container_app.pdf[0].ingress[0].fqdn}"

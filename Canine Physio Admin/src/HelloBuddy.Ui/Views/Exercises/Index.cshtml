@@ -1,0 +1,87 @@
+@model ExerciseIndexVm
+@{
+    ViewData["Title"] = "Exercise library";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1>Exercise library</h1>
+        <p class="text-muted mb-0">Manage reusable exercise content for programme authoring.</p>
+    </div>
+    <a class="btn btn-primary" asp-action="Create">Add exercise</a>
+</div>
+
+<form method="get" class="card card-body mb-3">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label" for="searchText">Search</label>
+            <input id="searchText" name="searchText" class="form-control" value="@Model.Filter.SearchText" placeholder="Title or instruction text" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label" for="categoryId">Category</label>
+            <select id="categoryId" name="categoryId" class="form-select">
+                <option value="">All categories</option>
+                @foreach (var category in Model.CategoryOptions)
+                {
+                    <option value="@category.Value" selected="@(category.Value == Model.Filter.CategoryId?.ToString())">@category.Text</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label" for="hasVideo">Video</label>
+            <select id="hasVideo" name="hasVideo" class="form-select">
+                <option value="" selected="@(Model.Filter.HasVideo is null)">Any</option>
+                <option value="true" selected="@(Model.Filter.HasVideo == true)">Has video</option>
+                <option value="false" selected="@(Model.Filter.HasVideo == false)">No video</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <div class="form-check mt-4">
+                <input class="form-check-input" type="checkbox" id="activeOnly" name="activeOnly" value="true" checked="@Model.Filter.ActiveOnly" />
+                <label class="form-check-label" for="activeOnly">Active only</label>
+            </div>
+        </div>
+        <div class="col-md-1 d-grid">
+            <button type="submit" class="btn btn-outline-primary">Apply</button>
+        </div>
+    </div>
+</form>
+
+@if (Model.Exercises.Count == 0)
+{
+    <div class="alert alert-info">No exercises match the current filters.</div>
+}
+else
+{
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Summary</th>
+                <th>Status</th>
+                <th>Image</th>
+                <th>Video</th>
+                <th>Updated</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var exercise in Model.Exercises)
+            {
+                <tr>
+                    <td>@exercise.Title</td>
+                    <td>@(exercise.CategoryName ?? "-")</td>
+                    <td>@(exercise.ObjectiveSummary ?? "-")</td>
+                    <td>@(exercise.IsActive ? "Active" : "Inactive")</td>
+                    <td>@(exercise.HasImage ? "Yes" : "No")</td>
+                    <td>@(exercise.HasVideo ? "Yes" : "No")</td>
+                    <td>@exercise.UpdatedDate.ToString("dd MMM yyyy")</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@exercise.ExerciseId">Open</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

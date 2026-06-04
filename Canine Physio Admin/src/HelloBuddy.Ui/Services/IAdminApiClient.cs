@@ -1,4 +1,5 @@
 using HelloBuddy.Contracts;
+using System.IO;
 
 namespace HelloBuddy.Ui.Services;
 
@@ -22,8 +23,18 @@ public interface IAdminApiClient
     Task<PetDetailVm?> GetPetAsync(ulong id, CancellationToken ct);
     Task<PetDetailVm> CreatePetAsync(SavePetRequest request, CancellationToken ct);
     Task<PetDetailVm?> UpdatePetAsync(ulong id, SavePetRequest request, CancellationToken ct);
+    Task<IReadOnlyList<ExerciseListItem>> ListExercisesAsync(ExerciseListFilter filter, CancellationToken ct);
+    Task<ExerciseDetailVm?> GetExerciseAsync(ulong id, CancellationToken ct);
+    Task<ExerciseImageContent?> GetExerciseImageAsync(ulong id, CancellationToken ct);
+    Task<ExerciseMediaUploadResponse> UploadExerciseImageAsync(Stream fileStream, string fileName, string contentType, CancellationToken ct);
+    Task<ExerciseDetailVm> CreateExerciseAsync(SaveExerciseRequest request, CancellationToken ct);
+    Task<ExerciseDetailVm?> UpdateExerciseAsync(ulong id, SaveExerciseRequest request, CancellationToken ct);
+    Task<ExerciseDetailVm?> SetExerciseActiveAsync(ulong id, bool isActive, CancellationToken ct);
+    Task<IReadOnlyList<ExerciseCategoryListItem>> ListExerciseCategoriesAsync(CancellationToken ct);
     Task<ProgrammeVm?> GetProgrammeAsync(ulong id, CancellationToken ct);
     Task<ProgrammeVm?> UpdateProgrammeAsync(ulong id, ProgrammeBuilderForm form, CancellationToken ct);
     Task<PublishResponse> PublishProgrammeAsync(ulong id, CancellationToken ct);
     Task<DownloadUrlResponse> GetDownloadUrlAsync(string fileName, CancellationToken ct);
 }
+
+public sealed record ExerciseImageContent(byte[] Bytes, string ContentType);

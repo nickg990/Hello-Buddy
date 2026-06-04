@@ -77,6 +77,8 @@ public sealed class ProgrammeRepository : IProgrammeRepository
                                 se.ExerciseId,
                                 se.Exercise.Title,
                                 se.Exercise.ObjectiveSummary,
+                                se.Exercise.ImageUrl,
+                                se.Exercise.VideoUrl,
                                 se.Reps,
                                 se.Sets,
                                 se.HoldSeconds,

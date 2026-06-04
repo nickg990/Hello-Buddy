@@ -19,7 +19,7 @@ public sealed class LocalFileStore : IFileStore
         Directory.CreateDirectory(_rootPath);
     }
 
-    public Task<Uri> WriteAsync(string key, byte[] bytes, CancellationToken ct = default)
+    public Task<Uri> WriteAsync(string key, byte[] bytes, string contentType, CancellationToken ct = default)
     {
         var path = Path.Combine(_rootPath, key);
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
@@ -40,10 +40,48 @@ public sealed class LocalFileStore : IFileStore
         return Task.FromResult(new Uri($"/dev-published/{Uri.EscapeDataString(key)}", UriKind.Relative));
     }
 
+    public Task<bool> DeleteIfExistsAsync(string key, CancellationToken ct = default)
+    {
+        var path = Path.Combine(_rootPath, key.Replace('/', Path.DirectorySeparatorChar));
+        if (!File.Exists(path))
+        {
+            return Task.FromResult(false);
+        }
+
+        File.Delete(path);
+        _logger.LogInformation("Deleted local file store artefact at {Path}", path);
+        return Task.FromResult(true);
+    }
+
+    public Task<ArtefactReadResult?> OpenReadAsync(string key, CancellationToken ct = default)
+    {
+        var path = Path.Combine(_rootPath, key.Replace('/', Path.DirectorySeparatorChar));
+        if (!File.Exists(path))
+        {
+            return Task.FromResult<ArtefactReadResult?>(null);
+        }
+
+        var stream = File.OpenRead(path);
+        return Task.FromResult<ArtefactReadResult?>(new ArtefactReadResult(stream, GuessContentType(path)));
+    }
+
     internal Stream? OpenReadOrNull(string key)
     {
         var path = Path.Combine(_rootPath, key);
         if (!File.Exists(path)) return null;
         return File.OpenRead(path);
+    }
+
+    private static string GuessContentType(string path)
+    {
+        var extension = Path.GetExtension(path).ToLowerInvariant();
+        return extension switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".webp" => "image/webp",
+            ".pdf" => "application/pdf",
+            _ => "application/octet-stream"
+        };
     }
 }

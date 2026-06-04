@@ -80,6 +80,8 @@ As a platform engineer, I want infrastructure split into foundation and app-depl
 
 ## Increment 3: Exercise Library
 
+> **Detailed delivery plan:** [Increment-3-Exercise-Library-Plan.md](Increment-3-Exercise-Library-Plan.md) — authoritative source for scope, contracts, seeder design, test matrix, and Increment 4 handoff.
+
 ### Increment objective
 
 Enable maintainable, reusable exercise data for programme creation.
@@ -110,6 +112,8 @@ As a platform engineer, I want per-app deployment scripts so UI/API/PDF can be r
 ---
 
 ## Increment 4: Programme Builder Persistence
+
+> **Depends on Increment 3.** Consume the exercise contracts, `IExerciseRepository`, and seeded exercise data established in [Increment-3-Exercise-Library-Plan.md](Increment-3-Exercise-Library-Plan.md) (see its §9 "Handoff to Increment 4"). Do not introduce parallel exercise inserts in Increment 4 tests — reuse seeded `ExerciseKey` values.
 
 ### Increment objective
 

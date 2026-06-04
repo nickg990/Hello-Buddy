@@ -1,0 +1,115 @@
+@model ExerciseEditorVm
+@{
+    var isCreate = !Model.ExerciseId.HasValue;
+    ViewData["Title"] = isCreate ? "Add exercise" : "Edit exercise";
+}
+
+<p><a asp-action="Index">&larr; Exercise library</a></p>
+
+<h1>@ViewData["Title"]</h1>
+
+<form method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <div class="row g-3">
+        <div class="col-md-8">
+            <label asp-for="Form.Title" class="form-label"></label>
+            <input asp-for="Form.Title" class="form-control" />
+            <span asp-validation-for="Form.Title" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Form.ExerciseCategoryId" class="form-label">Category</label>
+            <select asp-for="Form.ExerciseCategoryId" asp-items="Model.CategoryOptions" class="form-select">
+                <option value="">Select category</option>
+            </select>
+            <span asp-validation-for="Form.ExerciseCategoryId" class="text-danger"></span>
+        </div>
+        <div class="col-12">
+            <label asp-for="Form.ObjectiveSummary" class="form-label">Summary</label>
+            <textarea asp-for="Form.ObjectiveSummary" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="Form.ObjectiveSummary" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="UploadImage" class="form-label">Upload image</label>
+            <input asp-for="UploadImage" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
+            <span asp-validation-for="UploadImage" class="text-danger"></span>
+            <div class="form-text">Supported formats: JPG, PNG, WEBP. Max file size is validated by the API.</div>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Form.ImageUrl" class="form-label">Image URL (optional manual override)</label>
+            <input asp-for="Form.ImageUrl" class="form-control" />
+            <span asp-validation-for="Form.ImageUrl" class="text-danger"></span>
+            <div class="form-check mt-2">
+                <input asp-for="RemoveImage" class="form-check-input" />
+                <label asp-for="RemoveImage" class="form-check-label">Remove current image on save</label>
+            </div>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Model.Form.ImageUrl))
+        {
+            <div class="col-12">
+                <label class="form-label">Current image preview</label>
+                <div class="mb-2">
+                    <a asp-action="Image" asp-route-id="@Model.ExerciseId" target="_blank" rel="noopener noreferrer">View image</a>
+                </div>
+                <div>
+                    <img src="@Url.Action("Image", "Exercises", new { id = Model.ExerciseId })" alt="Current exercise image" class="img-thumbnail" style="max-height: 220px;" />
+                </div>
+            </div>
+        }
+        <div class="col-md-6">
+            <label asp-for="Form.VideoUrl" class="form-label"></label>
+            <input asp-for="Form.VideoUrl" class="form-control" />
+            <span asp-validation-for="Form.VideoUrl" class="text-danger"></span>
+            @if (!string.IsNullOrWhiteSpace(Model.Form.VideoUrl))
+            {
+                <div class="form-text mt-2">
+                    <a href="@Model.Form.VideoUrl" target="_blank" rel="noopener noreferrer">Open video</a>
+                </div>
+            }
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Form.DefaultReps" class="form-label"></label>
+            <input asp-for="Form.DefaultReps" class="form-control" />
+            <span asp-validation-for="Form.DefaultReps" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Form.DefaultSets" class="form-label"></label>
+            <input asp-for="Form.DefaultSets" class="form-control" />
+            <span asp-validation-for="Form.DefaultSets" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Form.DefaultHoldSeconds" class="form-label"></label>
+            <input asp-for="Form.DefaultHoldSeconds" class="form-control" />
+            <span asp-validation-for="Form.DefaultHoldSeconds" class="text-danger"></span>
+        </div>
+        <div class="col-12 form-check">
+            <input asp-for="Form.IsActive" class="form-check-input" />
+            <label asp-for="Form.IsActive" class="form-check-label"></label>
+        </div>
+        <div class="col-12">
+            <label asp-for="InstructionsText" class="form-label">Ordered instructions (one step per line)</label>
+            <textarea asp-for="InstructionsText" class="form-control" rows="7"></textarea>
+            <span asp-validation-for="InstructionsText" class="text-danger"></span>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Model.LegacyInstructionsText))
+        {
+            <div class="col-12">
+                <label class="form-label">Legacy free-text instructions (read only)</label>
+                <textarea class="form-control" rows="3" readonly>@Model.LegacyInstructionsText</textarea>
+            </div>
+        }
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Save exercise</button>
+        @if (!isCreate)
+        {
+            <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.ExerciseId">Cancel</a>
+        }
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

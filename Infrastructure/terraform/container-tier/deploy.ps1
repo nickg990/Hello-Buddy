@@ -13,9 +13,13 @@
 param(
     [string] $ImageTag,
     [string] $SubnetAppsId,
+    [string] $ResourceGroupName = "rg-hellobuddy-prod",
     [switch] $SkipBuild,
     [switch] $FoundationOnly,
-    [switch] $AppsOnly
+    [switch] $AppsOnly,
+    [switch] $UiOnly,
+    [switch] $ApiOnly,
+    [switch] $PdfOnly
 )
 
 $ErrorActionPreference = "Stop"
@@ -44,9 +48,11 @@ $acrName = "acrhellobuddyprod"
 $loginServer = "$acrName.azurecr.io"
 
 $images = @(
-    @{ Name = "hello-buddy-ui"; Dockerfile = "Dockerfile.ui"; VarName = "ui_app_image" }
-    @{ Name = "hello-buddy-api"; Dockerfile = "Dockerfile.api"; VarName = "api_app_image" }
-    @{ Name = "hello-buddy-pdf"; Dockerfile = "Dockerfile.pdf"; VarName = "pdf_app_image" }
+    @{ Name = "hello-buddy-ui"; Dockerfile = "Dockerfile.ui"; VarName = "ui_app_image"; Component = "ui"; AppName = "ca-hello-buddy-ui";  StreamingUnsafe = $false }
+    @{ Name = "hello-buddy-api"; Dockerfile = "Dockerfile.api"; VarName = "api_app_image"; Component = "api"; AppName = "ca-hello-buddy-api"; StreamingUnsafe = $false }
+    # PDF image runs apt-get install chromium whose progress output contains the Unicode arrow
+    # character '→' (U+2192) which cp1252 cannot encode. Always skip streaming for this image.
+    @{ Name = "hello-buddy-pdf"; Dockerfile = "Dockerfile.pdf"; VarName = "pdf_app_image"; Component = "pdf"; AppName = "ca-hello-buddy-pdf"; StreamingUnsafe = $true  }
 )
 
 foreach ($img in $images) {
@@ -55,6 +61,29 @@ foreach ($img in $images) {
 
 Write-Host "==> Images will be tagged as:" -ForegroundColor Cyan
 $images | ForEach-Object { Write-Host "    $($_.Ref)" }
+
+$componentSelectionCount = @($UiOnly, $ApiOnly, $PdfOnly).Where({ $_ }).Count
+if ($componentSelectionCount -gt 1) {
+    throw "Select only one of -UiOnly, -ApiOnly, or -PdfOnly."
+}
+
+$componentDeploy = $componentSelectionCount -eq 1
+if ($componentDeploy -and $FoundationOnly) {
+    throw "-FoundationOnly cannot be combined with component-only deployment switches."
+}
+
+$targetImages = if ($UiOnly) {
+    @($images | Where-Object { $_.Component -eq "ui" })
+}
+elseif ($ApiOnly) {
+    @($images | Where-Object { $_.Component -eq "api" })
+}
+elseif ($PdfOnly) {
+    @($images | Where-Object { $_.Component -eq "pdf" })
+}
+else {
+    $images
+}
 
 function Get-ImageVarArgs {
     $args = @()
@@ -82,7 +111,7 @@ if ($AppsOnly) {
         Pop-Location
     }
 }
-else {
+elseif (-not $componentDeploy) {
     Push-Location $tfDir
     try {
         if (-not (Test-Path .terraform)) {
@@ -115,29 +144,83 @@ else {
 if (-not $SkipBuild) {
     # az CLI streams remote build logs through a Python process that defaults
     # to cp1252 on Windows; non-ANSI bytes (e.g. apt's '→') crash the CLI even
-    # though the ACR build itself is fine. Force UTF-8 for both the child
-    # process and our own console.
-    $env:PYTHONIOENCODING = 'utf-8'
+    # though the ACR build itself is fine. Belt-and-braces: enable Python's
+    # full UTF-8 mode in the child process, set an error-tolerant io encoding,
+    # switch the active console code page to UTF-8 (65001), and align the
+    # PowerShell host's own output encoding. The ':replace' suffix is the
+    # final safety net so any stray byte becomes '?' rather than a crash.
+    $env:PYTHONUTF8       = '1'
+    $env:PYTHONIOENCODING = 'utf-8:replace'
+
+    $prevChcp = $null
+    try {
+        $chcpOut = chcp 2>$null
+        if ($chcpOut -match '(\d+)\s*$') { $prevChcp = [int]$Matches[1] }
+        chcp 65001 | Out-Null
+    } catch {}
+    $prevOutEnc = [Console]::OutputEncoding
     try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 
     Push-Location $adminSolution
     try {
-        foreach ($img in $images) {
-            Write-Host "==> az acr build -t $($img.Name):$ImageTag -f $($img.Dockerfile)" -ForegroundColor Cyan
-            az acr build `
-                --registry $acrName `
-                --image "$($img.Name):$ImageTag" `
-                --file $img.Dockerfile `
-                . | Out-Host
-            if ($LASTEXITCODE -ne 0) { throw "az acr build failed for $($img.Name)." }
+        foreach ($img in $targetImages) {
+            if ($img.StreamingUnsafe) {
+                # This image runs apt-get during build; apt progress output contains Unicode
+                # characters that cp1252 cannot encode. Skip streaming entirely.
+                Write-Host "==> az acr build -t $($img.Name):$ImageTag -f $($img.Dockerfile) [--no-logs: apt Unicode output]" -ForegroundColor Cyan
+                az acr build `
+                    --registry $acrName `
+                    --image "$($img.Name):$ImageTag" `
+                    --file $img.Dockerfile `
+                    --no-logs `
+                    . | Out-Host
+                if ($LASTEXITCODE -ne 0) { throw "az acr build failed for $($img.Name)." }
+            }
+            else {
+                Write-Host "==> az acr build -t $($img.Name):$ImageTag -f $($img.Dockerfile)" -ForegroundColor Cyan
+                az acr build `
+                    --registry $acrName `
+                    --image "$($img.Name):$ImageTag" `
+                    --file $img.Dockerfile `
+                    . | Out-Host
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Host "==> Streamed build failed for $($img.Name); retrying with --no-logs (logs available via 'az acr task logs')" -ForegroundColor Yellow
+                    az acr build `
+                        --registry $acrName `
+                        --image "$($img.Name):$ImageTag" `
+                        --file $img.Dockerfile `
+                        --no-logs `
+                        . | Out-Host
+                    if ($LASTEXITCODE -ne 0) { throw "az acr build failed for $($img.Name)." }
+                }
+            }
         }
     }
     finally {
         Pop-Location
+        try { if ($prevChcp) { chcp $prevChcp | Out-Null } } catch {}
+        try { [Console]::OutputEncoding = $prevOutEnc } catch {}
     }
 }
 else {
     Write-Host "==> SkipBuild set; using existing image tags" -ForegroundColor Yellow
+}
+
+# ----------------------------------------------------------------------------
+# Component-only deployment — update the selected Container App image directly.
+# ----------------------------------------------------------------------------
+if ($componentDeploy) {
+    foreach ($img in $targetImages) {
+        Write-Host "==> az containerapp update --name $($img.AppName) --image $($img.Ref)" -ForegroundColor Cyan
+        az containerapp update `
+            --resource-group $ResourceGroupName `
+            --name $img.AppName `
+            --image $img.Ref | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "az containerapp update failed for $($img.AppName)." }
+    }
+
+    Write-Host "==> Component-only deployment completed." -ForegroundColor Green
+    return
 }
 
 # ----------------------------------------------------------------------------

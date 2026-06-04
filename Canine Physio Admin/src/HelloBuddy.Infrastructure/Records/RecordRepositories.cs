@@ -16,8 +16,260 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IOwnerRepository, OwnerRepository>();
         services.AddScoped<IPetRepository, PetRepository>();
         services.AddScoped<ITreatmentCaseRepository, TreatmentCaseRepository>();
+        services.AddScoped<IExerciseRepository, ExerciseRepository>();
         services.AddScoped<IProgrammeRepository, ProgrammeRepository>();
         return services;
+    }
+}
+
+public sealed class ExerciseRepository : IExerciseRepository
+{
+    private readonly CaninePhysioDbContext _db;
+
+    public ExerciseRepository(CaninePhysioDbContext db)
+    {
+        _db = db;
+    }
+
+    public async Task<IReadOnlyList<ExerciseListItem>> ListAsync(ExerciseListFilter filter, CancellationToken ct)
+    {
+        var query = _db.Exercises.AsQueryable();
+
+        if (filter.ActiveOnly)
+        {
+            query = query.Where(x => x.IsActive ?? true);
+        }
+
+        if (filter.CategoryId.HasValue)
+        {
+            query = query.Where(x => x.ExerciseCategoryId == filter.CategoryId.Value);
+        }
+
+        if (filter.HasVideo.HasValue)
+        {
+            if (filter.HasVideo.Value)
+            {
+                query = query.Where(x => !string.IsNullOrWhiteSpace(x.VideoUrl));
+            }
+            else
+            {
+                query = query.Where(x => string.IsNullOrWhiteSpace(x.VideoUrl));
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.SearchText))
+        {
+            var search = filter.SearchText.Trim().ToLowerInvariant();
+            query = query.Where(x =>
+                x.Title.ToLower().Contains(search) ||
+                (x.ObjectiveSummary != null && x.ObjectiveSummary.ToLower().Contains(search)) ||
+                x.Exerciseinstructions.Any(step => step.InstructionText.ToLower().Contains(search)));
+        }
+
+        return await query
+            .OrderBy(x => x.Title)
+            .Select(x => new ExerciseListItem(
+                x.ExerciseId,
+                x.ExerciseKey,
+                x.Title,
+                x.ExerciseCategoryId,
+                x.ExerciseCategory != null ? x.ExerciseCategory.CategoryName : null,
+                x.ObjectiveSummary,
+                x.IsActive ?? true,
+                !string.IsNullOrWhiteSpace(x.ImageUrl),
+                !string.IsNullOrWhiteSpace(x.VideoUrl),
+                x.UpdatedDate))
+            .ToListAsync(ct);
+    }
+
+    public async Task<ExerciseDetailVm?> GetAsync(ulong exerciseId, CancellationToken ct)
+    {
+        return await _db.Exercises
+            .Where(x => x.ExerciseId == exerciseId)
+            .Select(x => new ExerciseDetailVm(
+                x.ExerciseId,
+                x.ExerciseCategoryId,
+                x.ExerciseCategory != null ? x.ExerciseCategory.CategoryName : null,
+                x.ExerciseKey,
+                x.Title,
+                x.ObjectiveSummary,
+                x.ImageUrl,
+                x.VideoUrl,
+                x.DefaultReps,
+                x.DefaultSets,
+                x.DefaultHoldSeconds,
+                x.IsActive ?? true,
+                x.InstructionsText,
+                x.UpdatedDate,
+                x.Exerciseinstructions
+                    .OrderBy(step => step.StepNumber)
+                    .Select(step => new ExerciseDetailVm.InstructionStepVm(step.StepNumber, step.InstructionText))
+                    .ToList()))
+            .FirstOrDefaultAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<ExerciseCategoryListItem>> ListCategoriesAsync(CancellationToken ct)
+    {
+        return await _db.Exercisecategories
+            .OrderBy(x => x.CategoryName)
+            .Select(x => new ExerciseCategoryListItem(
+                x.ExerciseCategoryId,
+                x.CategoryName,
+                x.IsActive ?? true))
+            .ToListAsync(ct);
+    }
+
+    public Task<bool> CategoryExistsAsync(ulong exerciseCategoryId, CancellationToken ct)
+    {
+        return _db.Exercisecategories.AnyAsync(x => x.ExerciseCategoryId == exerciseCategoryId, ct);
+    }
+
+    public async Task<ulong> CreateAsync(SaveExerciseRequest request, CancellationToken ct)
+    {
+        var useTransaction = !string.Equals(_db.Database.ProviderName, "Microsoft.EntityFrameworkCore.InMemory", StringComparison.Ordinal);
+        if (useTransaction)
+        {
+            await using var tx = await _db.Database.BeginTransactionAsync(ct);
+            var exerciseId = await CreateInternalAsync(request, ct);
+            await tx.CommitAsync(ct);
+            return exerciseId;
+        }
+
+        return await CreateInternalAsync(request, ct);
+    }
+
+    public async Task<bool> UpdateAsync(ulong exerciseId, SaveExerciseRequest request, CancellationToken ct)
+    {
+        var useTransaction = !string.Equals(_db.Database.ProviderName, "Microsoft.EntityFrameworkCore.InMemory", StringComparison.Ordinal);
+        if (useTransaction)
+        {
+            await using var tx = await _db.Database.BeginTransactionAsync(ct);
+            var updated = await UpdateInternalAsync(exerciseId, request, ct);
+            if (updated)
+            {
+                await tx.CommitAsync(ct);
+            }
+
+            return updated;
+        }
+
+        return await UpdateInternalAsync(exerciseId, request, ct);
+    }
+
+    private async Task<ulong> CreateInternalAsync(SaveExerciseRequest request, CancellationToken ct)
+    {
+
+        var entity = new Exercise
+        {
+            ExerciseCategoryId = request.ExerciseCategoryId,
+            ExerciseKey = await BuildExerciseKeyAsync(request.Title, null, ct),
+            Title = request.Title.Trim(),
+            ObjectiveSummary = RecordNormalization.NullIfWhiteSpace(request.ObjectiveSummary),
+            ImageUrl = RecordNormalization.NullIfWhiteSpace(request.ImageUrl),
+            VideoUrl = RecordNormalization.NullIfWhiteSpace(request.VideoUrl),
+            DefaultReps = request.DefaultReps,
+            DefaultSets = request.DefaultSets,
+            DefaultHoldSeconds = request.DefaultHoldSeconds,
+            IsActive = request.IsActive
+        };
+
+        _db.Exercises.Add(entity);
+        await _db.SaveChangesAsync(ct);
+
+        ApplyInstructionRows(entity.ExerciseId, request.Instructions);
+        await _db.SaveChangesAsync(ct);
+        return entity.ExerciseId;
+    }
+
+    private async Task<bool> UpdateInternalAsync(ulong exerciseId, SaveExerciseRequest request, CancellationToken ct)
+    {
+        var entity = await _db.Exercises.FirstOrDefaultAsync(x => x.ExerciseId == exerciseId, ct);
+        if (entity is null)
+        {
+            return false;
+        }
+
+        entity.ExerciseCategoryId = request.ExerciseCategoryId;
+        entity.Title = request.Title.Trim();
+        entity.ObjectiveSummary = RecordNormalization.NullIfWhiteSpace(request.ObjectiveSummary);
+        entity.ImageUrl = RecordNormalization.NullIfWhiteSpace(request.ImageUrl);
+        entity.VideoUrl = RecordNormalization.NullIfWhiteSpace(request.VideoUrl);
+        entity.DefaultReps = request.DefaultReps;
+        entity.DefaultSets = request.DefaultSets;
+        entity.DefaultHoldSeconds = request.DefaultHoldSeconds;
+        entity.IsActive = request.IsActive;
+
+        var existingSteps = await _db.Exerciseinstructions
+            .Where(x => x.ExerciseId == exerciseId)
+            .ToListAsync(ct);
+        _db.Exerciseinstructions.RemoveRange(existingSteps);
+        await _db.SaveChangesAsync(ct);
+
+        ApplyInstructionRows(exerciseId, request.Instructions);
+        await _db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    public async Task<bool> SetActiveAsync(ulong exerciseId, bool isActive, CancellationToken ct)
+    {
+        var entity = await _db.Exercises.FirstOrDefaultAsync(x => x.ExerciseId == exerciseId, ct);
+        if (entity is null)
+        {
+            return false;
+        }
+
+        entity.IsActive = isActive;
+        await _db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    private void ApplyInstructionRows(ulong exerciseId, IReadOnlyList<SaveExerciseRequest.InstructionStepInput> instructions)
+    {
+        for (var i = 0; i < instructions.Count; i++)
+        {
+            _db.Exerciseinstructions.Add(new Exerciseinstruction
+            {
+                ExerciseId = exerciseId,
+                StepNumber = (ushort)(i + 1),
+                InstructionText = instructions[i].InstructionText.Trim()
+            });
+        }
+    }
+
+    private async Task<string> BuildExerciseKeyAsync(string title, ulong? excludedExerciseId, CancellationToken ct)
+    {
+        var baseKey = BuildSlug(title);
+        var candidate = baseKey;
+        var suffix = 2;
+
+        while (await _db.Exercises.AnyAsync(
+                   x => x.ExerciseKey == candidate &&
+                        (!excludedExerciseId.HasValue || x.ExerciseId != excludedExerciseId.Value),
+                   ct))
+        {
+            candidate = $"{baseKey}-{suffix}";
+            suffix++;
+        }
+
+        return candidate;
+    }
+
+    private static string BuildSlug(string value)
+    {
+        var chars = value
+            .Trim()
+            .ToLowerInvariant()
+            .Select(c => char.IsLetterOrDigit(c) ? c : '-')
+            .ToArray();
+
+        var slug = new string(chars);
+        while (slug.Contains("--", StringComparison.Ordinal))
+        {
+            slug = slug.Replace("--", "-", StringComparison.Ordinal);
+        }
+
+        slug = slug.Trim('-');
+        return string.IsNullOrWhiteSpace(slug) ? "exercise" : slug;
     }
 }
 

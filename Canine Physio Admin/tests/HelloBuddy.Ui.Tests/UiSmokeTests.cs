@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text;
 using HelloBuddy.Contracts;
 using HelloBuddy.Ui.Services;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -22,9 +23,11 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
     [InlineData("/Owners", "Owners")]
     [InlineData("/Pets", "Pets")]
     [InlineData("/Cases", "Treatment cases")]
+    [InlineData("/Exercises", "Exercise library")]
     [InlineData("/Owners/1", "Amelia Carter")]
     [InlineData("/Pets/1", "Buddy")]
     [InlineData("/Cases/1", "Buddy Hind Limb Rehab")]
+    [InlineData("/Exercises/1", "Step-ups (low)")]
     public async Task PageLoads(string path, string expectedText)
     {
         var response = await _client.GetAsync(path);
@@ -93,6 +96,26 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
             [new CaseDetailVm.NoteRow(1, new DateTime(2026, 5, 1, 10, 0, 0, DateTimeKind.Utc), "assessment", "Initial clinical assessment completed.")],
             []);
 
+        private static readonly ExerciseDetailVm Exercise = new(
+            1,
+            1,
+            "Strength",
+            "step-up",
+            "Step-ups (low)",
+            "Controlled stepping exercise for hind-limb strength.",
+            "https://example.test/step-up.jpg",
+            "https://example.test/step-up.mp4",
+            5,
+            3,
+            null,
+            true,
+            null,
+            new DateTime(2026, 6, 1, 10, 0, 0, DateTimeKind.Utc),
+            [
+                new ExerciseDetailVm.InstructionStepVm(1, "Lead dog onto the low step."),
+                new ExerciseDetailVm.InstructionStepVm(2, "Pause and encourage controlled step down.")
+            ]);
+
         public Task<IReadOnlyList<OwnerListItem>> ListOwnersAsync(CancellationToken ct)
             => Task.FromResult<IReadOnlyList<OwnerListItem>>([new OwnerListItem(1, Owner.FullName, Owner.Email, Owner.PhoneNumber, 1)]);
 
@@ -116,6 +139,42 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
 
         public Task<PetDetailVm?> UpdatePetAsync(ulong id, SavePetRequest request, CancellationToken ct)
             => Task.FromResult<PetDetailVm?>(id == 1 ? Pet : null);
+
+        public Task<IReadOnlyList<ExerciseListItem>> ListExercisesAsync(ExerciseListFilter filter, CancellationToken ct)
+            => Task.FromResult<IReadOnlyList<ExerciseListItem>>([
+                new ExerciseListItem(1, "step-up", Exercise.Title, 1, "Strength", Exercise.ObjectiveSummary, true, true, true, Exercise.UpdatedDate)
+            ]);
+
+        public Task<ExerciseDetailVm?> GetExerciseAsync(ulong id, CancellationToken ct)
+            => Task.FromResult<ExerciseDetailVm?>(id == 1 ? Exercise : null);
+
+        public Task<ExerciseImageContent?> GetExerciseImageAsync(ulong id, CancellationToken ct)
+            => Task.FromResult<ExerciseImageContent?>(
+                id == 1
+                    ? new ExerciseImageContent([0x89, 0x50, 0x4E, 0x47], "image/png")
+                    : null);
+
+        public Task<ExerciseMediaUploadResponse> UploadExerciseImageAsync(Stream fileStream, string fileName, string contentType, CancellationToken ct)
+            => Task.FromResult(new ExerciseMediaUploadResponse(
+                "https://example.test/exercise-upload.jpg",
+                fileName,
+                string.IsNullOrWhiteSpace(contentType) ? "image/jpeg" : contentType,
+                fileStream.CanSeek ? fileStream.Length : Encoding.UTF8.GetByteCount("stub")));
+
+        public Task<ExerciseDetailVm> CreateExerciseAsync(SaveExerciseRequest request, CancellationToken ct)
+            => Task.FromResult(Exercise);
+
+        public Task<ExerciseDetailVm?> UpdateExerciseAsync(ulong id, SaveExerciseRequest request, CancellationToken ct)
+            => Task.FromResult<ExerciseDetailVm?>(id == 1 ? Exercise : null);
+
+        public Task<ExerciseDetailVm?> SetExerciseActiveAsync(ulong id, bool isActive, CancellationToken ct)
+            => Task.FromResult<ExerciseDetailVm?>(id == 1 ? Exercise with { IsActive = isActive } : null);
+
+        public Task<IReadOnlyList<ExerciseCategoryListItem>> ListExerciseCategoriesAsync(CancellationToken ct)
+            => Task.FromResult<IReadOnlyList<ExerciseCategoryListItem>>([
+                new ExerciseCategoryListItem(1, "Strength", true),
+                new ExerciseCategoryListItem(2, "Mobility", true)
+            ]);
 
         public Task<IReadOnlyList<CaseRow>> ListCasesAsync(CancellationToken ct)
             => Task.FromResult<IReadOnlyList<CaseRow>>([new CaseRow(1, TreatmentCase.CaseTitle, TreatmentCase.Status, TreatmentCase.StartDate, TreatmentCase.PetName, TreatmentCase.OwnerName)]);

@@ -44,7 +44,15 @@ public sealed class MySqlTestcontainerFixture : IAsyncLifetime
         await ApplyScriptsAsync();
     }
 
-    public Task DisposeAsync() => _container.DisposeAsync().AsTask();
+    public async Task DisposeAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(ConnectionString))
+        {
+            await IntegrationTestDatabaseReset.ResetToSeedAsync(ConnectionString);
+        }
+
+        await _container.DisposeAsync();
+    }
 
     private async Task ApplyScriptsAsync()
     {
@@ -77,12 +85,12 @@ public sealed class MySqlTestcontainerFixture : IAsyncLifetime
     {
         var root = FindRepoRoot();
         var dir = Path.Combine(root, "Canine Physio Database", "Build and Initialise");
-        return new[]
-        {
+        return
+        [
             Path.Combine(dir, "Canine Physio DB Scripts v2.3 (fresh).sql"),
             Path.Combine(dir, "Canine Physio DB Day 1 Initialise v2.4.sql"),
-            Path.Combine(dir, "Canine Physio DB MSc Assessment Seed v1.sql"),
-        };
+            Path.Combine(dir, "Canine Physio DB MSc Assessment Seed v1.sql")
+        ];
     }
 
     private static string FindRepoRoot()
@@ -92,7 +100,9 @@ public sealed class MySqlTestcontainerFixture : IAsyncLifetime
         {
             dir = dir.Parent;
         }
-        return dir?.FullName ?? throw new InvalidOperationException(
-            "Could not locate 'Canine Physio Database' folder relative to test output directory.");
+
+        return dir?.FullName
+            ?? throw new InvalidOperationException(
+                "Could not locate 'Canine Physio Database' folder relative to test output directory.");
     }
 }

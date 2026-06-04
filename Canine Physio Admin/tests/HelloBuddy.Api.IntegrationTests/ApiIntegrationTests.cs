@@ -104,17 +104,37 @@ public sealed class ApiIntegrationTests : IClassFixture<ApiIntegrationTests.Fact
 
     public sealed class Factory : WebApplicationFactory<Program>
     {
+        private string _dbConnection = string.Empty;
+        private int _resetAttempted;
+
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             var dbConnection =
                 Environment.GetEnvironmentVariable("HELLOBUDDY_TEST_DB_CONNECTION")
                 ?? Environment.GetEnvironmentVariable("ConnectionStrings__CaninePhysioDb")
                 ?? Environment.GetEnvironmentVariable("MYSQLCONNSTR_CaninePhysioDb")
-                ?? "Server=localhost;Port=3306;Database=canine_physiotherapy;User=root;Password=devroot;SslMode=None";
+                ?? "Server=localhost;Port=3306;Database=canine_physiotherapy;User=root;Password=P3nyf@n01;SslMode=None";
+
+            _dbConnection = dbConnection;
 
             builder.UseEnvironment("IntegrationTesting");
             builder.UseSetting("ConnectionStrings:CaninePhysioDb", dbConnection);
             builder.UseSetting("PdfService:Uri", "http://localhost:18080");
+            builder.UseSetting("Seed:ExerciseLibrary:Enabled", "true");
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing
+                && !string.IsNullOrWhiteSpace(_dbConnection)
+                && Interlocked.Exchange(ref _resetAttempted, 1) == 0)
+            {
+                IntegrationTestDatabaseReset.ResetToSeedAsync(_dbConnection)
+                    .GetAwaiter()
+                    .GetResult();
+            }
+
+            base.Dispose(disposing);
         }
     }
 }

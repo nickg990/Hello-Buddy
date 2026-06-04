@@ -1,5 +1,7 @@
 [CmdletBinding()]
 param(
+    [switch]$SkipAzurite,
+    [switch]$ResetAzurite,
     [switch]$SkipPdf,
     [switch]$SkipApi,
     [switch]$SkipUi,
@@ -15,6 +17,62 @@ $adminRoot = Join-Path $repoRoot "Canine Physio Admin"
 
 if (-not (Test-Path $adminRoot)) {
     throw "Could not find 'Canine Physio Admin' at $adminRoot"
+}
+
+function Ensure-Azurite {
+    if ($SkipAzurite) {
+        Write-Host "Skipping Azurite startup (SkipAzurite switch set)." -ForegroundColor Yellow
+        return
+    }
+
+    $docker = Get-Command docker -ErrorAction SilentlyContinue
+    if (-not $docker) {
+        throw "Docker is required to run Azurite locally. Install/start Docker Desktop or rerun with -SkipAzurite and set Storage:Mode=FileSystem."
+    }
+
+    $containerName = "hellobuddy-azurite"
+    $existingContainer = docker ps -a --filter "name=^/${containerName}$" --format "{{.Names}}"
+
+    if ($ResetAzurite -and $existingContainer) {
+        docker rm -f $containerName | Out-Null
+        $existingContainer = ""
+    }
+
+    if (-not $existingContainer) {
+        Write-Host "Starting Azurite container..." -ForegroundColor Cyan
+        docker run -d --name $containerName -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 | Out-Null
+    }
+    else {
+        $running = docker ps --filter "name=^/${containerName}$" --format "{{.Names}}"
+        if (-not $running) {
+            Write-Host "Starting existing Azurite container..." -ForegroundColor Cyan
+            docker start $containerName | Out-Null
+        }
+    }
+
+    $started = $false
+    for ($i = 0; $i -lt 20; $i++) {
+        try {
+            $client = [System.Net.Sockets.TcpClient]::new()
+            $task = $client.ConnectAsync("127.0.0.1", 10000)
+            $task.Wait(500)
+            if ($client.Connected) {
+                $started = $true
+                $client.Dispose()
+                break
+            }
+            $client.Dispose()
+        }
+        catch {
+        }
+        Start-Sleep -Milliseconds 500
+    }
+
+    if (-not $started) {
+        throw "Azurite did not become reachable on localhost:10000."
+    }
+
+    Write-Host "Azurite ready at localhost:10000 (blob), 10001 (queue), 10002 (table)." -ForegroundColor Green
 }
 
 function Start-ServiceProcess {
@@ -88,6 +146,8 @@ function Open-UiInBrowser {
     Start-Process $Url | Out-Null
 }
 
+Ensure-Azurite
+
 if (-not $SkipPdf) {
     Start-ServiceProcess -Title "HelloBuddy PDF" -Command "dotnet run --arch x86 --project src/HelloBuddy.PdfService/HelloBuddy.PdfService.csproj --launch-profile http"
 }
@@ -119,3 +179,4 @@ Write-Host "Launched requested local services." -ForegroundColor Green
 Write-Host "UI:  http://localhost:5046" -ForegroundColor Green
 Write-Host "API: http://localhost:5080/healthz" -ForegroundColor Green
 Write-Host "PDF: http://localhost:5081/healthz" -ForegroundColor Green
+Write-Host "Azurite blob endpoint: http://127.0.0.1:10000/devstoreaccount1" -ForegroundColor Green

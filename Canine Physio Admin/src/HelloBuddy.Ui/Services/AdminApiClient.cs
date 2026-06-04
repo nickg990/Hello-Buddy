@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using HelloBuddy.Contracts;
 using Microsoft.AspNetCore.Mvc;
@@ -76,6 +77,97 @@ public sealed class AdminApiClient : IAdminApiClient
         if (resp.StatusCode == HttpStatusCode.NotFound) return null;
         await EnsureSuccessOrThrowAsync(resp, ct);
         return await ReadRequiredAsync<PetDetailVm>(resp, ct);
+    }
+
+    public async Task<IReadOnlyList<ExerciseListItem>> ListExercisesAsync(ExerciseListFilter filter, CancellationToken ct)
+    {
+        var query = new List<string>();
+        if (!string.IsNullOrWhiteSpace(filter.SearchText))
+        {
+            query.Add($"searchText={Uri.EscapeDataString(filter.SearchText.Trim())}");
+        }
+
+        if (filter.CategoryId.HasValue)
+        {
+            query.Add($"categoryId={filter.CategoryId.Value}");
+        }
+
+        if (filter.HasVideo.HasValue)
+        {
+            query.Add($"hasVideo={filter.HasVideo.Value.ToString().ToLowerInvariant()}");
+        }
+
+        query.Add($"activeOnly={filter.ActiveOnly.ToString().ToLowerInvariant()}");
+
+        var path = "/api/exercises";
+        if (query.Count > 0)
+        {
+            path += "?" + string.Join("&", query);
+        }
+
+        var rows = await _http.GetFromJsonAsync<List<ExerciseListItem>>(path, ct);
+        return rows ?? new List<ExerciseListItem>();
+    }
+
+    public async Task<ExerciseDetailVm?> GetExerciseAsync(ulong id, CancellationToken ct)
+    {
+        var resp = await _http.GetAsync($"/api/exercises/{id}", ct);
+        if (resp.StatusCode == HttpStatusCode.NotFound) return null;
+        await EnsureSuccessOrThrowAsync(resp, ct);
+        return await ReadRequiredAsync<ExerciseDetailVm>(resp, ct);
+    }
+
+    public async Task<ExerciseImageContent?> GetExerciseImageAsync(ulong id, CancellationToken ct)
+    {
+        var resp = await _http.GetAsync($"/api/exercises/{id}/image", ct);
+        if (resp.StatusCode == HttpStatusCode.NotFound) return null;
+        await EnsureSuccessOrThrowAsync(resp, ct);
+
+        var bytes = await resp.Content.ReadAsByteArrayAsync(ct);
+        var contentType = resp.Content.Headers.ContentType?.MediaType;
+        return new ExerciseImageContent(bytes, string.IsNullOrWhiteSpace(contentType) ? "application/octet-stream" : contentType);
+    }
+
+    public async Task<ExerciseMediaUploadResponse> UploadExerciseImageAsync(Stream fileStream, string fileName, string contentType, CancellationToken ct)
+    {
+        using var form = new MultipartFormDataContent();
+        using var fileContent = new StreamContent(fileStream);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+        form.Add(fileContent, "file", fileName);
+
+        var resp = await _http.PostAsync("/api/exercises/media", form, ct);
+        await EnsureSuccessOrThrowAsync(resp, ct);
+        return await ReadRequiredAsync<ExerciseMediaUploadResponse>(resp, ct);
+    }
+
+    public async Task<ExerciseDetailVm> CreateExerciseAsync(SaveExerciseRequest request, CancellationToken ct)
+    {
+        var resp = await _http.PostAsJsonAsync("/api/exercises", request, ct);
+        await EnsureSuccessOrThrowAsync(resp, ct);
+        return await ReadRequiredAsync<ExerciseDetailVm>(resp, ct);
+    }
+
+    public async Task<ExerciseDetailVm?> UpdateExerciseAsync(ulong id, SaveExerciseRequest request, CancellationToken ct)
+    {
+        var resp = await _http.PutAsJsonAsync($"/api/exercises/{id}", request, ct);
+        if (resp.StatusCode == HttpStatusCode.NotFound) return null;
+        await EnsureSuccessOrThrowAsync(resp, ct);
+        return await ReadRequiredAsync<ExerciseDetailVm>(resp, ct);
+    }
+
+    public async Task<ExerciseDetailVm?> SetExerciseActiveAsync(ulong id, bool isActive, CancellationToken ct)
+    {
+        var endpoint = isActive ? "activate" : "deactivate";
+        var resp = await _http.PostAsync($"/api/exercises/{id}/{endpoint}", content: null, ct);
+        if (resp.StatusCode == HttpStatusCode.NotFound) return null;
+        await EnsureSuccessOrThrowAsync(resp, ct);
+        return await ReadRequiredAsync<ExerciseDetailVm>(resp, ct);
+    }
+
+    public async Task<IReadOnlyList<ExerciseCategoryListItem>> ListExerciseCategoriesAsync(CancellationToken ct)
+    {
+        var rows = await _http.GetFromJsonAsync<List<ExerciseCategoryListItem>>("/api/exercise-categories", ct);
+        return rows ?? new List<ExerciseCategoryListItem>();
     }
 
     public async Task<CaseDetailVm?> GetCaseAsync(ulong id, CancellationToken ct)

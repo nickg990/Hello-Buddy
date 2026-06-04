@@ -68,6 +68,23 @@ th { background: #f4f4f4; font-weight: 600; font-size: 10pt; }
 {
 <div class="ex-obj">@ex.ObjectiveSummary</div>
 }
+@if (!string.IsNullOrWhiteSpace(ex.ImageUrl))
+{
+<div style="margin-top:6px;">
+@if (!string.IsNullOrWhiteSpace(ex.VideoUrl))
+{
+<a href="@ex.VideoUrl"><img src="@ex.ImageUrl" alt="@ex.ExerciseTitle image" style="max-height:120px; max-width:220px;" /></a>
+}
+else
+{
+<img src="@ex.ImageUrl" alt="@ex.ExerciseTitle image" style="max-height:120px; max-width:220px;" />
+}
+</div>
+}
+@if (string.IsNullOrWhiteSpace(ex.ImageUrl) && !string.IsNullOrWhiteSpace(ex.VideoUrl))
+{
+<div class="ex-obj" style="margin-top:6px;"><a href="@ex.VideoUrl">Watch video</a></div>
+}
 </td>
 <td>@(ex.Reps?.ToString() ?? "—")</td>
 <td>@(ex.Sets?.ToString() ?? "—")</td>
