@@ -75,7 +75,6 @@
                             <img id="selected-image-preview" src="#" alt="Selected image preview" style="width: 224px; height: 224px; object-fit: contain;" />
                         </a>
                     </div>
-                    <div id="selected-image-filename" class="form-text mt-1 d-none" style="max-width: 240px; word-break: break-all;"></div>
                 </div>
             </div>
         </div>
@@ -140,30 +139,43 @@
             const empty = document.getElementById('selected-image-empty');
             const link = document.getElementById('selected-image-link');
             const preview = document.getElementById('selected-image-preview');
-            const filename = document.getElementById('selected-image-filename');
-            if (!input || !preview || !empty || !filename || !link) { return; }
+            if (!input || !preview || !empty || !link) { return; }
+
+            let selectedImageObjectUrl = null;
+
+            function clearSelectedImageObjectUrl() {
+                if (!selectedImageObjectUrl) {
+                    return;
+                }
+
+                URL.revokeObjectURL(selectedImageObjectUrl);
+                selectedImageObjectUrl = null;
+            }
+
+            function resetSelectedImagePreview() {
+                clearSelectedImageObjectUrl();
+                link.classList.add('d-none');
+                empty.classList.remove('d-none');
+                preview.src = '#';
+                link.href = '#';
+            }
 
             input.addEventListener('change', function () {
                 const file = input.files && input.files[0];
                 if (!file) {
-                    link.classList.add('d-none');
-                    filename.classList.add('d-none');
-                    empty.classList.remove('d-none');
-                    preview.src = '#';
-                    link.href = '#';
+                    resetSelectedImagePreview();
                     return;
                 }
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    preview.src = e.target.result;
-                    link.href = e.target.result;
-                    link.classList.remove('d-none');
-                    filename.textContent = file.name;
-                    filename.classList.remove('d-none');
-                    empty.classList.add('d-none');
-                };
-                reader.readAsDataURL(file);
+
+                clearSelectedImageObjectUrl();
+                selectedImageObjectUrl = URL.createObjectURL(file);
+                preview.src = selectedImageObjectUrl;
+                link.href = selectedImageObjectUrl;
+                link.classList.remove('d-none');
+                empty.classList.add('d-none');
             });
+
+            window.addEventListener('beforeunload', clearSelectedImageObjectUrl);
         })();
     </script>
 }

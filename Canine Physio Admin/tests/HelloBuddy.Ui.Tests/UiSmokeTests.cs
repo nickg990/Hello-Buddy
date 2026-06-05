@@ -37,6 +37,36 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
         Assert.Contains(expectedText, html);
     }
 
+    [Fact]
+    public async Task EditExercisePage_RendersCurrentAndSelectedImagePanels()
+    {
+        var response = await _client.GetAsync("/Exercises/1/Edit");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Current image", html);
+        Assert.Contains("Selected image (pending save)", html);
+        Assert.Contains("/Exercises/1/Image", html);
+        Assert.Contains("id=\"selected-image-link\"", html);
+        Assert.Contains("id=\"selected-image-preview\"", html);
+        Assert.DoesNotContain("selected-image-filename", html);
+    }
+
+    [Fact]
+    public async Task CreateExercisePage_RendersSelectedImagePanelWithoutCurrentImagePanel()
+    {
+        var response = await _client.GetAsync("/Exercises/Create");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("Current image", html);
+        Assert.Contains("Selected image", html);
+        Assert.Contains("No image selected", html);
+        Assert.Contains("id=\"selected-image-link\"", html);
+        Assert.Contains("id=\"selected-image-preview\"", html);
+        Assert.DoesNotContain("selected-image-filename", html);
+    }
+
     public sealed class Factory : WebApplicationFactory<Program>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
