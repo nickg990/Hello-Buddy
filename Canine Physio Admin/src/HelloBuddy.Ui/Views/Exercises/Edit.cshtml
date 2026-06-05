@@ -1,7 +1,8 @@
-@model ExerciseEditorVm
+﻿@model ExerciseEditorVm
 @{
     var isCreate = !Model.ExerciseId.HasValue;
     ViewData["Title"] = isCreate ? "Add exercise" : "Edit exercise";
+    var currentVideoUrl = Model.Form.VideoUrl ?? string.Empty;
 }
 
 <p><a asp-action="Index">&larr; Exercise library</a></p>
@@ -30,84 +31,140 @@
             <textarea asp-for="Form.ObjectiveSummary" class="form-control" rows="3"></textarea>
             <span asp-validation-for="Form.ObjectiveSummary" class="text-danger"></span>
         </div>
-        <div class="col-md-6">
-            <label asp-for="UploadImage" class="form-label">Upload image</label>
-            <input asp-for="UploadImage" id="UploadImage" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
-            <span asp-validation-for="UploadImage" class="text-danger"></span>
-            <div class="form-text">Supported formats: JPG, PNG, WEBP. Max file size is validated by the API. Pick a different file to replace the preview before saving.</div>
-        </div>
-        <div class="col-md-6">
-            <label asp-for="Form.ImageUrl" class="form-label">Image URL (optional manual override)</label>
-            <input asp-for="Form.ImageUrl" class="form-control" />
-            <span asp-validation-for="Form.ImageUrl" class="text-danger"></span>
-            <div class="form-check mt-2">
-                <input asp-for="RemoveImage" class="form-check-input" />
-                <label asp-for="RemoveImage" class="form-check-label">Remove current image on save</label>
-            </div>
-        </div>
+
         <div class="col-12">
-            <div class="d-flex flex-wrap gap-3">
-                @if (!isCreate)
-                {
+            <div class="border rounded p-3">
+                <h2 class="h6 mb-3">Media</h2>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="UploadImage" class="form-label">Upload image</label>
+                        <input asp-for="UploadImage" id="UploadImage" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
+                        <span asp-validation-for="UploadImage" class="text-danger"></span>
+                        <div class="form-text">Supported formats: JPG, PNG, WEBP. Left click selected image to open; right click selected image to deselect.</div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Form.VideoUrl" class="form-label">Video URL</label>
+                        <div class="input-group">
+                            <input asp-for="Form.VideoUrl" id="Form_VideoUrl" class="form-control" placeholder="https://..." />
+                            <button id="open-video-search" type="button" class="btn btn-outline-secondary">Search video</button>
+                        </div>
+                        <span asp-validation-for="Form.VideoUrl" class="text-danger"></span>
+                        <div class="form-text">Left click current/selected video to open; right click selected video to deselect.</div>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-3">
+                    @if (!isCreate)
+                    {
+                        <div>
+                            <label class="form-label">Current image</label>
+                            <div class="border rounded p-2 d-flex align-items-center justify-content-center bg-light overflow-hidden" style="width: 240px; height: 240px;">
+                                @if (!string.IsNullOrWhiteSpace(Model.Form.ImageUrl))
+                                {
+                                    <a asp-action="Image" asp-route-id="@Model.ExerciseId" target="_blank" rel="noopener noreferrer" title="Open full-size image in new tab" class="d-inline-flex">
+                                        <img src="@Url.Action("Image", "Exercises", new { id = Model.ExerciseId })" alt="Current exercise image" style="width: 224px; height: 224px; object-fit: contain;" />
+                                    </a>
+                                }
+                                else
+                                {
+                                    <partial name="_NoImagePlaceholder" model="@("No image")" />
+                                }
+                            </div>
+                        </div>
+                    }
+
                     <div>
-                        <label class="form-label">Current image</label>
-                        <div class="border rounded p-2 d-flex align-items-center justify-content-center bg-light overflow-hidden" style="width: 240px; height: 240px;">
-                            @if (!string.IsNullOrWhiteSpace(Model.Form.ImageUrl))
-                            {
-                                <a asp-action="Image" asp-route-id="@Model.ExerciseId" target="_blank" rel="noopener noreferrer" title="Open full-size image in new tab" class="d-inline-flex">
-                                    <img src="@Url.Action("Image", "Exercises", new { id = Model.ExerciseId })" alt="Current exercise image" style="width: 224px; height: 224px; object-fit: contain;" />
-                                </a>
-                            }
-                            else
-                            {
-                                <partial name="_NoImagePlaceholder" model="@("No image")" />
-                            }
+                        <label class="form-label">@(isCreate ? "Selected image" : "Selected image (pending save)")</label>
+                        <div id="selected-image-panel" class="border rounded p-2 d-flex align-items-center justify-content-center bg-light position-relative overflow-hidden" style="width: 240px; height: 240px;">
+                            <div id="selected-image-empty" class="text-center">
+                                <partial name="_NoImagePlaceholder" model="@("No image selected")" />
+                            </div>
+                            <a id="selected-image-link" href="#" target="_blank" rel="noopener noreferrer" class="d-none d-inline-flex" title="Open full-size preview in new tab">
+                                <img id="selected-image-preview" src="#" alt="Selected image preview" style="width: 224px; height: 224px; object-fit: contain;" />
+                            </a>
                         </div>
                     </div>
-                }
-                <div>
-                    <label class="form-label">@(isCreate ? "Selected image" : "Selected image (pending save)")</label>
-                    <div id="selected-image-panel" class="border rounded p-2 d-flex align-items-center justify-content-center bg-light position-relative overflow-hidden" style="width: 240px; height: 240px;">
-                        <div id="selected-image-empty" class="text-center">
-                            <partial name="_NoImagePlaceholder" model="@("No image selected")" />
+
+                    @if (!isCreate)
+                    {
+                        <div>
+                            <label class="form-label">Current video</label>
+                            <div class="border rounded p-2 d-flex align-items-center justify-content-center bg-light overflow-hidden text-center" style="width: 240px; height: 240px;">
+                                @if (!string.IsNullOrWhiteSpace(currentVideoUrl))
+                                {
+                                    <a id="current-video-link" href="@currentVideoUrl" target="_blank" rel="noopener noreferrer" title="Open current video in new tab" class="d-inline-flex flex-column align-items-center text-decoration-none">
+                                        <img id="current-video-thumb" src="#" alt="Current video preview" class="d-none" style="width: 224px; height: 224px; object-fit: cover;" />
+                                        <video id="current-video-player" class="d-none" muted playsinline preload="metadata" style="width: 224px; height: 224px; object-fit: cover; pointer-events: none;"></video>
+                                        <div id="current-video-fallback" class="text-center">
+                                            <span class="fs-1" aria-hidden="true">&#9658;</span>
+                                            <div class="small">Open current video</div>
+                                        </div>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <div class="text-muted">
+                                        <div class="fs-1" aria-hidden="true">&#9658;</div>
+                                        <div class="small mt-2">No video</div>
+                                    </div>
+                                }
+                            </div>
                         </div>
-                        <a id="selected-image-link" href="#" target="_blank" rel="noopener noreferrer" class="d-none d-inline-flex" title="Open full-size preview in new tab">
-                            <img id="selected-image-preview" src="#" alt="Selected image preview" style="width: 224px; height: 224px; object-fit: contain;" />
-                        </a>
+                    }
+
+                    <div>
+                        <label class="form-label">@(isCreate ? "Selected video" : "Selected video (pending save)")</label>
+                        <div id="selected-video-panel" class="border rounded p-2 d-flex align-items-center justify-content-center bg-light position-relative overflow-hidden" style="width: 240px; height: 240px;">
+                            <div id="selected-video-empty" class="text-muted text-center">
+                                <div class="fs-1" aria-hidden="true">&#9658;</div>
+                                <div class="small mt-2">No video selected</div>
+                            </div>
+                            <a id="selected-video-link" href="#" target="_blank" rel="noopener noreferrer" class="d-none d-inline-flex flex-column align-items-center text-decoration-none" title="Open selected video in new tab">
+                                <img id="selected-video-thumb" src="#" alt="Selected video preview" class="d-none" style="width: 224px; height: 224px; object-fit: cover;" />
+                                <video id="selected-video-player" class="d-none" muted playsinline preload="metadata" style="width: 224px; height: 224px; object-fit: cover; pointer-events: none;"></video>
+                                <div id="selected-video-fallback" class="text-center">
+                                    <span class="fs-1" aria-hidden="true">&#9658;</span>
+                                    <span id="selected-video-text" class="small d-block">Open selected video</span>
+                                </div>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <label asp-for="Form.VideoUrl" class="form-label"></label>
-            <input asp-for="Form.VideoUrl" class="form-control" />
-            <span asp-validation-for="Form.VideoUrl" class="text-danger"></span>
-            @if (!string.IsNullOrWhiteSpace(Model.Form.VideoUrl))
-            {
-                <div class="form-text mt-2">
-                    <a href="@Model.Form.VideoUrl" target="_blank" rel="noopener noreferrer">Open video</a>
+
+        <div class="col-12">
+            <div class="border rounded p-3">
+                <h2 class="h6 mb-3">Defaults</h2>
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">Is active</label>
+                        <div class="form-check mt-2">
+                            <input asp-for="Form.IsActive" class="form-check-input" />
+                            <label asp-for="Form.IsActive" class="form-check-label">Active exercise</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="Form.DefaultReps" class="form-label"></label>
+                        <input asp-for="Form.DefaultReps" class="form-control" />
+                        <span asp-validation-for="Form.DefaultReps" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="Form.DefaultSets" class="form-label"></label>
+                        <input asp-for="Form.DefaultSets" class="form-control" />
+                        <span asp-validation-for="Form.DefaultSets" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="Form.DefaultHoldSeconds" class="form-label"></label>
+                        <input asp-for="Form.DefaultHoldSeconds" class="form-control" />
+                        <span asp-validation-for="Form.DefaultHoldSeconds" class="text-danger"></span>
+                    </div>
                 </div>
-            }
+            </div>
         </div>
-        <div class="col-md-4">
-            <label asp-for="Form.DefaultReps" class="form-label"></label>
-            <input asp-for="Form.DefaultReps" class="form-control" />
-            <span asp-validation-for="Form.DefaultReps" class="text-danger"></span>
-        </div>
-        <div class="col-md-4">
-            <label asp-for="Form.DefaultSets" class="form-label"></label>
-            <input asp-for="Form.DefaultSets" class="form-control" />
-            <span asp-validation-for="Form.DefaultSets" class="text-danger"></span>
-        </div>
-        <div class="col-md-4">
-            <label asp-for="Form.DefaultHoldSeconds" class="form-label"></label>
-            <input asp-for="Form.DefaultHoldSeconds" class="form-control" />
-            <span asp-validation-for="Form.DefaultHoldSeconds" class="text-danger"></span>
-        </div>
-        <div class="col-12 form-check">
-            <input asp-for="Form.IsActive" class="form-check-input" />
-            <label asp-for="Form.IsActive" class="form-check-label"></label>
-        </div>
+
         <div class="col-12">
             <label asp-for="InstructionsText" class="form-label">Ordered instructions (one step per line)</label>
             <textarea asp-for="InstructionsText" class="form-control" rows="7"></textarea>
@@ -131,17 +188,84 @@
     </div>
 </form>
 
+<div id="video-search-backdrop" class="d-none position-fixed top-0 start-0 w-100 h-100" style="z-index: 1040; background: rgba(0, 0, 0, 0.35);"></div>
+<div id="video-search-popup" class="d-none position-fixed bg-white border rounded shadow p-3" style="z-index: 1050; left: 50%; top: 12%; transform: translateX(-50%); width: min(640px, 95vw);">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h3 class="h6 m-0">Search for video URL</h3>
+        <button id="close-video-search" type="button" class="btn btn-sm btn-outline-secondary">Close</button>
+    </div>
+    <div class="row g-2 align-items-end">
+        <div class="col-md-5">
+            <label for="video-search-term" class="form-label">Search term</label>
+            <input id="video-search-term" class="form-control" placeholder="e.g. canine physio step up exercise" />
+        </div>
+        <div class="col-md-4">
+            <label for="video-search-provider" class="form-label">Provider</label>
+            <select id="video-search-provider" class="form-select">
+                <option value="youtube">YouTube</option>
+                <option value="vimeo">Vimeo</option>
+                <option value="web">General web</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button id="run-video-search" type="button" class="btn btn-primary w-100">Search web</button>
+        </div>
+    </div>
+    <div class="form-text mt-2">Search opens in a new tab. Copy the URL of the chosen video and paste it below.</div>
+    <div class="mt-3">
+        <label for="video-selected-url" class="form-label">Selected video URL</label>
+        <div class="input-group">
+            <input id="video-selected-url" class="form-control" placeholder="https://..." />
+            <button id="apply-video-selected-url" type="button" class="btn btn-outline-primary">Use URL</button>
+        </div>
+    </div>
+</div>
+
+<div id="selected-media-context-menu" class="d-none position-fixed bg-white border rounded shadow-sm py-1" style="z-index: 1060; min-width: 180px;">
+    <button id="selected-media-deselect" type="button" class="btn btn-link text-start text-decoration-none w-100 px-3 py-1">Deselect</button>
+</div>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
         (function () {
-            const input = document.getElementById('UploadImage');
-            const empty = document.getElementById('selected-image-empty');
-            const link = document.getElementById('selected-image-link');
-            const preview = document.getElementById('selected-image-preview');
-            if (!input || !preview || !empty || !link) { return; }
+            const imageInput = document.getElementById('UploadImage');
+            const selectedImageEmpty = document.getElementById('selected-image-empty');
+            const selectedImageLink = document.getElementById('selected-image-link');
+            const selectedImagePreview = document.getElementById('selected-image-preview');
+
+            const videoInput = document.getElementById('Form_VideoUrl');
+            const selectedVideoEmpty = document.getElementById('selected-video-empty');
+            const selectedVideoLink = document.getElementById('selected-video-link');
+            const selectedVideoText = document.getElementById('selected-video-text');
+            const selectedVideoThumb = document.getElementById('selected-video-thumb');
+            const selectedVideoPlayer = document.getElementById('selected-video-player');
+            const selectedVideoFallback = document.getElementById('selected-video-fallback');
+
+            const currentVideoLink = document.getElementById('current-video-link');
+            const currentVideoThumb = document.getElementById('current-video-thumb');
+            const currentVideoPlayer = document.getElementById('current-video-player');
+            const currentVideoFallback = document.getElementById('current-video-fallback');
+
+            const contextMenu = document.getElementById('selected-media-context-menu');
+            const contextMenuDeselect = document.getElementById('selected-media-deselect');
+
+            const videoSearchBackdrop = document.getElementById('video-search-backdrop');
+            const videoSearchPopup = document.getElementById('video-search-popup');
+            const openVideoSearch = document.getElementById('open-video-search');
+            const closeVideoSearch = document.getElementById('close-video-search');
+            const runVideoSearch = document.getElementById('run-video-search');
+            const applyVideoSelectedUrl = document.getElementById('apply-video-selected-url');
+            const videoSearchProvider = document.getElementById('video-search-provider');
+            const videoSearchTerm = document.getElementById('video-search-term');
+            const videoSelectedUrl = document.getElementById('video-selected-url');
+
+            if (!imageInput || !selectedImageEmpty || !selectedImageLink || !selectedImagePreview || !videoInput || !selectedVideoEmpty || !selectedVideoLink || !selectedVideoText || !selectedVideoThumb || !selectedVideoPlayer || !selectedVideoFallback || !contextMenu || !contextMenuDeselect || !videoSearchBackdrop || !videoSearchPopup || !openVideoSearch || !closeVideoSearch || !runVideoSearch || !applyVideoSelectedUrl || !videoSearchProvider || !videoSearchTerm || !videoSelectedUrl) {
+                return;
+            }
 
             let selectedImageObjectUrl = null;
+            let contextTarget = null;
 
             function clearSelectedImageObjectUrl() {
                 if (!selectedImageObjectUrl) {
@@ -154,14 +278,155 @@
 
             function resetSelectedImagePreview() {
                 clearSelectedImageObjectUrl();
-                link.classList.add('d-none');
-                empty.classList.remove('d-none');
-                preview.src = '#';
-                link.href = '#';
+                selectedImageLink.classList.add('d-none');
+                selectedImageEmpty.classList.remove('d-none');
+                selectedImagePreview.src = '#';
+                selectedImageLink.href = '#';
             }
 
-            input.addEventListener('change', function () {
-                const file = input.files && input.files[0];
+            function isHttpUrl(value) {
+                if (!value) {
+                    return false;
+                }
+
+                try {
+                    const parsed = new URL(value);
+                    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+                } catch {
+                    return false;
+                }
+            }
+
+            function extractYouTubeId(url) {
+                try {
+                    const parsed = new URL(url);
+                    const host = parsed.hostname.toLowerCase();
+                    if (host.includes('youtube.com')) {
+                        const id = parsed.searchParams.get('v');
+                        return id && id.trim() ? id.trim() : null;
+                    }
+
+                    if (host === 'youtu.be') {
+                        const path = parsed.pathname.replace(/^\//, '').split('/')[0];
+                        return path ? path : null;
+                    }
+                } catch {
+                }
+
+                return null;
+            }
+
+            function extractVimeoId(url) {
+                try {
+                    const parsed = new URL(url);
+                    if (!parsed.hostname.toLowerCase().includes('vimeo.com')) {
+                        return null;
+                    }
+
+                    const segments = parsed.pathname.split('/').filter(Boolean);
+                    for (let i = segments.length - 1; i >= 0; i--) {
+                        if (/^\d+$/.test(segments[i])) {
+                            return segments[i];
+                        }
+                    }
+                } catch {
+                }
+
+                return null;
+            }
+
+            function isDirectVideoUrl(url) {
+                return /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(url);
+            }
+
+            function resolveVideoPreview(url) {
+                const youtubeId = extractYouTubeId(url);
+                if (youtubeId) {
+                    return { type: 'thumb', src: 'https://img.youtube.com/vi/' + youtubeId + '/hqdefault.jpg' };
+                }
+
+                const vimeoId = extractVimeoId(url);
+                if (vimeoId) {
+                    return { type: 'thumb', src: 'https://vumbnail.com/' + vimeoId + '.jpg' };
+                }
+
+                if (isDirectVideoUrl(url)) {
+                    return { type: 'video', src: url };
+                }
+
+                return { type: 'fallback', src: null };
+            }
+
+            function renderVideoPreview(link, thumb, player, fallback, url) {
+                thumb.classList.add('d-none');
+                player.classList.add('d-none');
+                fallback.classList.remove('d-none');
+                thumb.src = '#';
+                player.removeAttribute('src');
+                player.load();
+
+                const preview = resolveVideoPreview(url);
+                if (preview.type === 'thumb') {
+                    thumb.src = preview.src;
+                    thumb.classList.remove('d-none');
+                    fallback.classList.add('d-none');
+                    return;
+                }
+
+                if (preview.type === 'video') {
+                    player.src = preview.src;
+                    player.classList.remove('d-none');
+                    fallback.classList.add('d-none');
+                }
+            }
+
+            function updateSelectedVideoPanel() {
+                const raw = videoInput.value ? videoInput.value.trim() : '';
+                if (!isHttpUrl(raw)) {
+                    selectedVideoLink.classList.add('d-none');
+                    selectedVideoEmpty.classList.remove('d-none');
+                    selectedVideoLink.href = '#';
+                    selectedVideoText.textContent = 'Open selected video';
+                    selectedVideoThumb.classList.add('d-none');
+                    selectedVideoPlayer.classList.add('d-none');
+                    selectedVideoFallback.classList.remove('d-none');
+                    return;
+                }
+
+                const host = new URL(raw).host;
+                selectedVideoLink.href = raw;
+                selectedVideoText.textContent = host ? 'Open selected video (' + host + ')' : 'Open selected video';
+                selectedVideoLink.classList.remove('d-none');
+                selectedVideoEmpty.classList.add('d-none');
+                renderVideoPreview(selectedVideoLink, selectedVideoThumb, selectedVideoPlayer, selectedVideoFallback, raw);
+            }
+
+            function hideContextMenu() {
+                contextMenu.classList.add('d-none');
+                contextTarget = null;
+            }
+
+            function showContextMenu(x, y, target) {
+                contextTarget = target;
+                contextMenuDeselect.textContent = target === 'image' ? 'Deselect image' : 'Deselect video';
+                contextMenu.style.left = x + 'px';
+                contextMenu.style.top = y + 'px';
+                contextMenu.classList.remove('d-none');
+            }
+
+            function openVideoSearchPopup() {
+                videoSearchBackdrop.classList.remove('d-none');
+                videoSearchPopup.classList.remove('d-none');
+                videoSelectedUrl.value = videoInput.value || '';
+            }
+
+            function closeVideoSearchPopup() {
+                videoSearchPopup.classList.add('d-none');
+                videoSearchBackdrop.classList.add('d-none');
+            }
+
+            imageInput.addEventListener('change', function () {
+                const file = imageInput.files && imageInput.files[0];
                 if (!file) {
                     resetSelectedImagePreview();
                     return;
@@ -169,12 +434,88 @@
 
                 clearSelectedImageObjectUrl();
                 selectedImageObjectUrl = URL.createObjectURL(file);
-                preview.src = selectedImageObjectUrl;
-                link.href = selectedImageObjectUrl;
-                link.classList.remove('d-none');
-                empty.classList.add('d-none');
+                selectedImagePreview.src = selectedImageObjectUrl;
+                selectedImageLink.href = selectedImageObjectUrl;
+                selectedImageLink.classList.remove('d-none');
+                selectedImageEmpty.classList.add('d-none');
             });
 
+            videoInput.addEventListener('input', updateSelectedVideoPanel);
+
+            selectedImageLink.addEventListener('contextmenu', function (e) {
+                if (selectedImageLink.classList.contains('d-none')) {
+                    return;
+                }
+                e.preventDefault();
+                showContextMenu(e.pageX, e.pageY, 'image');
+            });
+
+            selectedVideoLink.addEventListener('contextmenu', function (e) {
+                if (selectedVideoLink.classList.contains('d-none')) {
+                    return;
+                }
+                e.preventDefault();
+                showContextMenu(e.pageX, e.pageY, 'video');
+            });
+
+            contextMenuDeselect.addEventListener('click', function () {
+                if (contextTarget === 'image') {
+                    imageInput.value = '';
+                    resetSelectedImagePreview();
+                } else if (contextTarget === 'video') {
+                    videoInput.value = '';
+                    updateSelectedVideoPanel();
+                }
+                hideContextMenu();
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!contextMenu.contains(e.target)) {
+                    hideContextMenu();
+                }
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    hideContextMenu();
+                    closeVideoSearchPopup();
+                }
+            });
+
+            openVideoSearch.addEventListener('click', openVideoSearchPopup);
+            closeVideoSearch.addEventListener('click', closeVideoSearchPopup);
+            videoSearchBackdrop.addEventListener('click', closeVideoSearchPopup);
+
+            runVideoSearch.addEventListener('click', function () {
+                const term = (videoSearchTerm.value || '').trim();
+                if (!term) {
+                    return;
+                }
+
+                const encoded = encodeURIComponent(term);
+                let url = 'https://www.google.com/search?q=' + encoded;
+                const provider = videoSearchProvider.value;
+
+                if (provider === 'youtube') {
+                    url = 'https://www.youtube.com/results?search_query=' + encoded;
+                } else if (provider === 'vimeo') {
+                    url = 'https://vimeo.com/search?q=' + encoded;
+                }
+
+                window.open(url, '_blank', 'noopener');
+            });
+
+            applyVideoSelectedUrl.addEventListener('click', function () {
+                videoInput.value = (videoSelectedUrl.value || '').trim();
+                updateSelectedVideoPanel();
+                closeVideoSearchPopup();
+            });
+
+            if (currentVideoLink && currentVideoThumb && currentVideoPlayer && currentVideoFallback) {
+                renderVideoPreview(currentVideoLink, currentVideoThumb, currentVideoPlayer, currentVideoFallback, currentVideoLink.href);
+            }
+
+            updateSelectedVideoPanel();
             window.addEventListener('beforeunload', clearSelectedImageObjectUrl);
         })();
     </script>

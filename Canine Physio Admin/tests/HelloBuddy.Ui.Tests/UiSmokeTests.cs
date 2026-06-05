@@ -38,18 +38,24 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
     }
 
     [Fact]
-    public async Task EditExercisePage_RendersCurrentAndSelectedImagePanels()
+    public async Task EditExercisePage_RendersCurrentAndSelectedMediaPanels()
     {
         var response = await _client.GetAsync("/Exercises/1/Edit");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Media", html);
         Assert.Contains("Current image", html);
         Assert.Contains("Selected image (pending save)", html);
+        Assert.Contains("Current video", html);
+        Assert.Contains("Selected video (pending save)", html);
         Assert.Contains("/Exercises/1/Image", html);
         Assert.Contains("id=\"selected-image-link\"", html);
         Assert.Contains("id=\"selected-image-preview\"", html);
-        Assert.DoesNotContain("selected-image-filename", html);
+        Assert.Contains("id=\"selected-video-link\"", html);
+        Assert.Contains("id=\"open-video-search\"", html);
+        Assert.DoesNotContain("Image URL (optional manual override)", html);
+        Assert.DoesNotContain("Remove current image on save", html);
     }
 
     [Fact]
@@ -60,11 +66,33 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var html = await response.Content.ReadAsStringAsync();
         Assert.DoesNotContain("Current image", html);
+        Assert.DoesNotContain("Current video", html);
         Assert.Contains("Selected image", html);
+        Assert.Contains("Selected video", html);
         Assert.Contains("No image selected", html);
+        Assert.Contains("No video selected", html);
         Assert.Contains("id=\"selected-image-link\"", html);
         Assert.Contains("id=\"selected-image-preview\"", html);
-        Assert.DoesNotContain("selected-image-filename", html);
+        Assert.Contains("id=\"selected-video-link\"", html);
+        Assert.Contains("id=\"open-video-search\"", html);
+        Assert.DoesNotContain("Image URL (optional manual override)", html);
+        Assert.DoesNotContain("Remove current image on save", html);
+    }
+
+    [Fact]
+    public async Task ExerciseDetailsPage_RendersHorizontalMediaTilesWithoutLinkLabels()
+    {
+        var response = await _client.GetAsync("/Exercises/1");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Media", html);
+        Assert.Contains("Image", html);
+        Assert.Contains("Video", html);
+        Assert.Contains("d-flex flex-wrap gap-3", html);
+        Assert.Contains("id=\"details-video-link\"", html);
+        Assert.DoesNotContain(">View image<", html);
+        Assert.DoesNotContain(">Open video<", html);
     }
 
     public sealed class Factory : WebApplicationFactory<Program>

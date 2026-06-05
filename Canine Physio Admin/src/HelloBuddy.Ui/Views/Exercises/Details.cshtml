@@ -51,34 +51,48 @@
                     <dd class="col-sm-8">@(Model.DefaultHoldSeconds?.ToString() ?? "-")</dd>
                 </dl>
 
-                <h2 class="h4">Media links</h2>
-                <dl class="row mb-0">
-                    <dt class="col-sm-4">Image URL</dt>
-                    <dd class="col-sm-8">
-                        @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
-                        {
-                            <a asp-action="Image" asp-route-id="@Model.ExerciseId" target="_blank" rel="noopener noreferrer">View image</a>
-                            <div class="mt-2">
-                                <img src="@Url.Action("Image", "Exercises", new { id = Model.ExerciseId })" alt="@Model.Title image" class="img-thumbnail" style="max-height: 220px;" />
-                            </div>
-                        }
-                        else
-                        {
-                            <span>-</span>
-                        }
-                    </dd>
-                    <dt class="col-sm-4">Video URL</dt>
-                    <dd class="col-sm-8">
-                        @if (!string.IsNullOrWhiteSpace(Model.VideoUrl))
-                        {
-                            <a href="@Model.VideoUrl" target="_blank" rel="noopener noreferrer">Open video</a>
-                        }
-                        else
-                        {
-                            <span>-</span>
-                        }
-                    </dd>
-                </dl>
+                <h2 class="h4">Media</h2>
+                <div class="d-flex flex-wrap gap-3">
+                    <div>
+                        <label class="form-label">Image</label>
+                        <div class="border rounded p-2 d-flex align-items-center justify-content-center bg-light overflow-hidden" style="width: 240px; height: 240px;">
+                            @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+                            {
+                                <a asp-action="Image" asp-route-id="@Model.ExerciseId" target="_blank" rel="noopener noreferrer" title="Open image in new tab" class="d-inline-flex">
+                                    <img src="@Url.Action("Image", "Exercises", new { id = Model.ExerciseId })" alt="@Model.Title image" style="width: 224px; height: 224px; object-fit: contain;" />
+                                </a>
+                            }
+                            else
+                            {
+                                <partial name="_NoImagePlaceholder" model="@("No image")" />
+                            }
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="form-label">Video</label>
+                        <div class="border rounded p-2 d-flex align-items-center justify-content-center bg-light overflow-hidden" style="width: 240px; height: 240px;">
+                            @if (!string.IsNullOrWhiteSpace(Model.VideoUrl))
+                            {
+                                <a id="details-video-link" href="@Model.VideoUrl" target="_blank" rel="noopener noreferrer" title="Open video in new tab" class="d-inline-flex flex-column align-items-center text-decoration-none">
+                                    <img id="details-video-thumb" src="#" alt="Video preview" class="d-none" style="width: 224px; height: 224px; object-fit: cover;" />
+                                    <video id="details-video-player" class="d-none" muted playsinline preload="metadata" style="width: 224px; height: 224px; object-fit: cover; pointer-events: none;"></video>
+                                    <div id="details-video-fallback" class="text-center text-muted">
+                                        <span class="fs-1" aria-hidden="true">&#9658;</span>
+                                            <div class="small">Video</div>
+                                    </div>
+                                </a>
+                            }
+                            else
+                            {
+                                <div class="text-center text-muted">
+                                    <span class="fs-1" aria-hidden="true">&#9658;</span>
+                                    <div class="small">No video</div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -109,4 +123,91 @@
         <h2 class="h6">Legacy free-text instructions</h2>
         <p class="mb-0">@Model.LegacyInstructionsText</p>
     </div>
+}
+
+@section Scripts {
+    <script>
+        (function () {
+            const link = document.getElementById('details-video-link');
+            const thumb = document.getElementById('details-video-thumb');
+            const player = document.getElementById('details-video-player');
+            const fallback = document.getElementById('details-video-fallback');
+
+            if (!link || !thumb || !player || !fallback) {
+                return;
+            }
+
+            function extractYouTubeId(url) {
+                try {
+                    const parsed = new URL(url);
+                    const host = parsed.hostname.toLowerCase();
+                    if (host.includes('youtube.com')) {
+                        const id = parsed.searchParams.get('v');
+                        return id && id.trim() ? id.trim() : null;
+                    }
+
+                    if (host === 'youtu.be') {
+                        const path = parsed.pathname.replace(/^\//, '').split('/')[0];
+                        return path ? path : null;
+                    }
+                } catch {
+                }
+                return null;
+            }
+
+            function extractVimeoId(url) {
+                try {
+                    const parsed = new URL(url);
+                    if (!parsed.hostname.toLowerCase().includes('vimeo.com')) {
+                        return null;
+                    }
+
+                    const segments = parsed.pathname.split('/').filter(Boolean);
+                    for (let i = segments.length - 1; i >= 0; i--) {
+                        if (/^\d+$/.test(segments[i])) {
+                            return segments[i];
+                        }
+                    }
+                } catch {
+                }
+                return null;
+            }
+
+            function isDirectVideoUrl(url) {
+                return /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(url);
+            }
+
+            function resolveVideoPreview(url) {
+                const youtubeId = extractYouTubeId(url);
+                if (youtubeId) {
+                    return { type: 'thumb', src: 'https://img.youtube.com/vi/' + youtubeId + '/hqdefault.jpg' };
+                }
+
+                const vimeoId = extractVimeoId(url);
+                if (vimeoId) {
+                    return { type: 'thumb', src: 'https://vumbnail.com/' + vimeoId + '.jpg' };
+                }
+
+                if (isDirectVideoUrl(url)) {
+                    return { type: 'video', src: url };
+                }
+
+                return { type: 'fallback', src: null };
+            }
+
+            const preview = resolveVideoPreview(link.href);
+            if (preview.type === 'thumb') {
+                thumb.src = preview.src;
+                thumb.classList.remove('d-none');
+                fallback.classList.add('d-none');
+                return;
+            }
+
+            if (preview.type === 'video') {
+                player.src = preview.src;
+                player.classList.remove('d-none');
+                fallback.classList.add('d-none');
+            }
+        })();
+    </script>
 }
