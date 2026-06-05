@@ -1,6 +1,6 @@
 # Increment 3 Error Log
 
-Last Updated: 2026-06-04
+Last Updated: 2026-06-05
 
 ## Status legend
 
@@ -16,6 +16,7 @@ Last Updated: 2026-06-04
 | I3-ERR-001 | Increment 3 | Unable to preview image in Exercise Library due to blob public access restrictions | Open | Azure | 2026-06-04 |
 | I3-ERR-002 | Increment 3 | Baited back stretch image URL not displayed on exercise screen | Open | Azure | 2026-06-04 |
 | I3-ERR-003 | Increment 3 | Current image preview does not display uploaded image | Open | Azure | 2026-06-04 |
+| I3-ERR-004 | Increment 3 | Edit/Add exercise image preview overflows its fixed-size box | Resolved | Azure | 2026-06-05 |
 
 ## Details
 
@@ -66,6 +67,27 @@ Preview area does not show image.
 
 - Expected result:
 Preview area should render the currently saved uploaded image.
+
+### I3-ERR-004 - Edit/Add exercise image preview overflows its fixed-size box
+
+- Reproduction steps:
+1. Go to Exercise Library.
+2. Open an exercise and click Edit (or click Add exercise).
+3. Observe the Current image / Selected image preview panels.
+
+- Observed result:
+The image rendered on top of / spilling outside the fixed 240x240 preview box instead of being contained within it. Affected both the Edit screen (current + selected panels) and the Add exercise screen (selected panel).
+
+- Expected result:
+Image should be fully contained inside the preview box, centered, with aspect ratio preserved, regardless of the source image dimensions.
+
+- Root cause:
+The image used `max-height: 100%`, which resolves against the inline `<a>` wrapper element. That wrapper had no defined height, so the percentage had no constraint to resolve against and the image rendered at its natural size, overflowing the box.
+
+- Fix:
+Images are sized with an explicit `width: 224px; height: 224px; object-fit: contain` (the 240px box minus `p-2` padding). `object-fit: contain` scales any source image to fit the box while preserving aspect ratio, downscaling large images and upscaling small ones, with letterboxing as needed. Panels also got `overflow-hidden` as a safety clip. Applied to the current-image panel (Edit) and the selected-image panel (shared by Edit and Add exercise).
+
+- Status: Resolved (CR-005 refinement). Pending commit + UI redeploy to production.
 
 ## Triage notes
 
