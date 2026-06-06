@@ -90,6 +90,16 @@ resource "azurerm_container_app" "ui" {
       }
 
       env {
+        name  = "MediaSearch__VideoProviders__0__Description"
+        value = var.media_search_provider_description
+      }
+
+      env {
+        name  = "MediaSearch__VideoProviders__0__BaseUrl"
+        value = var.media_search_provider_base_url
+      }
+
+      env {
         name  = "ApplicationInsights__ConnectionString"
         value = var.application_insights_connection_string
       }

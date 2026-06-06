@@ -55,11 +55,11 @@
                 <div class="d-flex flex-wrap gap-3">
                     <div>
                         <label class="form-label">Image</label>
-                        <div class="border rounded p-2 d-flex align-items-center justify-content-center bg-light overflow-hidden" style="width: 240px; height: 240px;">
+                        <div class="exercise-media-panel exercise-media-panel--tile border rounded p-2 d-flex align-items-center justify-content-center bg-light overflow-hidden">
                             @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
                             {
                                 <a asp-action="Image" asp-route-id="@Model.ExerciseId" target="_blank" rel="noopener noreferrer" title="Open image in new tab" class="d-inline-flex">
-                                    <img src="@Url.Action("Image", "Exercises", new { id = Model.ExerciseId })" alt="@Model.Title image" style="width: 224px; height: 224px; object-fit: contain;" />
+                                    <img src="@Url.Action("Image", "Exercises", new { id = Model.ExerciseId })" alt="@Model.Title image" class="exercise-media-item exercise-media-item--contain" />
                                 </a>
                             }
                             else
@@ -71,12 +71,12 @@
 
                     <div>
                         <label class="form-label">Video</label>
-                        <div class="border rounded p-2 d-flex align-items-center justify-content-center bg-light overflow-hidden" style="width: 240px; height: 240px;">
+                        <div class="exercise-media-panel exercise-media-panel--tile border rounded p-2 d-flex align-items-center justify-content-center bg-light overflow-hidden">
                             @if (!string.IsNullOrWhiteSpace(Model.VideoUrl))
                             {
                                 <a id="details-video-link" href="@Model.VideoUrl" target="_blank" rel="noopener noreferrer" title="Open video in new tab" class="d-inline-flex flex-column align-items-center text-decoration-none">
-                                    <img id="details-video-thumb" src="#" alt="Video preview" class="d-none" style="width: 224px; height: 224px; object-fit: cover;" />
-                                    <video id="details-video-player" class="d-none" muted playsinline preload="metadata" style="width: 224px; height: 224px; object-fit: cover; pointer-events: none;"></video>
+                                    <img id="details-video-thumb" src="#" alt="Video preview" class="exercise-media-item exercise-media-item--cover d-none" />
+                                    <video id="details-video-player" class="exercise-media-item exercise-media-item--cover exercise-media-video d-none" muted playsinline preload="metadata"></video>
                                     <div id="details-video-fallback" class="text-center text-muted">
                                         <span class="fs-1" aria-hidden="true">&#9658;</span>
                                             <div class="small">Video</div>
@@ -177,6 +177,28 @@
                 return /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(url);
             }
 
+            function extractGoogleDriveId(url) {
+                try {
+                    const parsed = new URL(url);
+                    if (!parsed.hostname.toLowerCase().includes('drive.google.com')) {
+                        return null;
+                    }
+
+                    const fileMatch = parsed.pathname.match(/\/file\/d\/([^/]+)/);
+                    if (fileMatch && fileMatch[1]) {
+                        return fileMatch[1];
+                    }
+
+                    const idParam = parsed.searchParams.get('id');
+                    if (idParam && idParam.trim()) {
+                        return idParam.trim();
+                    }
+                } catch {
+                }
+
+                return null;
+            }
+
             function resolveVideoPreview(url) {
                 const youtubeId = extractYouTubeId(url);
                 if (youtubeId) {
@@ -186,6 +208,11 @@
                 const vimeoId = extractVimeoId(url);
                 if (vimeoId) {
                     return { type: 'thumb', src: 'https://vumbnail.com/' + vimeoId + '.jpg' };
+                }
+
+                const driveId = extractGoogleDriveId(url);
+                if (driveId) {
+                    return { type: 'thumb', src: 'https://drive.google.com/thumbnail?id=' + driveId + '&sz=w640' };
                 }
 
                 if (isDirectVideoUrl(url)) {

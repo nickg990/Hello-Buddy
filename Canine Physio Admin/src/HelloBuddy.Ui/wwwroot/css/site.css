@@ -40,3 +40,157 @@ body {
 .programme-table .col-sets-sm       { width: 8%; }
 .programme-table .col-hold          { width: 12%; }
 .programme-table .col-hold-sm       { width: 10%; }
+
+.builder-preview-card {
+  position: sticky;
+  top: 1rem;
+}
+
+.builder-preview-body {
+  max-height: calc(100vh - 12rem);
+  overflow: auto;
+  background: #f8f9fa;
+}
+
+.programme-preview {
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  background: #fff;
+  padding: 0.75rem;
+}
+
+.programme-preview-standalone {
+  padding: 1rem;
+}
+
+.programme-preview-document {
+  color: #222;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 11pt;
+  line-height: 1.4;
+  padding: 0 4mm;
+}
+
+.programme-preview-document h1 {
+  margin: 0 0 4px 0;
+  font-size: 20pt;
+}
+
+.programme-preview-document h2 {
+  margin: 16px 0 4px 0;
+  font-size: 14pt;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 2px;
+}
+
+.programme-preview-document .subhead {
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.programme-preview-document .meta {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 12px;
+}
+
+.programme-preview-document .meta div {
+  flex: 1;
+}
+
+.programme-preview-document table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 4px;
+}
+
+.programme-preview-document th,
+.programme-preview-document td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid #eee;
+  vertical-align: top;
+}
+
+.programme-preview-document th {
+  background: #f4f4f4;
+  font-weight: 600;
+  font-size: 10pt;
+}
+
+.programme-preview-document .ex-title {
+  font-weight: 600;
+}
+
+.programme-preview-document .ex-obj {
+  color: #666;
+  font-size: 10pt;
+}
+
+.programme-preview-document .preview-image {
+  max-height: 120px;
+  max-width: 220px;
+}
+
+.programme-preview-document .session {
+  break-inside: avoid;
+  margin-bottom: 12px;
+}
+
+.programme-preview-document .footer {
+  color: #888;
+  font-size: 9pt;
+  margin-top: 24px;
+  text-align: center;
+}
+
+@media (max-width: 1399.98px) {
+  .builder-preview-card {
+    position: static;
+  }
+
+  .builder-preview-body {
+    max-height: none;
+  }
+}
+
+/* Exercise media preview layout classes used by edit/details views. */
+.exercise-media-panel--tile {
+  width: 240px;
+  height: 240px;
+}
+
+.exercise-media-item {
+  width: 224px;
+  height: 224px;
+}
+
+.exercise-media-item--contain {
+  object-fit: contain;
+}
+
+.exercise-media-item--cover {
+  object-fit: cover;
+}
+
+.exercise-media-video {
+  pointer-events: none;
+}
+
+.exercise-video-search-backdrop {
+  z-index: 1040;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.exercise-video-search-popup {
+  z-index: 1050;
+  left: 50%;
+  top: 12%;
+  transform: translateX(-50%);
+  width: min(640px, 95vw);
+}
+
+.exercise-media-context-menu {
+  z-index: 1060;
+  min-width: 180px;
+}

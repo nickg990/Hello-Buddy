@@ -1,0 +1,13 @@
+@model HelloBuddy.Contracts.ProgrammeVm
+
+<div class="card builder-preview-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 class="h6 mb-0">Live preview</h2>
+        <span class="text-muted small">Updates after builder changes</span>
+    </div>
+    <div class="card-body builder-preview-body">
+        <div class="programme-preview">
+            <partial name="_ProgrammePreviewDocument" model="Model" />
+        </div>
+    </div>
+</div>

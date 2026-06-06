@@ -190,7 +190,7 @@ INSERT INTO Programme (
     @TreatmentCaseId, NULL,
     'Buddy Initial Home Rehabilitation Programme',
     CURRENT_DATE, DATE_ADD(CURRENT_DATE, INTERVAL 14 DAY),
-    'active', TRUE,
+    'planned', TRUE,
     'Initial home exercise programme created following first physiotherapy review. MSc assessment demo data.'
 );
 SET @ProgrammeId = LAST_INSERT_ID();
@@ -201,7 +201,7 @@ INSERT INTO Session (
     Period, Objective, Status, SortOrder
 ) VALUES (
     @ProgrammeId, @SessionTypeAM, CURRENT_TIMESTAMP,
-    'AM', 'Morning strengthening and core control session.', 'active', 1
+    'AM', 'Morning strengthening and core control session.', 'planned', 1
 );
 SET @SessionAM = LAST_INSERT_ID();
 
@@ -210,7 +210,7 @@ INSERT INTO Session (
     Period, Objective, Status, SortOrder
 ) VALUES (
     @ProgrammeId, @SessionTypePM, CURRENT_TIMESTAMP,
-    'PM', 'Evening mobility, balance and controlled movement session.', 'active', 2
+    'PM', 'Evening mobility, balance and controlled movement session.', 'planned', 2
 );
 SET @SessionPM = LAST_INSERT_ID();
 

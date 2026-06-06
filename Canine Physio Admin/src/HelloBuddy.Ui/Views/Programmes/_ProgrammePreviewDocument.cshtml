@@ -1,0 +1,87 @@
+@model HelloBuddy.Contracts.ProgrammeVm
+
+<div class="programme-preview-document">
+    <h1 id="preview-programme-name">@Model.ProgrammeName</h1>
+    <div class="subhead">@Model.CaseTitle - Programme #@Model.ProgrammeId - @Model.Status</div>
+
+    <div class="meta">
+        <div><strong>Patient:</strong> @Model.PetName</div>
+        <div><strong>Owner:</strong> @Model.OwnerName</div>
+        <div>
+            <strong>Starts:</strong>
+            <span id="preview-start-date">@Model.StartDate.ToString("yyyy-MM-dd")</span>
+            <span id="preview-date-separator" class="@(Model.EndDate is null ? "d-none" : string.Empty)"> - </span>
+            <span id="preview-end-date">@(Model.EndDate?.ToString("yyyy-MM-dd") ?? string.Empty)</span>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Notes))
+    {
+        <p><strong>Notes:</strong> @Model.Notes</p>
+    }
+
+    @foreach (var session in Model.Sessions)
+    {
+        <div class="session">
+            <h2>Session @session.SortOrder - @session.Period</h2>
+            @if (!string.IsNullOrWhiteSpace(session.Objective))
+            {
+                <div class="subhead">@session.Objective</div>
+            }
+            <table class="programme-table">
+                <thead>
+                    <tr>
+                        <th class="col-exercise-wide">Exercise</th>
+                        <th class="col-reps">Reps</th>
+                        <th class="col-sets">Sets</th>
+                        <th class="col-hold">Hold (s)</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ex in session.Exercises)
+                    {
+                        <tr data-preview-session-exercise-id="@ex.SessionExerciseId">
+                            <td>
+                                <div class="ex-title">@ex.ExerciseTitle</div>
+                                @if (!string.IsNullOrWhiteSpace(ex.ObjectiveSummary))
+                                {
+                                    <div class="ex-obj">@ex.ObjectiveSummary</div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(ex.ImageUrl))
+                                {
+                                    <div class="mt-2">
+                                        @if (!string.IsNullOrWhiteSpace(ex.VideoUrl))
+                                        {
+                                            <a href="@ex.VideoUrl" target="_blank" rel="noopener noreferrer">
+                                                <img src="@Url.Action("Image", "Exercises", new { id = ex.ExerciseId })" alt="@ex.ExerciseTitle image" class="preview-image" />
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <img src="@Url.Action("Image", "Exercises", new { id = ex.ExerciseId })" alt="@ex.ExerciseTitle image" class="preview-image" />
+                                        }
+                                    </div>
+                                }
+                                @if (string.IsNullOrWhiteSpace(ex.ImageUrl) && !string.IsNullOrWhiteSpace(ex.VideoUrl))
+                                {
+                                    <div class="ex-obj mt-2">
+                                        <a href="@ex.VideoUrl" target="_blank" rel="noopener noreferrer">Watch video</a>
+                                    </div>
+                                }
+                            </td>
+                            <td data-preview-field="reps">@(ex.Reps?.ToString() ?? "-")</td>
+                            <td data-preview-field="sets">@(ex.Sets?.ToString() ?? "-")</td>
+                            <td data-preview-field="holdSeconds">@(ex.HoldSeconds?.ToString() ?? "-")</td>
+                            <td data-preview-field="notes">@(ex.Notes ?? string.Empty)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <div class="footer">
+        Generated @DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm 'UTC'") - Hello Buddy Cloud Admin
+    </div>
+</div>

@@ -103,6 +103,18 @@ variable "seeded_practitioner_id" {
   default     = "1"
 }
 
+variable "media_search_provider_description" {
+  description = "Description shown in the UI video search provider dropdown (e.g., Cloud storage)."
+  type        = string
+  default     = "Google Drive"
+}
+
+variable "media_search_provider_base_url" {
+  description = "Base URL opened by the UI video search provider."
+  type        = string
+  default     = "https://drive.google.com/drive/u/1/folders/13mCIF8x8VNVfg30xbbnrAxKEFRh2QF9C"
+}
+
 variable "deploy_container_apps" {
   description = "Set to false on first apply (foundation only); set to true after images are in ACR."
   type        = bool

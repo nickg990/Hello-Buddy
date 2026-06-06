@@ -1,6 +1,6 @@
 ﻿# Increment 3 Error Log
 
-Last Updated: 2026-06-05
+Last Updated: 2026-06-06
 
 ## Status legend
 
@@ -19,6 +19,8 @@ Last Updated: 2026-06-05
 | I3-ERR-004 | Increment 3 | Edit/Add exercise image preview overflows its fixed-size box | Resolved | Azure | 2026-06-05 |
 | I3-ERR-005 | Increment 3 | Selected image preview shows file name beneath the preview box | Resolved | Azure | 2026-06-05 |
 | I3-ERR-006 | Increment 3 | Selected image preview does not reliably open a larger image when clicked | Resolved | Azure | 2026-06-05 |
+| I3-ERR-007 | Increment 3 | Case note add action does not persist note from case screen | Open | Local / Azure (to confirm) | 2026-06-06 |
+| I3-ERR-008 | Increment 3 | Video placeholder remains clickable when no video URL is set and opens not found target | Open | Local / Azure (to confirm) | 2026-06-06 |
 
 ## Details
 
@@ -139,6 +141,44 @@ Use `URL.createObjectURL(file)` for the selected image instead of a `data:` URL,
 Switched the pending-image preview to use `URL.createObjectURL(file)` for both the preview `src` and the clickable anchor `href`, with object URL cleanup on reselection and page unload.
 
 - Status: Resolved. Pending commit + UI redeploy to production.
+
+### I3-ERR-007 - Case note add action does not persist note from case screen
+
+- Reproduction steps:
+1. Go to Cases.
+2. Open a case detail screen.
+3. Enter note text in the Add case note input.
+4. Click Add note.
+
+- Observed result:
+No new note appears in the case notes list and the screen continues to show "No case notes recorded yet."
+
+- Expected result:
+The note should be saved and immediately displayed in the case notes list for the selected case.
+
+- Initial hypothesis:
+Possible issue in case-note POST wiring (form action, antiforgery handling, model binding key, or API call/response handling) that prevents persistence or prevents refresh of the notes list after save.
+
+- Status: Open. Investigation and fix pending.
+
+### I3-ERR-008 - Video placeholder remains clickable when no video URL is set and opens not found target
+
+- Reproduction steps:
+1. Go to Exercise Library.
+2. Open Add exercise or Edit exercise.
+3. Leave Video URL empty (or clear the selected/current video URL).
+4. Click the video placeholder tile.
+
+- Observed result:
+The placeholder behaves as a clickable link and navigation opens a not found target/error page.
+
+- Expected result:
+When no valid video URL exists, the placeholder should be non-clickable and should not attempt navigation.
+
+- Initial hypothesis:
+Anchor/link state is not gated by URL presence in all placeholder states, so click targets remain active even when the source URL is null/empty/invalid.
+
+- Status: Open. Investigation and fix pending.
 
 ## Triage notes
 

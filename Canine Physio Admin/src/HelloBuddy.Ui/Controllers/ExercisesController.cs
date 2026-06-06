@@ -3,6 +3,7 @@ using HelloBuddy.Ui.Models;
 using HelloBuddy.Ui.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.Options;
 
 namespace HelloBuddy.Ui.Controllers;
 
@@ -10,10 +11,12 @@ namespace HelloBuddy.Ui.Controllers;
 public class ExercisesController : Controller
 {
     private readonly IAdminApiClient _api;
+    private readonly MediaSearchOptions _mediaSearchOptions;
 
-    public ExercisesController(IAdminApiClient api)
+    public ExercisesController(IAdminApiClient api, IOptions<MediaSearchOptions> mediaSearchOptions)
     {
         _api = api;
+        _mediaSearchOptions = mediaSearchOptions.Value;
     }
 
     [HttpGet("")]
@@ -75,6 +78,7 @@ public class ExercisesController : Controller
     public async Task<IActionResult> Create(ExerciseEditorVm vm, CancellationToken ct)
     {
         vm.CategoryOptions = await BuildCategoryOptionsAsync(ct);
+        vm.VideoSearchProviders = BuildVideoSearchProviderOptions();
         vm.Form.Instructions = ParseInstructions(vm.InstructionsText);
 
         if (!ModelState.IsValid)
@@ -132,6 +136,7 @@ public class ExercisesController : Controller
     {
         vm.ExerciseId = id;
         vm.CategoryOptions = await BuildCategoryOptionsAsync(ct);
+        vm.VideoSearchProviders = BuildVideoSearchProviderOptions();
         vm.Form.Instructions = ParseInstructions(vm.InstructionsText);
 
         if (!ModelState.IsValid)
@@ -185,6 +190,7 @@ public class ExercisesController : Controller
             ExerciseId = exerciseId,
             Form = form,
             CategoryOptions = await BuildCategoryOptionsAsync(ct),
+            VideoSearchProviders = BuildVideoSearchProviderOptions(),
             LegacyInstructionsText = legacyInstructionsText,
             InstructionsText = string.Join(Environment.NewLine,
                 form.Instructions
@@ -200,6 +206,57 @@ public class ExercisesController : Controller
             .Where(x => x.IsActive)
             .Select(x => new SelectListItem(x.CategoryName, x.ExerciseCategoryId.ToString()))
             .ToList();
+    }
+
+    private IReadOnlyList<VideoSearchProviderVm> BuildVideoSearchProviderOptions()
+    {
+        var configured = _mediaSearchOptions.VideoProviders
+            .Where(x => !string.IsNullOrWhiteSpace(x.Description) && IsHttpUrl(x.BaseUrl))
+            .Select(x => new VideoSearchProviderVm
+            {
+                Description = x.Description.Trim(),
+                BaseUrl = x.BaseUrl.Trim()
+            })
+            .ToList();
+
+        if (configured.Count > 0)
+        {
+            return configured;
+        }
+
+        return
+        [
+            new VideoSearchProviderVm
+            {
+                Description = "Google Drive",
+                BaseUrl = "https://drive.google.com/drive/u/1/folders/13mCIF8x8VNVfg30xbbnrAxKEFRh2QF9C"
+            },
+            new VideoSearchProviderVm
+            {
+                Description = "YouTube",
+                BaseUrl = "https://www.youtube.com/results?search_query={query}"
+            },
+            new VideoSearchProviderVm
+            {
+                Description = "Vimeo",
+                BaseUrl = "https://vimeo.com/search?q={query}"
+            },
+            new VideoSearchProviderVm
+            {
+                Description = "General web",
+                BaseUrl = "https://www.google.com/search?q={query}"
+            }
+        ];
+    }
+
+    private static bool IsHttpUrl(string? value)
+    {
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri))
+        {
+            return false;
+        }
+
+        return uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps;
     }
 
     private static List<SaveExerciseRequest.InstructionStepInput> ParseInstructions(string instructionsText)

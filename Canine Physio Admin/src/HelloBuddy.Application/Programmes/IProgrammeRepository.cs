@@ -37,4 +37,7 @@ public interface IProgrammeRepository
 
     /// <summary>Applies edits to session-exercise rows belonging to the supplied programme.</summary>
     Task UpdateSessionExercisesAsync(ulong programmeId, IReadOnlyList<ProgrammeBuilderForm.SessionExerciseEdit> edits, CancellationToken ct);
+
+    /// <summary>Creates a published immutable programme version and marks it current for the supplied programme.</summary>
+    Task PersistPublishedVersionAsync(ulong programmeId, ulong practitionerId, string payloadJson, CancellationToken ct);
 }

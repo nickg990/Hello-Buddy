@@ -1,4 +1,5 @@
 using Azure.Identity;
+using HelloBuddy.Ui.Models;
 using HelloBuddy.Ui.Services;
 using HelloBuddy.Ui.Telemetry;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -44,6 +45,8 @@ builder.Services.AddHttpClient<IAdminApiClient, AdminApiClient>(client =>
     client.Timeout = TimeSpan.FromMinutes(2);
 })
 .AddHttpMessageHandler<PractitionerHeaderHandler>();
+
+builder.Services.Configure<MediaSearchOptions>(builder.Configuration.GetSection("MediaSearch"));
 
 builder.Services.AddControllersWithViews();
 

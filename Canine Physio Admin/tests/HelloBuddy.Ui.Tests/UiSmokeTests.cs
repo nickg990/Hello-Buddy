@@ -54,6 +54,8 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
         Assert.Contains("id=\"selected-image-preview\"", html);
         Assert.Contains("id=\"selected-video-link\"", html);
         Assert.Contains("id=\"open-video-search\"", html);
+        Assert.Contains("id=\"video-search-provider\"", html);
+        Assert.Contains(">Google Drive<", html);
         Assert.DoesNotContain("Image URL (optional manual override)", html);
         Assert.DoesNotContain("Remove current image on save", html);
     }
@@ -75,6 +77,8 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
         Assert.Contains("id=\"selected-image-preview\"", html);
         Assert.Contains("id=\"selected-video-link\"", html);
         Assert.Contains("id=\"open-video-search\"", html);
+        Assert.Contains("id=\"video-search-provider\"", html);
+        Assert.Contains(">Google Drive<", html);
         Assert.DoesNotContain("Image URL (optional manual override)", html);
         Assert.DoesNotContain("Remove current image on save", html);
     }
@@ -117,9 +121,33 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
         Assert.Contains("Session structure", html);
         Assert.Contains("Add exercise", html);
         Assert.Contains("Remove exercise", html);
+        Assert.Contains("Live preview", html);
+        Assert.DoesNotContain("Open preview", html);
     }
 
-    public sealed class Factory : WebApplicationFactory<Program>
+    [Fact]
+    public async Task BuilderEditorPanel_RendersExpectedContent()
+    {
+        var response = await _client.GetAsync("/Programmes/1/Builder/EditorPanel");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Dates and session structure", html);
+        Assert.Contains("data-async-builder=\"true\"", html);
+    }
+
+    [Fact]
+    public async Task BuilderPreviewPanel_RendersExpectedContent()
+    {
+        var response = await _client.GetAsync("/Programmes/1/Builder/PreviewPanel");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Live preview", html);
+        Assert.Contains("preview-programme-name", html);
+    }
+
+    public class Factory : WebApplicationFactory<Program>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {

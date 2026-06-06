@@ -333,22 +333,123 @@ public sealed class ProgrammeRepository : IProgrammeRepository
         IReadOnlyList<ProgrammeBuilderForm.SessionExerciseEdit> edits,
         CancellationToken ct)
     {
+        if (edits.Count == 0)
+        {
+            return;
+        }
+
         var ids = edits.Select(e => e.SessionExerciseId).ToList();
-        var entities = await _db.Sessionexercises
+        var editedEntities = await _db.Sessionexercises
             .Where(se => ids.Contains(se.SessionExerciseId) && se.Session.ProgrammeId == programmeId)
             .ToListAsync(ct);
 
+        var touchedSessionIds = editedEntities
+            .Select(se => se.SessionId)
+            .Distinct()
+            .ToList();
+
+        var sessionEntities = await _db.Sessionexercises
+            .Where(se => touchedSessionIds.Contains(se.SessionId) && se.Session.ProgrammeId == programmeId)
+            .ToListAsync(ct);
+
+        var editsById = edits.ToDictionary(e => e.SessionExerciseId);
+
         foreach (var edit in edits)
         {
-            var entity = entities.FirstOrDefault(e => e.SessionExerciseId == edit.SessionExerciseId);
+            var entity = editedEntities.FirstOrDefault(e => e.SessionExerciseId == edit.SessionExerciseId);
             if (entity is null) continue;
             entity.Reps = edit.Reps;
             entity.Sets = edit.Sets;
             entity.HoldSeconds = edit.HoldSeconds;
-            entity.SortOrder = edit.SortOrder;
             entity.Notes = edit.Notes;
         }
 
+        foreach (var sessionGroup in sessionEntities.GroupBy(se => se.SessionId))
+        {
+            var sorted = sessionGroup
+                .OrderBy(se => se.SortOrder)
+                .ThenBy(se => se.SessionExerciseId)
+                .ToList();
+
+            var moves = sorted
+                .Select(se => new
+                {
+                    Entity = se,
+                    CurrentSortOrder = se.SortOrder,
+                    RequestedSortOrder = editsById.TryGetValue(se.SessionExerciseId, out var edit)
+                        ? edit.SortOrder
+                        : se.SortOrder,
+                })
+                .Where(x => x.RequestedSortOrder != x.CurrentSortOrder)
+                .OrderBy(x => x.RequestedSortOrder)
+                .ThenBy(x => x.CurrentSortOrder)
+                .ThenBy(x => x.Entity.SessionExerciseId)
+                .ToList();
+
+            foreach (var move in moves)
+            {
+                var currentIndex = sorted.FindIndex(se => se.SessionExerciseId == move.Entity.SessionExerciseId);
+                if (currentIndex < 0)
+                {
+                    continue;
+                }
+
+                var targetIndex = Math.Clamp(move.RequestedSortOrder - 1, 0, sorted.Count - 1);
+                if (targetIndex == currentIndex)
+                {
+                    continue;
+                }
+
+                var entity = sorted[currentIndex];
+                sorted.RemoveAt(currentIndex);
+                sorted.Insert(targetIndex, entity);
+            }
+
+            for (ushort index = 0; index < sorted.Count; index++)
+            {
+                sorted[index].SortOrder = (ushort)(index + 1);
+            }
+        }
+
+        await _db.SaveChangesAsync(ct);
+    }
+
+    public async Task PersistPublishedVersionAsync(ulong programmeId, ulong practitionerId, string payloadJson, CancellationToken ct)
+    {
+        var programme = await _db.Programmes
+            .Include(p => p.CurrentProgrammeVersion)
+            .FirstOrDefaultAsync(p => p.ProgrammeId == programmeId && p.TreatmentCase.PractitionerId == practitionerId, ct)
+            ?? throw new InvalidOperationException("Programme not found for publish version persistence.");
+
+        if (programme.CurrentProgrammeVersion is not null
+            && string.Equals(programme.CurrentProgrammeVersion.VersionStatus, "published", StringComparison.OrdinalIgnoreCase))
+        {
+            programme.CurrentProgrammeVersion.VersionStatus = "superseded";
+            programme.CurrentProgrammeVersion.SupersededDate = DateTime.UtcNow;
+        }
+
+        var nextVersion = await _db.Programmeversions
+            .Where(v => v.ProgrammeId == programmeId)
+            .Select(v => (uint?)v.VersionNumber)
+            .MaxAsync(ct) ?? 0;
+        nextVersion++;
+
+        var publishedVersion = new Programmeversion
+        {
+            ProgrammeId = programmeId,
+            VersionNumber = nextVersion,
+            VersionStatus = "published",
+            PayloadJson = payloadJson,
+            PayloadSchemaVersion = "1.0.0",
+            CreatedByPractitionerId = practitionerId,
+            CreatedDate = DateTime.UtcNow,
+            PublishedDate = DateTime.UtcNow,
+        };
+
+        _db.Programmeversions.Add(publishedVersion);
+        await _db.SaveChangesAsync(ct);
+
+        programme.CurrentProgrammeVersionId = publishedVersion.ProgrammeVersionId;
         await _db.SaveChangesAsync(ct);
     }
 

@@ -152,30 +152,40 @@ As a platform engineer, I want per-component config checks during deploy so part
 
 ### Increment objective
 
-Deliver the publish path with validation, document generation, storage, and access.
+Deliver an in-app preview and publish path with validation, document generation, storage, and controlled access, while keeping preview and final output visually as close as practical.
 
 ### Stories
 
-1. **Story I5-S1: Unified preview and publish document model**  
-As a developer, I want preview and final output generated from the same model/contract so that parity is guaranteed.
-2. **Story I5-S2: Publish validation rules implementation**  
-As a practitioner, I want blocking validation for critical gaps and warnings for non-blocking issues so that publish quality is controlled.
-3. **Story I5-S3: Publish action creates immutable version and stored file**  
+1. **Story I5-S1: Shared preview and publish document contract**  
+As a developer, I want preview and final output generated from the same document model and rendering contract so that parity is enforced at the source.
+2. **Story I5-S2: Persistent in-app preview pane**  
+As a practitioner, I want to review the owner-facing programme in a persistent right-hand preview pane inside the programme workflow, refreshed in place when the left-hand draft changes, so that preview remains focused and low-friction without opening separate browser tabs.
+3. **Story I5-S3: Targeted async builder updates for preview and scroll stability**  
+As a practitioner, I want add/remove/update programme-builder actions to refresh only the affected builder and preview regions without a full-page reload so that my scroll position and working context remain stable, using a controlled interaction model with shared rendering contracts, targeted partial updates, debounced preview refresh for text/value edits, responsive preview fallback on smaller screens, and clear loading/error states.
+4. **Story I5-S4: Preview styling aligned to final PDF output**  
+As a practitioner, I want the in-app preview to remain visually close to the final PDF in layout, spacing, and hierarchy so that I can approve with confidence.
+5. **Story I5-S5: Publish validation rules implementation**  
+As a practitioner, I want blocking validation for critical gaps and warnings for non-blocking issues shown in the preview flow so that publish quality is controlled before final output is generated.
+6. **Story I5-S6: Publish action creates immutable version and stored file**  
 As a practitioner, I want publish to create a fixed version and retrievable file so that clinical records are stable.
-4. **Story I5-S4: Download/open published document flow**  
+7. **Story I5-S7: Download/open published document flow**  
 As a practitioner, I want secure access to generated documents so I can share via existing channels.
-5. **Story I5-S5: Failure handling for render and storage paths**  
-As a developer, I want robust error handling for renderer/storage failures so that issues are recoverable and diagnosable.
-6. **Story I5-S6: Integration tests for preview/publish/download (local DB)**  
-As a developer, I want end-to-end integration tests for publish success/failure paths so high-risk behavior is verified.
-7. **Story I5-S7: Azure deployment and cloud re-test for publish path**  
+8. **Story I5-S8: Failure handling for render and storage paths**  
+As a developer, I want robust error handling for preview-render, final-render, and storage failures so that issues are recoverable and diagnosable.
+9. **Story I5-S9: Integration tests for preview/publish/download (local DB)**  
+As a developer, I want end-to-end integration tests for in-app preview, publish success/failure paths, and download so high-risk behavior is verified.
+10. **Story I5-S10: Azure deployment and cloud re-test for publish path**  
 As a developer, I want the publish workflow re-tested post-deploy so runtime and dependency differences are validated.
-8. **Story I5-S8: Granular rollback procedure per app component**  
+11. **Story I5-S11: Granular rollback procedure per app component**  
 As a platform engineer, I want per-component rollback instructions so failed releases can be reversed quickly.
 
 ### Increment 5 acceptance focus
 
 - AC-014 to AC-017 satisfied.
+- Preview is delivered as a persistent in-app surface rather than repeated new-tab previews.
+- Builder add/remove/update interactions use targeted async updates, avoiding full-page repaint and routine scroll jumps.
+- The preview implementation uses disciplined partial-update behavior rather than ad hoc client-side state, including debounced refresh where appropriate and clear responsive/accessibility fallbacks.
+- Preview and published PDF remain visually close enough that layout and content differences are not surprising at publish time.
 - Publish validation demonstrably enforced.
 - Local integration tests pass, then Azure re-test passes.
 
@@ -207,11 +217,17 @@ As a developer, I want integration tests of history and immutability rules so re
 As a developer, I want cloud re-validation of hardening features so production behavior is trusted.
 9. **Story I6-S9: Granular observability checks per component deployment**  
 As an operator, I want post-deploy health and telemetry checks per component so incidents are caught quickly.
+10. **Story I6-S10: Case note add/persist defect resolution (I3-ERR-007)**  
+As a practitioner, I want the Add note action on case detail to persist and immediately display my new note so clinical updates are captured reliably.
+11. **Story I6-S11: Non-clickable empty video placeholders on exercise screens (I3-ERR-008)**  
+As a practitioner, I want video placeholders to be non-clickable when no video URL exists so I do not hit not-found pages from empty media slots.
 
 ### Increment 6 acceptance focus
 
 - AC-018, AC-020, AC-021 satisfied.
 - Local integration tests pass; Azure re-test confirms behavior.
+- Case note create flow is verified end-to-end: valid note saves, appears in the case notes list after submit, and no longer leaves the page in the "No case notes recorded yet" state when a note was accepted.
+- Exercise add/edit video placeholders are verified as non-clickable when URL is absent/invalid, and clickable only when a valid URL is present.
 
 ---
 

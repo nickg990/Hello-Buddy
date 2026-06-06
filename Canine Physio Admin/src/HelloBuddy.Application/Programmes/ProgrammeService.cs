@@ -1,6 +1,7 @@
 using HelloBuddy.Admin.Pdf;
 using HelloBuddy.Contracts;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 using System.Text;
 
 namespace HelloBuddy.Application.Programmes;
@@ -100,9 +101,9 @@ public sealed class ProgrammeService : IProgrammeService
                     errors[$"{keyPrefix}.Sets"] = ["Sets must be set to a value greater than zero."];
                 }
 
-                if (!exercise.HoldSeconds.HasValue || exercise.HoldSeconds.Value == 0)
+                if (exercise.HoldSeconds.HasValue && exercise.HoldSeconds.Value == 0)
                 {
-                    errors[$"{keyPrefix}.HoldSeconds"] = ["Hold seconds must be set to a value greater than zero."];
+                    errors[$"{keyPrefix}.HoldSeconds"] = ["Hold seconds must be greater than zero when provided."];
                 }
             }
         }
@@ -125,6 +126,9 @@ public sealed class ProgrammeService : IProgrammeService
         var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
         var fileName = $"programme-{programmeId}-{timestamp}.pdf";
         var uri = await _fileStore.WriteAsync(fileName, pdf, "application/pdf", ct);
+
+        var payloadJson = JsonSerializer.Serialize(renderVm);
+        await _repository.PersistPublishedVersionAsync(programmeId, practitionerId, payloadJson, ct);
 
         _logger.LogInformation(
             "Published programme {ProgrammeId} as {FileName} ({Bytes} bytes)",

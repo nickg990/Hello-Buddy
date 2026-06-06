@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Net.Http.Headers;
 using HelloBuddy.Admin.Core.Data;
 using HelloBuddy.Admin.Core.Data.Entities;
+using HelloBuddy.Admin.Pdf;
 using HelloBuddy.Contracts;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -286,12 +287,544 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
     }
 
     [Fact]
+    public async Task ProgrammeUpdate_AllowsNullHoldSeconds()
+    {
+        var (_, programme) = await CreateDraftProgrammeForDeleteAsync();
+        var session = Assert.Single(programme.Sessions);
+
+        var exercises = await _client.GetFromJsonAsync<List<ExerciseListItem>>("/api/exercises?activeOnly=true");
+        Assert.NotNull(exercises);
+        Assert.NotEmpty(exercises);
+
+        var add = await _client.PostAsJsonAsync(
+            $"/api/programmes/{programme.ProgrammeId}/sessions/{session.SessionId}/exercises",
+            new AddSessionExerciseRequest { ExerciseId = exercises[0].ExerciseId });
+        Assert.Equal(HttpStatusCode.NoContent, add.StatusCode);
+
+        var refreshed = await _client.GetFromJsonAsync<ProgrammeVm>($"/api/programmes/{programme.ProgrammeId}");
+        Assert.NotNull(refreshed);
+        var updatedSession = Assert.Single(refreshed.Sessions);
+        var exercise = Assert.Single(updatedSession.Exercises);
+
+        var update = await _client.PutAsJsonAsync(
+            $"/api/programmes/{programme.ProgrammeId}",
+            new ProgrammeBuilderForm
+            {
+                ProgrammeId = programme.ProgrammeId,
+                Exercises =
+                [
+                    new ProgrammeBuilderForm.SessionExerciseEdit
+                    {
+                        SessionExerciseId = exercise.SessionExerciseId,
+                        Reps = 10,
+                        Sets = 3,
+                        HoldSeconds = null,
+                        SortOrder = exercise.SortOrder,
+                        Notes = "Hold is intentionally nullable.",
+                    }
+                ]
+            });
+
+        Assert.Equal(HttpStatusCode.OK, update.StatusCode);
+        var vm = await update.Content.ReadFromJsonAsync<ProgrammeVm>();
+        Assert.NotNull(vm);
+
+        var persistedExercise = Assert.Single(Assert.Single(vm.Sessions).Exercises);
+        Assert.Null(persistedExercise.HoldSeconds);
+    }
+
+    [Fact]
+    public async Task ProgrammeUpdate_ReordersAndRenumbersSessionExercises_WhenSortOrdersChange()
+    {
+        var (_, programme) = await CreateDraftProgrammeForDeleteAsync();
+        var session = Assert.Single(programme.Sessions);
+
+        var categories = await _client.GetFromJsonAsync<List<ExerciseCategoryListItem>>("/api/exercise-categories");
+        Assert.NotNull(categories);
+        var category = Assert.Single(categories.Where(x => x.CategoryName == "Strength"));
+
+        var exerciseIds = new List<ulong>();
+        for (var i = 1; i <= 6; i++)
+        {
+            var createExercise = await _client.PostAsJsonAsync("/api/exercises", new SaveExerciseRequest
+            {
+                ExerciseCategoryId = category.ExerciseCategoryId,
+                Title = $"Sort test exercise {Guid.NewGuid():N}-{i}",
+                ObjectiveSummary = "Sort re-numbering test",
+                IsActive = true,
+                Instructions = [new SaveExerciseRequest.InstructionStepInput { StepNumber = 1, InstructionText = "Step" }],
+            });
+            Assert.Equal(HttpStatusCode.Created, createExercise.StatusCode);
+
+            var createdExercise = await createExercise.Content.ReadFromJsonAsync<ExerciseDetailVm>();
+            Assert.NotNull(createdExercise);
+            exerciseIds.Add(createdExercise.ExerciseId);
+
+            var add = await _client.PostAsJsonAsync(
+                $"/api/programmes/{programme.ProgrammeId}/sessions/{session.SessionId}/exercises",
+                new AddSessionExerciseRequest { ExerciseId = createdExercise.ExerciseId });
+            Assert.Equal(HttpStatusCode.NoContent, add.StatusCode);
+        }
+
+        var refreshed = await _client.GetFromJsonAsync<ProgrammeVm>($"/api/programmes/{programme.ProgrammeId}");
+        Assert.NotNull(refreshed);
+        var refreshedSession = Assert.Single(refreshed.Sessions);
+        Assert.Equal(6, refreshedSession.Exercises.Count);
+
+        var byExerciseId = refreshedSession.Exercises.ToDictionary(x => x.ExerciseId);
+        var first = byExerciseId[exerciseIds[0]];
+        var second = byExerciseId[exerciseIds[1]];
+        var third = byExerciseId[exerciseIds[2]];
+        var fourth = byExerciseId[exerciseIds[3]];
+        var fifth = byExerciseId[exerciseIds[4]];
+        var sixth = byExerciseId[exerciseIds[5]];
+
+        var update = await _client.PutAsJsonAsync(
+            $"/api/programmes/{programme.ProgrammeId}",
+            new ProgrammeBuilderForm
+            {
+                ProgrammeId = programme.ProgrammeId,
+                Exercises =
+                [
+                    new ProgrammeBuilderForm.SessionExerciseEdit { SessionExerciseId = first.SessionExerciseId, Reps = first.Reps, Sets = first.Sets, HoldSeconds = first.HoldSeconds, SortOrder = 1, Notes = first.Notes },
+                    new ProgrammeBuilderForm.SessionExerciseEdit { SessionExerciseId = second.SessionExerciseId, Reps = second.Reps, Sets = second.Sets, HoldSeconds = second.HoldSeconds, SortOrder = 4, Notes = second.Notes },
+                    new ProgrammeBuilderForm.SessionExerciseEdit { SessionExerciseId = third.SessionExerciseId, Reps = third.Reps, Sets = third.Sets, HoldSeconds = third.HoldSeconds, SortOrder = 5, Notes = third.Notes },
+                    new ProgrammeBuilderForm.SessionExerciseEdit { SessionExerciseId = fourth.SessionExerciseId, Reps = fourth.Reps, Sets = fourth.Sets, HoldSeconds = fourth.HoldSeconds, SortOrder = 6, Notes = fourth.Notes },
+                    new ProgrammeBuilderForm.SessionExerciseEdit { SessionExerciseId = fifth.SessionExerciseId, Reps = fifth.Reps, Sets = fifth.Sets, HoldSeconds = fifth.HoldSeconds, SortOrder = 3, Notes = fifth.Notes },
+                    new ProgrammeBuilderForm.SessionExerciseEdit { SessionExerciseId = sixth.SessionExerciseId, Reps = sixth.Reps, Sets = sixth.Sets, HoldSeconds = sixth.HoldSeconds, SortOrder = 2, Notes = sixth.Notes },
+                ]
+            });
+
+        Assert.Equal(HttpStatusCode.OK, update.StatusCode);
+        var vm = await update.Content.ReadFromJsonAsync<ProgrammeVm>();
+        Assert.NotNull(vm);
+
+        var reordered = Assert.Single(vm.Sessions).Exercises;
+        var expectedSortOrders = new[] { 1, 2, 3, 4, 5, 6 };
+        var actualSortOrders = reordered.Select(x => (int)x.SortOrder).ToArray();
+        Assert.True(expectedSortOrders.SequenceEqual(actualSortOrders));
+
+        var expectedSessionExerciseOrder = new[]
+        {
+            first.SessionExerciseId,
+            sixth.SessionExerciseId,
+            fifth.SessionExerciseId,
+            second.SessionExerciseId,
+            third.SessionExerciseId,
+            fourth.SessionExerciseId,
+        };
+        var actualSessionExerciseOrder = reordered.Select(x => x.SessionExerciseId).ToArray();
+        Assert.True(expectedSessionExerciseOrder.SequenceEqual(actualSessionExerciseOrder));
+    }
+
+    [Theory]
+    [InlineData(4, new[] { 1, 2, 3, 6, 4, 5 })]
+    [InlineData(1, new[] { 6, 1, 2, 3, 4, 5 })]
+    public async Task ProgrammeUpdate_MovingLastExerciseUp_LandsInRequestedSlot(int requestedSortOrder, int[] expectedOrder)
+    {
+        var (_, programme) = await CreateDraftProgrammeForDeleteAsync();
+        var session = Assert.Single(programme.Sessions);
+
+        var categories = await _client.GetFromJsonAsync<List<ExerciseCategoryListItem>>("/api/exercise-categories");
+        Assert.NotNull(categories);
+        var category = Assert.Single(categories.Where(x => x.CategoryName == "Strength"));
+
+        var exerciseIds = new List<ulong>();
+        for (var i = 1; i <= 6; i++)
+        {
+            var createExercise = await _client.PostAsJsonAsync("/api/exercises", new SaveExerciseRequest
+            {
+                ExerciseCategoryId = category.ExerciseCategoryId,
+                Title = $"Move-up sort test {Guid.NewGuid():N}-{i}",
+                ObjectiveSummary = "Move-up sort regression test",
+                IsActive = true,
+                Instructions = [new SaveExerciseRequest.InstructionStepInput { StepNumber = 1, InstructionText = "Step" }],
+            });
+            Assert.Equal(HttpStatusCode.Created, createExercise.StatusCode);
+
+            var createdExercise = await createExercise.Content.ReadFromJsonAsync<ExerciseDetailVm>();
+            Assert.NotNull(createdExercise);
+            exerciseIds.Add(createdExercise.ExerciseId);
+
+            var add = await _client.PostAsJsonAsync(
+                $"/api/programmes/{programme.ProgrammeId}/sessions/{session.SessionId}/exercises",
+                new AddSessionExerciseRequest { ExerciseId = createdExercise.ExerciseId });
+            Assert.Equal(HttpStatusCode.NoContent, add.StatusCode);
+        }
+
+        var refreshed = await _client.GetFromJsonAsync<ProgrammeVm>($"/api/programmes/{programme.ProgrammeId}");
+        Assert.NotNull(refreshed);
+        var refreshedSession = Assert.Single(refreshed.Sessions);
+        var orderedExercises = refreshedSession.Exercises.OrderBy(x => x.SortOrder).ToList();
+
+        var update = await _client.PutAsJsonAsync(
+            $"/api/programmes/{programme.ProgrammeId}",
+            new ProgrammeBuilderForm
+            {
+                ProgrammeId = programme.ProgrammeId,
+                Exercises = orderedExercises
+                    .Select((exercise, index) => new ProgrammeBuilderForm.SessionExerciseEdit
+                    {
+                        SessionExerciseId = exercise.SessionExerciseId,
+                        Reps = exercise.Reps,
+                        Sets = exercise.Sets,
+                        HoldSeconds = exercise.HoldSeconds,
+                        SortOrder = index == 5 ? (ushort)requestedSortOrder : exercise.SortOrder,
+                        Notes = exercise.Notes,
+                    })
+                    .ToList()
+            });
+
+        Assert.Equal(HttpStatusCode.OK, update.StatusCode);
+        var vm = await update.Content.ReadFromJsonAsync<ProgrammeVm>();
+        Assert.NotNull(vm);
+
+        var reordered = Assert.Single(vm.Sessions).Exercises;
+        Assert.True(new[] { 1, 2, 3, 4, 5, 6 }.SequenceEqual(reordered.Select(x => (int)x.SortOrder)));
+
+        var expectedSessionExerciseIds = expectedOrder
+            .Select(position => orderedExercises[position - 1].SessionExerciseId)
+            .ToArray();
+        var actualSessionExerciseIds = reordered.Select(x => x.SessionExerciseId).ToArray();
+        Assert.True(expectedSessionExerciseIds.SequenceEqual(actualSessionExerciseIds));
+    }
+
+    [Fact]
+    public async Task ProgrammeUpdate_MultiSession_ReordersSessionTwoWithoutAffectingSessionOne()
+    {
+        var (_, programme) = await CreateDraftProgrammeForDeleteAsync();
+
+        var structureUpdate = await _client.PutAsJsonAsync(
+            $"/api/programmes/{programme.ProgrammeId}/structure",
+            new ProgrammeStructureForm
+            {
+                ProgrammeId = programme.ProgrammeId,
+                ProgrammeName = $"{programme.ProgrammeName} AMPM",
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow.Date),
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddDays(14)),
+                SessionStructure = "am-pm",
+            });
+        Assert.Equal(HttpStatusCode.NoContent, structureUpdate.StatusCode);
+
+        var categories = await _client.GetFromJsonAsync<List<ExerciseCategoryListItem>>("/api/exercise-categories");
+        Assert.NotNull(categories);
+        var category = Assert.Single(categories.Where(x => x.CategoryName == "Strength"));
+
+        var afterStructure = await _client.GetFromJsonAsync<ProgrammeVm>($"/api/programmes/{programme.ProgrammeId}");
+        Assert.NotNull(afterStructure);
+        Assert.Equal(2, afterStructure.Sessions.Count);
+
+        var sessions = afterStructure.Sessions.OrderBy(s => s.SortOrder).ToList();
+        var sessionOne = sessions[0];
+        var sessionTwo = sessions[1];
+
+        for (var i = 1; i <= 6; i++)
+        {
+            var createExercise = await _client.PostAsJsonAsync("/api/exercises", new SaveExerciseRequest
+            {
+                ExerciseCategoryId = category.ExerciseCategoryId,
+                Title = $"Multi-session sort test {Guid.NewGuid():N}-{i}",
+                ObjectiveSummary = "Multi-session sort test",
+                IsActive = true,
+                Instructions = [new SaveExerciseRequest.InstructionStepInput { StepNumber = 1, InstructionText = "Step" }],
+            });
+            Assert.Equal(HttpStatusCode.Created, createExercise.StatusCode);
+
+            var createdExercise = await createExercise.Content.ReadFromJsonAsync<ExerciseDetailVm>();
+            Assert.NotNull(createdExercise);
+
+            var addSessionOne = await _client.PostAsJsonAsync(
+                $"/api/programmes/{programme.ProgrammeId}/sessions/{sessionOne.SessionId}/exercises",
+                new AddSessionExerciseRequest { ExerciseId = createdExercise.ExerciseId });
+            Assert.Equal(HttpStatusCode.NoContent, addSessionOne.StatusCode);
+
+            var addSessionTwo = await _client.PostAsJsonAsync(
+                $"/api/programmes/{programme.ProgrammeId}/sessions/{sessionTwo.SessionId}/exercises",
+                new AddSessionExerciseRequest { ExerciseId = createdExercise.ExerciseId });
+            Assert.Equal(HttpStatusCode.NoContent, addSessionTwo.StatusCode);
+        }
+
+        var beforeUpdate = await _client.GetFromJsonAsync<ProgrammeVm>($"/api/programmes/{programme.ProgrammeId}");
+        Assert.NotNull(beforeUpdate);
+
+        var beforeSessionOne = beforeUpdate.Sessions.OrderBy(s => s.SortOrder).First();
+        var beforeSessionTwo = beforeUpdate.Sessions.OrderBy(s => s.SortOrder).Skip(1).First();
+        var orderedSessionOne = beforeSessionOne.Exercises.OrderBy(x => x.SortOrder).ToList();
+        var orderedSessionTwo = beforeSessionTwo.Exercises.OrderBy(x => x.SortOrder).ToList();
+
+        var edits = new List<ProgrammeBuilderForm.SessionExerciseEdit>();
+
+        foreach (var exercise in orderedSessionOne)
+        {
+            edits.Add(new ProgrammeBuilderForm.SessionExerciseEdit
+            {
+                SessionExerciseId = exercise.SessionExerciseId,
+                Reps = exercise.Reps,
+                Sets = exercise.Sets,
+                HoldSeconds = exercise.HoldSeconds,
+                SortOrder = exercise.SortOrder,
+                Notes = exercise.Notes,
+            });
+        }
+
+        for (var i = 0; i < orderedSessionTwo.Count; i++)
+        {
+            var exercise = orderedSessionTwo[i];
+            edits.Add(new ProgrammeBuilderForm.SessionExerciseEdit
+            {
+                SessionExerciseId = exercise.SessionExerciseId,
+                Reps = exercise.Reps,
+                Sets = exercise.Sets,
+                HoldSeconds = exercise.HoldSeconds,
+                SortOrder = i == orderedSessionTwo.Count - 1 ? (ushort)1 : exercise.SortOrder,
+                Notes = exercise.Notes,
+            });
+        }
+
+        var update = await _client.PutAsJsonAsync(
+            $"/api/programmes/{programme.ProgrammeId}",
+            new ProgrammeBuilderForm
+            {
+                ProgrammeId = programme.ProgrammeId,
+                Exercises = edits,
+            });
+
+        Assert.Equal(HttpStatusCode.OK, update.StatusCode);
+        var vm = await update.Content.ReadFromJsonAsync<ProgrammeVm>();
+        Assert.NotNull(vm);
+
+        var updatedSessionOne = vm.Sessions.OrderBy(s => s.SortOrder).First();
+        var updatedSessionTwo = vm.Sessions.OrderBy(s => s.SortOrder).Skip(1).First();
+
+        Assert.True(new[] { 1, 2, 3, 4, 5, 6 }.SequenceEqual(updatedSessionOne.Exercises.Select(x => (int)x.SortOrder)));
+        Assert.True(new[] { 1, 2, 3, 4, 5, 6 }.SequenceEqual(updatedSessionTwo.Exercises.Select(x => (int)x.SortOrder)));
+
+        var expectedSessionOneOrder = orderedSessionOne.Select(x => x.SessionExerciseId).ToArray();
+        var actualSessionOneOrder = updatedSessionOne.Exercises.Select(x => x.SessionExerciseId).ToArray();
+        Assert.True(expectedSessionOneOrder.SequenceEqual(actualSessionOneOrder));
+
+        var expectedSessionTwoOrder = new[]
+        {
+            orderedSessionTwo[5].SessionExerciseId,
+            orderedSessionTwo[0].SessionExerciseId,
+            orderedSessionTwo[1].SessionExerciseId,
+            orderedSessionTwo[2].SessionExerciseId,
+            orderedSessionTwo[3].SessionExerciseId,
+            orderedSessionTwo[4].SessionExerciseId,
+        };
+        var actualSessionTwoOrder = updatedSessionTwo.Exercises.Select(x => x.SessionExerciseId).ToArray();
+        Assert.True(expectedSessionTwoOrder.SequenceEqual(actualSessionTwoOrder));
+    }
+
+    [Fact]
+    public async Task ProgrammeUpdate_MultiSession_ReordersSessionOneWithoutAffectingSessionTwo()
+    {
+        var (_, programme) = await CreateDraftProgrammeForDeleteAsync();
+
+        var structureUpdate = await _client.PutAsJsonAsync(
+            $"/api/programmes/{programme.ProgrammeId}/structure",
+            new ProgrammeStructureForm
+            {
+                ProgrammeId = programme.ProgrammeId,
+                ProgrammeName = $"{programme.ProgrammeName} AMPM",
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow.Date),
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddDays(14)),
+                SessionStructure = "am-pm",
+            });
+        Assert.Equal(HttpStatusCode.NoContent, structureUpdate.StatusCode);
+
+        var categories = await _client.GetFromJsonAsync<List<ExerciseCategoryListItem>>("/api/exercise-categories");
+        Assert.NotNull(categories);
+        var category = Assert.Single(categories.Where(x => x.CategoryName == "Strength"));
+
+        var afterStructure = await _client.GetFromJsonAsync<ProgrammeVm>($"/api/programmes/{programme.ProgrammeId}");
+        Assert.NotNull(afterStructure);
+        Assert.Equal(2, afterStructure.Sessions.Count);
+
+        var sessions = afterStructure.Sessions.OrderBy(s => s.SortOrder).ToList();
+        var sessionOne = sessions[0];
+        var sessionTwo = sessions[1];
+
+        for (var i = 1; i <= 6; i++)
+        {
+            var createExercise = await _client.PostAsJsonAsync("/api/exercises", new SaveExerciseRequest
+            {
+                ExerciseCategoryId = category.ExerciseCategoryId,
+                Title = $"Multi-session sort mirror test {Guid.NewGuid():N}-{i}",
+                ObjectiveSummary = "Multi-session sort mirror test",
+                IsActive = true,
+                Instructions = [new SaveExerciseRequest.InstructionStepInput { StepNumber = 1, InstructionText = "Step" }],
+            });
+            Assert.Equal(HttpStatusCode.Created, createExercise.StatusCode);
+
+            var createdExercise = await createExercise.Content.ReadFromJsonAsync<ExerciseDetailVm>();
+            Assert.NotNull(createdExercise);
+
+            var addSessionOne = await _client.PostAsJsonAsync(
+                $"/api/programmes/{programme.ProgrammeId}/sessions/{sessionOne.SessionId}/exercises",
+                new AddSessionExerciseRequest { ExerciseId = createdExercise.ExerciseId });
+            Assert.Equal(HttpStatusCode.NoContent, addSessionOne.StatusCode);
+
+            var addSessionTwo = await _client.PostAsJsonAsync(
+                $"/api/programmes/{programme.ProgrammeId}/sessions/{sessionTwo.SessionId}/exercises",
+                new AddSessionExerciseRequest { ExerciseId = createdExercise.ExerciseId });
+            Assert.Equal(HttpStatusCode.NoContent, addSessionTwo.StatusCode);
+        }
+
+        var beforeUpdate = await _client.GetFromJsonAsync<ProgrammeVm>($"/api/programmes/{programme.ProgrammeId}");
+        Assert.NotNull(beforeUpdate);
+
+        var beforeSessionOne = beforeUpdate.Sessions.OrderBy(s => s.SortOrder).First();
+        var beforeSessionTwo = beforeUpdate.Sessions.OrderBy(s => s.SortOrder).Skip(1).First();
+        var orderedSessionOne = beforeSessionOne.Exercises.OrderBy(x => x.SortOrder).ToList();
+        var orderedSessionTwo = beforeSessionTwo.Exercises.OrderBy(x => x.SortOrder).ToList();
+
+        var edits = new List<ProgrammeBuilderForm.SessionExerciseEdit>();
+
+        for (var i = 0; i < orderedSessionOne.Count; i++)
+        {
+            var exercise = orderedSessionOne[i];
+            edits.Add(new ProgrammeBuilderForm.SessionExerciseEdit
+            {
+                SessionExerciseId = exercise.SessionExerciseId,
+                Reps = exercise.Reps,
+                Sets = exercise.Sets,
+                HoldSeconds = exercise.HoldSeconds,
+                SortOrder = i == orderedSessionOne.Count - 1 ? (ushort)1 : exercise.SortOrder,
+                Notes = exercise.Notes,
+            });
+        }
+
+        foreach (var exercise in orderedSessionTwo)
+        {
+            edits.Add(new ProgrammeBuilderForm.SessionExerciseEdit
+            {
+                SessionExerciseId = exercise.SessionExerciseId,
+                Reps = exercise.Reps,
+                Sets = exercise.Sets,
+                HoldSeconds = exercise.HoldSeconds,
+                SortOrder = exercise.SortOrder,
+                Notes = exercise.Notes,
+            });
+        }
+
+        var update = await _client.PutAsJsonAsync(
+            $"/api/programmes/{programme.ProgrammeId}",
+            new ProgrammeBuilderForm
+            {
+                ProgrammeId = programme.ProgrammeId,
+                Exercises = edits,
+            });
+
+        Assert.Equal(HttpStatusCode.OK, update.StatusCode);
+        var vm = await update.Content.ReadFromJsonAsync<ProgrammeVm>();
+        Assert.NotNull(vm);
+
+        var updatedSessionOne = vm.Sessions.OrderBy(s => s.SortOrder).First();
+        var updatedSessionTwo = vm.Sessions.OrderBy(s => s.SortOrder).Skip(1).First();
+
+        Assert.True(new[] { 1, 2, 3, 4, 5, 6 }.SequenceEqual(updatedSessionOne.Exercises.Select(x => (int)x.SortOrder)));
+        Assert.True(new[] { 1, 2, 3, 4, 5, 6 }.SequenceEqual(updatedSessionTwo.Exercises.Select(x => (int)x.SortOrder)));
+
+        var expectedSessionOneOrder = new[]
+        {
+            orderedSessionOne[5].SessionExerciseId,
+            orderedSessionOne[0].SessionExerciseId,
+            orderedSessionOne[1].SessionExerciseId,
+            orderedSessionOne[2].SessionExerciseId,
+            orderedSessionOne[3].SessionExerciseId,
+            orderedSessionOne[4].SessionExerciseId,
+        };
+        var actualSessionOneOrder = updatedSessionOne.Exercises.Select(x => x.SessionExerciseId).ToArray();
+        Assert.True(expectedSessionOneOrder.SequenceEqual(actualSessionOneOrder));
+
+        var expectedSessionTwoOrder = orderedSessionTwo.Select(x => x.SessionExerciseId).ToArray();
+        var actualSessionTwoOrder = updatedSessionTwo.Exercises.Select(x => x.SessionExerciseId).ToArray();
+        Assert.True(expectedSessionTwoOrder.SequenceEqual(actualSessionTwoOrder));
+    }
+
+    [Fact]
     public async Task ProgrammePublish_IncompleteDraft_ReturnsBadRequest()
     {
         var (_, programme) = await CreateDraftProgrammeForDeleteAsync();
 
         var publish = await _client.PostAsync($"/api/programmes/{programme.ProgrammeId}/publish", content: null);
         Assert.Equal(HttpStatusCode.BadRequest, publish.StatusCode);
+    }
+
+    [Fact]
+    public async Task ProgrammePublish_ValidDraft_CreatesImmutablePublishedVersion()
+    {
+        var (_, programme) = await CreateDraftProgrammeForDeleteAsync();
+        var session = Assert.Single(programme.Sessions);
+
+        var exercises = await _client.GetFromJsonAsync<List<ExerciseListItem>>("/api/exercises?activeOnly=true");
+        Assert.NotNull(exercises);
+        Assert.NotEmpty(exercises);
+
+        var add = await _client.PostAsJsonAsync(
+            $"/api/programmes/{programme.ProgrammeId}/sessions/{session.SessionId}/exercises",
+            new AddSessionExerciseRequest { ExerciseId = exercises[0].ExerciseId });
+        Assert.Equal(HttpStatusCode.NoContent, add.StatusCode);
+
+        var publish = await _client.PostAsync($"/api/programmes/{programme.ProgrammeId}/publish", content: null);
+        Assert.Equal(HttpStatusCode.OK, publish.StatusCode);
+
+        var response = await publish.Content.ReadFromJsonAsync<PublishResponse>();
+        Assert.NotNull(response);
+        Assert.Matches(@"^programme-\d+-\d{8}-\d{6}\.pdf$", response.FileName);
+        Assert.True(response.Bytes > 0);
+
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<CaninePhysioDbContext>();
+
+        var persistedProgramme = await db.Programmes
+            .Include(p => p.Programmeversions)
+            .FirstAsync(p => p.ProgrammeId == programme.ProgrammeId);
+
+        Assert.True(persistedProgramme.CurrentProgrammeVersionId.HasValue);
+
+        var version = Assert.Single(persistedProgramme.Programmeversions);
+        Assert.Equal("published", version.VersionStatus);
+        Assert.NotNull(version.PublishedDate);
+        Assert.Equal((uint)1, version.VersionNumber);
+        Assert.Equal((ulong)1, version.CreatedByPractitionerId);
+        Assert.False(string.IsNullOrWhiteSpace(version.PayloadJson));
+    }
+
+    [Fact]
+    public async Task ProgrammePublishedDownloadUrl_WithPublishedFileName_ReturnsReadUrl()
+    {
+        var (_, programme) = await CreateDraftProgrammeForDeleteAsync();
+        var session = Assert.Single(programme.Sessions);
+
+        var exercises = await _client.GetFromJsonAsync<List<ExerciseListItem>>("/api/exercises?activeOnly=true");
+        Assert.NotNull(exercises);
+        Assert.NotEmpty(exercises);
+
+        var add = await _client.PostAsJsonAsync(
+            $"/api/programmes/{programme.ProgrammeId}/sessions/{session.SessionId}/exercises",
+            new AddSessionExerciseRequest { ExerciseId = exercises[0].ExerciseId });
+        Assert.Equal(HttpStatusCode.NoContent, add.StatusCode);
+
+        var publish = await _client.PostAsync($"/api/programmes/{programme.ProgrammeId}/publish", content: null);
+        Assert.Equal(HttpStatusCode.OK, publish.StatusCode);
+        var published = await publish.Content.ReadFromJsonAsync<PublishResponse>();
+        Assert.NotNull(published);
+
+        var getUrl = await _client.GetAsync($"/api/programmes/published/{Uri.EscapeDataString(published.FileName)}/download-url");
+        Assert.Equal(HttpStatusCode.OK, getUrl.StatusCode);
+
+        var download = await getUrl.Content.ReadFromJsonAsync<DownloadUrlResponse>();
+        Assert.NotNull(download);
+        Assert.Contains("/dev-published/", download.Url);
+    }
+
+    [Fact]
+    public async Task ProgrammePublishedDownloadUrl_WithInvalidFileName_ReturnsBadRequest()
+    {
+        var getUrl = await _client.GetAsync("/api/programmes/published/not-a-published-file-name/download-url");
+        Assert.Equal(HttpStatusCode.BadRequest, getUrl.StatusCode);
     }
 
     [Fact]
@@ -463,10 +996,20 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
                 services.RemoveAll<DbContextOptions<CaninePhysioDbContext>>();
                 services.RemoveAll<CaninePhysioDbContext>();
                 services.RemoveAll<IDbContextOptionsConfiguration<CaninePhysioDbContext>>();
+                services.RemoveAll<IPdfRenderer>();
 
                 services.AddDbContext<CaninePhysioDbContext>(options =>
                     options.UseInMemoryDatabase(_databaseName));
+                services.AddSingleton<IPdfRenderer, StubPdfRenderer>();
             });
+        }
+
+        private sealed class StubPdfRenderer : IPdfRenderer
+        {
+            private static readonly byte[] MinimalPdf = "%PDF-1.4\n%stub\n"u8.ToArray();
+
+            public Task<byte[]> RenderAsync(string html, CancellationToken ct = default)
+                => Task.FromResult(MinimalPdf);
         }
     }
 }

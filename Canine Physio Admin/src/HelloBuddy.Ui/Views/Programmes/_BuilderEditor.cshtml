@@ -1,0 +1,212 @@
+@model HelloBuddy.Ui.Models.ProgrammesBuilderPageVm
+@{
+    var programme = Model.Programme;
+}
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h2 class="h5">Dates and session structure</h2>
+        <form id="setup-form" method="post" asp-action="Structure" asp-route-id="@programme.ProgrammeId" class="row g-3 align-items-end" data-async-builder="true">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="ProgrammeId" value="@programme.ProgrammeId" />
+            <div class="col-12">
+                <label class="form-label" for="programme-name">Programme title</label>
+                <input class="form-control"
+                       id="programme-name"
+                       type="text"
+                       name="ProgrammeName"
+                       value="@programme.ProgrammeName"
+                      data-preview-field="programmeName"
+                       data-title-input="true"
+                       data-initial-value="@programme.ProgrammeName" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="start-date">Start date</label>
+                <input class="form-control" id="start-date" type="date" name="StartDate" value="@programme.StartDate.ToString("yyyy-MM-dd")" data-preview-field="startDate" data-initial-value="@programme.StartDate.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="end-date">End date</label>
+                <input class="form-control" id="end-date" type="date" name="EndDate" value="@(programme.EndDate?.ToString("yyyy-MM-dd") ?? string.Empty)" data-preview-field="endDate" data-initial-value="@(programme.EndDate?.ToString("yyyy-MM-dd") ?? string.Empty)" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label d-block">Session structure</label>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" id="structure-single" name="SessionStructure" value="single" checked="@(Model.SessionStructure == "single")" data-initial-checked="@(Model.SessionStructure == "single")" />
+                    <label class="form-check-label" for="structure-single">Single session</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" id="structure-am-pm" name="SessionStructure" value="am-pm" checked="@(Model.SessionStructure == "am-pm")" data-initial-checked="@(Model.SessionStructure == "am-pm")" />
+                    <label class="form-check-label" for="structure-am-pm">AM/PM sessions</label>
+                </div>
+            </div>
+            <div class="col-md-2 text-md-end">
+                <button id="save-setup" type="submit" class="btn btn-outline-primary w-100" disabled>Save setup</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Case</dt>
+            <dd class="col-sm-9">@programme.CaseTitle</dd>
+            <dt class="col-sm-3">Pet</dt>
+            <dd class="col-sm-9">@programme.PetName</dd>
+            <dt class="col-sm-3">Owner</dt>
+            <dd class="col-sm-9">@programme.OwnerName</dd>
+            <dt class="col-sm-3">Dates</dt>
+            <dd class="col-sm-9">@programme.StartDate.ToString("yyyy-MM-dd")@(programme.EndDate is { } end ? $" - {end:yyyy-MM-dd}" : string.Empty)</dd>
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">@programme.Status</dd>
+        </dl>
+    </div>
+</div>
+
+<form id="session-edits-form" method="post" asp-action="Builder" asp-route-id="@programme.ProgrammeId" class="d-none" data-async-builder="true">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="ProgrammeId" value="@programme.ProgrammeId" />
+</form>
+
+@{ var editIndex = 0; }
+@foreach (var session in programme.Sessions)
+{
+    var sessionExerciseIds = session.Exercises.Select(e => e.ExerciseId).ToHashSet();
+    <div id="session-card-@session.SessionId" class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+                <strong>Session @session.SortOrder</strong> &mdash; @session.Period
+                @if (!string.IsNullOrWhiteSpace(session.Objective))
+                {
+                    <span class="text-muted">- @session.Objective</span>
+                }
+            </div>
+            <span class="badge bg-secondary">@session.Status</span>
+        </div>
+
+        <div class="card-body border-bottom bg-light-subtle">
+            <div class="row g-2">
+                <div class="col-md-8">
+                    <form method="post" asp-action="AddExercise" asp-route-id="@programme.ProgrammeId" asp-route-sessionId="@session.SessionId" class="row g-2 align-items-end" data-async-builder="true">
+                        @Html.AntiForgeryToken()
+                        <div class="col-md-9">
+                            <label class="form-label mb-1" for="add-exercise-@session.SessionId">Add exercise</label>
+                            <select id="add-exercise-@session.SessionId" class="form-select form-select-sm" name="exerciseId" required>
+                                <option value="">Select exercise...</option>
+                                @foreach (var ex in Model.AvailableExercises.Where(e => !sessionExerciseIds.Contains(e.ExerciseId)))
+                                {
+                                    <option value="@ex.ExerciseId">@ex.Title (@ex.CategoryName)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-sm btn-outline-primary w-100">Add</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-md-4">
+                    <form method="post" asp-action="RemoveExercise" asp-route-id="@programme.ProgrammeId" asp-route-sessionId="@session.SessionId" class="row g-2 align-items-end" data-async-builder="true">
+                        @Html.AntiForgeryToken()
+                        <div class="col-md-9">
+                            <label class="form-label mb-1" for="remove-exercise-@session.SessionId">Remove exercise</label>
+                            <select id="remove-exercise-@session.SessionId" class="form-select form-select-sm" name="sessionExerciseId" required>
+                                <option value="">Select...</option>
+                                @foreach (var existing in session.Exercises)
+                                {
+                                    <option value="@existing.SessionExerciseId">@existing.ExerciseTitle</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-sm btn-outline-danger w-100" title="Remove exercise" aria-label="Remove exercise" onclick="return confirm('Remove this exercise from the draft programme?');">
+                                <span aria-hidden="true">&#128465;</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            <table class="table table-sm mb-0 programme-table align-middle">
+                <thead>
+                    <tr>
+                        <th class="col-exercise">Exercise</th>
+                        <th class="col-sort">Sort</th>
+                        <th class="col-reps-sm">Reps</th>
+                        <th class="col-sets-sm">Sets</th>
+                        <th class="col-hold-sm">Hold (s)</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (var i = 0; i < session.Exercises.Count; i++)
+                    {
+                        var ex = session.Exercises[i];
+                        var prefix = $"Exercises[{editIndex}]";
+                        var sortId = $"ex-{session.SessionId}-{i}-sort";
+                        var repsId = $"ex-{session.SessionId}-{i}-reps";
+                        var setsId = $"ex-{session.SessionId}-{i}-sets";
+                        var holdId = $"ex-{session.SessionId}-{i}-hold";
+                        var notesId = $"ex-{session.SessionId}-{i}-notes";
+                        <tr>
+                            <td>
+                                <strong>@ex.ExerciseTitle</strong>
+                                @if (!string.IsNullOrWhiteSpace(ex.ObjectiveSummary))
+                                {
+                                    <div class="text-muted small">@ex.ObjectiveSummary</div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(ex.ImageUrl))
+                                {
+                                    <div class="mt-2">
+                                        <img src="@Url.Action("Image", "Exercises", new { id = ex.ExerciseId })" alt="@ex.ExerciseTitle image" class="img-thumbnail" style="max-height: 90px;" />
+                                    </div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(ex.VideoUrl))
+                                {
+                                    <div class="small mt-1">
+                                        <a href="@ex.VideoUrl" target="_blank" rel="noopener noreferrer">Watch video</a>
+                                    </div>
+                                }
+                                <input type="hidden" form="session-edits-form" name="@(prefix).SessionExerciseId" value="@ex.SessionExerciseId" />
+                            </td>
+                            <td>
+                                <label for="@sortId" class="visually-hidden">Sort order for @ex.ExerciseTitle</label>
+                                <input id="@sortId" form="session-edits-form" type="number" min="0" max="65535" class="form-control form-control-sm" name="@(prefix).SortOrder" value="@ex.SortOrder" data-initial-value="@ex.SortOrder" />
+                            </td>
+                            <td>
+                                <label for="@repsId" class="visually-hidden">Reps for @ex.ExerciseTitle</label>
+                                <input id="@repsId" form="session-edits-form" type="number" min="0" max="65535" class="form-control form-control-sm" name="@(prefix).Reps" value="@ex.Reps" data-preview-field="reps" data-session-exercise-id="@ex.SessionExerciseId" data-initial-value="@ex.Reps" />
+                            </td>
+                            <td>
+                                <label for="@setsId" class="visually-hidden">Sets for @ex.ExerciseTitle</label>
+                                <input id="@setsId" form="session-edits-form" type="number" min="0" max="65535" class="form-control form-control-sm" name="@(prefix).Sets" value="@ex.Sets" data-preview-field="sets" data-session-exercise-id="@ex.SessionExerciseId" data-initial-value="@ex.Sets" />
+                            </td>
+                            <td>
+                                <label for="@holdId" class="visually-hidden">Hold seconds for @ex.ExerciseTitle</label>
+                                <input id="@holdId" form="session-edits-form" type="number" min="0" max="65535" class="form-control form-control-sm" name="@(prefix).HoldSeconds" value="@ex.HoldSeconds" data-preview-field="holdSeconds" data-session-exercise-id="@ex.SessionExerciseId" data-initial-value="@ex.HoldSeconds" />
+                            </td>
+                            <td>
+                                <label for="@notesId" class="visually-hidden">Notes for @ex.ExerciseTitle</label>
+                                <input id="@notesId" form="session-edits-form" type="text" class="form-control form-control-sm" name="@(prefix).Notes" value="@ex.Notes" data-preview-field="notes" data-session-exercise-id="@ex.SessionExerciseId" data-initial-value="@ex.Notes" />
+                            </td>
+                        </tr>
+                        editIndex++;
+                    }
+                    @if (session.Exercises.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="6" class="text-muted text-center py-3">No exercises in this session yet.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<div id="session-edits-bottom" class="card mb-3">
+    <div class="card-body text-end">
+        <button id="save-session-edits" type="submit" form="session-edits-form" class="btn btn-primary" disabled>Save session edits</button>
+    </div>
+</div>
