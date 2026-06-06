@@ -1,6 +1,7 @@
 using HelloBuddy.Admin.Pdf;
 using HelloBuddy.Contracts;
 using Microsoft.Extensions.Logging;
+using System.Text;
 
 namespace HelloBuddy.Application.Programmes;
 
@@ -117,7 +118,8 @@ public sealed class ProgrammeService : IProgrammeService
             return null;
         }
 
-        var html = await _template.RenderAsync(vm, ct);
+        var renderVm = await BuildRenderVmAsync(vm, ct);
+        var html = await _template.RenderAsync(renderVm, ct);
         var pdf = await _pdfRenderer.RenderAsync(html, ct);
 
         var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
@@ -129,5 +131,94 @@ public sealed class ProgrammeService : IProgrammeService
             programmeId, fileName, pdf.Length);
 
         return new PublishResponse(uri.ToString(), fileName, pdf.Length);
+    }
+
+    private async Task<ProgrammeVm> BuildRenderVmAsync(ProgrammeVm vm, CancellationToken ct)
+    {
+        var imageCache = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        var sessions = new List<ProgrammeVm.SessionRow>(vm.Sessions.Count);
+
+        foreach (var session in vm.Sessions)
+        {
+            var exercises = new List<ProgrammeVm.SessionExerciseRow>(session.Exercises.Count);
+            foreach (var exercise in session.Exercises)
+            {
+                var imageUrl = await ResolveRenderableImageUrlAsync(exercise.ImageUrl, imageCache, ct);
+                exercises.Add(exercise with { ImageUrl = imageUrl });
+            }
+
+            sessions.Add(session with { Exercises = exercises });
+        }
+
+        return vm with { Sessions = sessions };
+    }
+
+    private async Task<string?> ResolveRenderableImageUrlAsync(
+        string? originalUrl,
+        Dictionary<string, string?> imageCache,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(originalUrl))
+        {
+            return originalUrl;
+        }
+
+        if (!TryResolveManagedKey(originalUrl, out var key))
+        {
+            return originalUrl;
+        }
+
+        if (imageCache.TryGetValue(key, out var cached))
+        {
+            return cached;
+        }
+
+        var readResult = await _fileStore.OpenReadAsync(key, ct);
+        if (readResult is null)
+        {
+            imageCache[key] = originalUrl;
+            return originalUrl;
+        }
+
+        await using (readResult.Content)
+        await using (var buffer = new MemoryStream())
+        {
+            await readResult.Content.CopyToAsync(buffer, ct);
+            var bytes = buffer.ToArray();
+            var mime = string.IsNullOrWhiteSpace(readResult.ContentType)
+                ? "application/octet-stream"
+                : readResult.ContentType;
+            var encoded = Convert.ToBase64String(bytes);
+            var dataUrl = $"data:{mime};base64,{encoded}";
+            imageCache[key] = dataUrl;
+            return dataUrl;
+        }
+    }
+
+    private static bool TryResolveManagedKey(string url, out string key)
+    {
+        key = string.Empty;
+
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        {
+            return false;
+        }
+
+        const string marker = "/exercise-media/";
+        var full = uri.AbsolutePath.Replace('\\', '/');
+        var markerIndex = full.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (markerIndex < 0)
+        {
+            return false;
+        }
+
+        var relative = full[(markerIndex + 1)..].Trim('/');
+        if (string.IsNullOrWhiteSpace(relative))
+        {
+            return false;
+        }
+
+        key = relative;
+        return true;
     }
 }

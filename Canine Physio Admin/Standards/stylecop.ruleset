@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RuleSet Name="HelloBuddy StyleCop Baseline" Description="Curated StyleCop baseline for Canine Physio Admin" ToolsVersion="16.0">
+  <!--
+    Stage 1 baseline: analyzer is installed and centrally wired, but all rules are
+    non-blocking to avoid retrofitting legacy files in this increment. Rules can be
+    promoted incrementally in follow-up debt slices.
+  -->
+  <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
+    <IncludeAll Action="None" />
+  </Rules>
+</RuleSet>

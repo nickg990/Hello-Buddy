@@ -314,6 +314,7 @@ public sealed class ApiIntegrationTests : IClassFixture<ApiIntegrationTests.Fact
             new ProgrammeStructureForm
             {
                 ProgrammeId = programme.ProgrammeId,
+                ProgrammeName = $"{programme.ProgrammeName} AMPM",
                 StartDate = DateOnly.FromDateTime(DateTime.UtcNow.Date),
                 EndDate = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddDays(21)),
                 SessionStructure = "am-pm",

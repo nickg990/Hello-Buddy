@@ -3,6 +3,7 @@ using HelloBuddy.Admin.Core.Data.Entities;
 using HelloBuddy.Application.Programmes;
 using HelloBuddy.Contracts;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace HelloBuddy.Infrastructure.Programmes;
 
@@ -40,16 +41,16 @@ public sealed class ProgrammeRepository : IProgrammeRepository
             ProgrammeName = $"{treatmentCase.CaseTitle} draft",
             StartDate = treatmentCase.StartDate,
             EndDate = treatmentCase.EndDate,
-            Status = "planned",
+            Status = ProgrammeDomainConstants.StatusPlanned,
             IsCurrent = true,
             Notes = treatmentCase.ClinicalSummary,
             Sessions =
             [
                 new Session
                 {
-                    Period = "single",
+                    Period = ProgrammeDomainConstants.SessionPeriodSingle,
                     Objective = treatmentCase.ClinicalSummary,
-                    Status = "planned",
+                    Status = ProgrammeDomainConstants.StatusPlanned,
                     SortOrder = 1,
                 },
             ],
@@ -137,9 +138,9 @@ public sealed class ProgrammeRepository : IProgrammeRepository
         programme.StartDate = form.StartDate;
         programme.EndDate = form.EndDate;
 
-        var targetPeriods = structure == "am-pm"
-            ? new[] { "AM", "PM" }
-            : new[] { "single" };
+        var targetPeriods = structure == ProgrammeDomainConstants.SessionStructureAmPm
+            ? new[] { ProgrammeDomainConstants.SessionPeriodAm, ProgrammeDomainConstants.SessionPeriodPm }
+            : new[] { ProgrammeDomainConstants.SessionPeriodSingle };
 
         var existingPeriods = programme.Sessions
             .OrderBy(s => s.SortOrder)
@@ -163,7 +164,7 @@ public sealed class ProgrammeRepository : IProgrammeRepository
                 {
                     Period = targetPeriods[i],
                     Objective = programme.Notes,
-                    Status = "planned",
+                    Status = ProgrammeDomainConstants.StatusPlanned,
                     SortOrder = (byte)(i + 1),
                 });
             }
@@ -247,44 +248,63 @@ public sealed class ProgrammeRepository : IProgrammeRepository
 
     public async Task<ProgrammeStatusTransitionResult> ActivateAsync(ulong programmeId, ulong practitionerId, CancellationToken ct)
     {
-        await using var tx = await _db.Database.BeginTransactionAsync(ct);
-
-        var programme = await _db.Programmes
-            .FirstOrDefaultAsync(p => p.ProgrammeId == programmeId && p.TreatmentCase.PractitionerId == practitionerId, ct);
-        if (programme is null)
+        IDbContextTransaction? tx = null;
+        if (_db.Database.IsRelational())
         {
-            return ProgrammeStatusTransitionResult.NotFound;
+            tx = await _db.Database.BeginTransactionAsync(ct);
         }
 
-        if (!string.Equals(programme.Status, "planned", StringComparison.OrdinalIgnoreCase))
+        try
         {
-            return ProgrammeStatusTransitionResult.InvalidTransition;
-        }
+            var programme = await _db.Programmes
+                .FirstOrDefaultAsync(p => p.ProgrammeId == programmeId && p.TreatmentCase.PractitionerId == practitionerId, ct);
+            if (programme is null)
+            {
+                return ProgrammeStatusTransitionResult.NotFound;
+            }
 
-        var activeExists = await _db.Programmes
-            .AnyAsync(p => p.TreatmentCaseId == programme.TreatmentCaseId
-                           && p.ProgrammeId != programmeId
-                           && p.Status == "active", ct);
-        if (activeExists)
+            if (!string.Equals(programme.Status, ProgrammeDomainConstants.StatusPlanned, StringComparison.OrdinalIgnoreCase))
+            {
+                return ProgrammeStatusTransitionResult.InvalidTransition;
+            }
+
+            var activeExists = await _db.Programmes
+                .AnyAsync(p => p.TreatmentCaseId == programme.TreatmentCaseId
+                               && p.ProgrammeId != programmeId
+                               && p.Status == ProgrammeDomainConstants.StatusActive, ct);
+            if (activeExists)
+            {
+                return ProgrammeStatusTransitionResult.BlockedByAnotherActiveProgramme;
+            }
+
+            var otherProgrammes = await _db.Programmes
+                .Where(p => p.TreatmentCaseId == programme.TreatmentCaseId && p.ProgrammeId != programmeId)
+                .ToListAsync(ct);
+
+            programme.Status = ProgrammeDomainConstants.StatusActive;
+            programme.IsCurrent = true;
+
+            foreach (var other in otherProgrammes)
+            {
+                other.IsCurrent = false;
+            }
+
+            await _db.SaveChangesAsync(ct);
+
+            if (tx is not null)
+            {
+                await tx.CommitAsync(ct);
+            }
+
+            return ProgrammeStatusTransitionResult.Updated;
+        }
+        finally
         {
-            return ProgrammeStatusTransitionResult.BlockedByAnotherActiveProgramme;
+            if (tx is not null)
+            {
+                await tx.DisposeAsync();
+            }
         }
-
-        var otherProgrammes = await _db.Programmes
-            .Where(p => p.TreatmentCaseId == programme.TreatmentCaseId && p.ProgrammeId != programmeId)
-            .ToListAsync(ct);
-
-        programme.Status = "active";
-        programme.IsCurrent = true;
-
-        foreach (var other in otherProgrammes)
-        {
-            other.IsCurrent = false;
-        }
-
-        await _db.SaveChangesAsync(ct);
-        await tx.CommitAsync(ct);
-        return ProgrammeStatusTransitionResult.Updated;
     }
 
     public async Task<ProgrammeStatusTransitionResult> CompleteAsync(ulong programmeId, ulong practitionerId, CancellationToken ct)
@@ -296,12 +316,12 @@ public sealed class ProgrammeRepository : IProgrammeRepository
             return ProgrammeStatusTransitionResult.NotFound;
         }
 
-        if (!string.Equals(programme.Status, "active", StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(programme.Status, ProgrammeDomainConstants.StatusActive, StringComparison.OrdinalIgnoreCase))
         {
             return ProgrammeStatusTransitionResult.InvalidTransition;
         }
 
-        programme.Status = "completed";
+        programme.Status = ProgrammeDomainConstants.StatusCompleted;
         programme.IsCurrent = false;
 
         await _db.SaveChangesAsync(ct);

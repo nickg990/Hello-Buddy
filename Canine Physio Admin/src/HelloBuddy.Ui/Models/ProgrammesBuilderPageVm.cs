@@ -8,8 +8,8 @@ public sealed class ProgrammesBuilderPageVm
     public required IReadOnlyList<ExerciseListItem> AvailableExercises { get; init; }
 
     public string SessionStructure
-        => Programme.Sessions.Any(s => string.Equals(s.Period, "AM", StringComparison.OrdinalIgnoreCase)
-                                    || string.Equals(s.Period, "PM", StringComparison.OrdinalIgnoreCase))
-            ? "am-pm"
-            : "single";
+        => Programme.Sessions.Any(s => string.Equals(s.Period, ProgrammeDomainConstants.SessionPeriodAm, StringComparison.OrdinalIgnoreCase)
+                                    || string.Equals(s.Period, ProgrammeDomainConstants.SessionPeriodPm, StringComparison.OrdinalIgnoreCase))
+            ? ProgrammeDomainConstants.SessionStructureAmPm
+            : ProgrammeDomainConstants.SessionStructureSingle;
 }

@@ -5,6 +5,8 @@
     <AnalysisLevel>latest</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)Standards\stylecop.ruleset</CodeAnalysisRuleSet>
     <NoWarn>$(NoWarn);NU1507</NoWarn>
   </PropertyGroup>
+
 </Project>

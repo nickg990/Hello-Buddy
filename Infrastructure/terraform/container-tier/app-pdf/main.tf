@@ -50,8 +50,18 @@ resource "azurerm_container_app" "pdf" {
   }
 
   template {
-    min_replicas = 1
-    max_replicas = 1
+    min_replicas = var.container_min_replicas
+    max_replicas = var.container_max_replicas
+
+    custom_scale_rule {
+      name             = "http-concurrency"
+      custom_rule_type = "http"
+      metadata = {
+        concurrentRequests = "50"
+        cooldownPeriod     = tostring(var.container_scale_cooldown_period)
+        pollingInterval    = tostring(var.container_scale_polling_interval)
+      }
+    }
 
     container {
       name   = "pdf"

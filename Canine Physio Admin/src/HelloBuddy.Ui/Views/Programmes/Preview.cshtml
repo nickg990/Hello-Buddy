@@ -148,12 +148,12 @@
                                                 @if (!string.IsNullOrWhiteSpace(ex.VideoUrl))
                                                 {
                                                     <a href="@ex.VideoUrl" target="_blank" rel="noopener noreferrer">
-                                                        <img src="@ex.ImageUrl" alt="@ex.ExerciseTitle image" style="max-height: 120px; max-width: 220px;" />
+                                                        <img src="@Url.Action("Image", "Exercises", new { id = ex.ExerciseId })" alt="@ex.ExerciseTitle image" style="max-height: 120px; max-width: 220px;" />
                                                     </a>
                                                 }
                                                 else
                                                 {
-                                                    <img src="@ex.ImageUrl" alt="@ex.ExerciseTitle image" style="max-height: 120px; max-width: 220px;" />
+                                                    <img src="@Url.Action("Image", "Exercises", new { id = ex.ExerciseId })" alt="@ex.ExerciseTitle image" style="max-height: 120px; max-width: 220px;" />
                                                 }
                                             </div>
                                         }

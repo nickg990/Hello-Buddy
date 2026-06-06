@@ -28,7 +28,7 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
     [InlineData("/Pets/1", "Buddy")]
     [InlineData("/Cases/1", "Buddy Hind Limb Rehab")]
     [InlineData("/Exercises/1", "Step-ups (low)")]
-    public async Task PageLoads(string path, string expectedText)
+    public async Task GetPage_GivenSmokeRoute_ReturnsExpectedText(string path, string expectedText)
     {
         var response = await _client.GetAsync(path);
 

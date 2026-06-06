@@ -240,6 +240,7 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
             new ProgrammeStructureForm
             {
                 ProgrammeId = programme.ProgrammeId,
+                ProgrammeName = $"{programme.ProgrammeName} AMPM",
                 StartDate = DateOnly.FromDateTime(DateTime.UtcNow.Date),
                 EndDate = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddDays(14)),
                 SessionStructure = "am-pm",
@@ -303,14 +304,14 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
 
         var afterActivate = await _client.GetFromJsonAsync<ProgrammeVm>($"/api/programmes/{programme.ProgrammeId}");
         Assert.NotNull(afterActivate);
-        Assert.Equal("active", afterActivate.Status);
+        Assert.Equal(ProgrammeDomainConstants.StatusActive, afterActivate.Status);
 
         var complete = await _client.PostAsync($"/api/programmes/{programme.ProgrammeId}/complete", content: null);
         Assert.Equal(HttpStatusCode.NoContent, complete.StatusCode);
 
         var afterComplete = await _client.GetFromJsonAsync<ProgrammeVm>($"/api/programmes/{programme.ProgrammeId}");
         Assert.NotNull(afterComplete);
-        Assert.Equal("completed", afterComplete.Status);
+        Assert.Equal(ProgrammeDomainConstants.StatusCompleted, afterComplete.Status);
     }
 
     [Fact]

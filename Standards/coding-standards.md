@@ -163,7 +163,9 @@ owner exists; pet exists; case exists; title or date range; start + end dates; �
 - **Page-per-feature** folder layout: `/Pages/Programmes/Build.cshtml(.cs)`, `/Pages/Cases/Detail.cshtml(.cs)`.
 - Page models are **thin**: gather input, call an Application service, populate view-model, return. No EF, no business rules.
 - **DTOs/view-models are distinct from entities.** Never bind a request directly to a domain entity.
-- **Antiforgery** on every POST handler (default in Razor Pages — do not disable).
+- **Antiforgery** on every browser-originated POST handler (default in Razor Pages — do not disable).
+- **Service-to-service API/PDF endpoints are non-browser surfaces.** CSRF protections are not mandatory on these endpoints when they are protected by infrastructure controls (private network boundary, authenticated caller identity, and deny-by-default ingress).
+- Any endpoint with antiforgery disabled must include an inline note explaining why the endpoint is non-browser and what control boundary protects it.
 - **No business logic in `.cshtml`.** Conditionals are presentation only.
 - **Tag helpers and partials** for layout reuse; reusable components listed in requirements §05 (`AppShell`, `PageHeader`, `LogoDisc`, `DashboardCard`, `OwnerCard`, `PetSummaryCard`, `CaseSummaryCard`, `ExerciseCard`, `SessionCard`, `ProgrammeBuilder`, `PdfPreview`) implemented as Razor partials or view components.
 - **CSS**: one site stylesheet driven by CSS custom properties for the Hello Buddy palette tokens. No inline styles outside the PDF template.
@@ -287,7 +289,7 @@ public sealed record ProgrammeDocumentResult(byte[] PdfBytes, string HtmlPreview
 - **OWASP Top 10** checklist runs in code review:
   - SQL injection: only EF Core / parameterised SQL. Raw SQL requires reviewer sign-off.
   - XSS: Razor encodes by default — never use `@Html.Raw` on user content.
-  - CSRF: antiforgery on by default.
+  - CSRF: antiforgery on by default for browser-entry endpoints. Non-browser service endpoints use caller authentication and infrastructure isolation instead of browser token defenses.
   - AuthN/Z: every page declares its requirement via `[Authorize]` / fallback policy; deny by default.
   - Dependencies: `dotnet list package --vulnerable` runs in CI; PR fails on Critical/High.
 - **GDPR-aware behaviour**:

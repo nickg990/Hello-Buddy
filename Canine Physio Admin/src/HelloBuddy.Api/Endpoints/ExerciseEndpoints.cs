@@ -149,6 +149,8 @@ public static class ExerciseEndpoints
                 contentType,
                 file.Length));
         })
+        // Service-to-service endpoint: UI server posts multipart content to API inside
+        // infrastructure trust boundaries; browser-origin CSRF tokens are not applicable.
         .DisableAntiforgery();
 
         app.MapPost("/api/exercises", async (

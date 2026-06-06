@@ -191,7 +191,38 @@ function Prepare-Projects {
     }
 }
 
+function Assert-LocalConfigurationAlignment {
+    $apiSettingsPath = Join-Path $adminRoot "src/HelloBuddy.Api/appsettings.Development.json"
+    $apiLaunchSettingsPath = Join-Path $adminRoot "src/HelloBuddy.Api/Properties/launchSettings.json"
+    $pdfLaunchSettingsPath = Join-Path $adminRoot "src/HelloBuddy.PdfService/Properties/launchSettings.json"
+
+    if (-not (Test-Path $apiSettingsPath) -or -not (Test-Path $apiLaunchSettingsPath) -or -not (Test-Path $pdfLaunchSettingsPath)) {
+        throw "Cannot validate local port alignment because one or more settings files are missing."
+    }
+
+    $apiSettings = Get-Content $apiSettingsPath -Raw | ConvertFrom-Json
+    $apiLaunch = Get-Content $apiLaunchSettingsPath -Raw | ConvertFrom-Json
+    $pdfLaunch = Get-Content $pdfLaunchSettingsPath -Raw | ConvertFrom-Json
+
+    $configuredPdfUri = [string]$apiSettings.PdfService.Uri
+    $apiUri = ([string]$apiLaunch.profiles.http.applicationUrl -split ';')[0]
+    $pdfUri = ([string]$pdfLaunch.profiles.http.applicationUrl -split ';')[0]
+
+    if ([string]::IsNullOrWhiteSpace($configuredPdfUri)) {
+        throw "PdfService:Uri is missing from src/HelloBuddy.Api/appsettings.Development.json."
+    }
+
+    if ($configuredPdfUri.TrimEnd('/') -ne $pdfUri.TrimEnd('/')) {
+        throw "Local config mismatch: Api appsettings PdfService:Uri ($configuredPdfUri) does not match PDF launch profile URL ($pdfUri)."
+    }
+
+    if ($apiUri.TrimEnd('/') -ne "http://localhost:5080") {
+        throw "Local config mismatch: API launch profile URL is $apiUri but the stack script expects http://localhost:5080."
+    }
+}
+
 Ensure-Azurite
+Assert-LocalConfigurationAlignment
 Prepare-Projects
 
 if (-not $SkipPdf) {
