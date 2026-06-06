@@ -95,6 +95,30 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
         Assert.DoesNotContain(">Open video<", html);
     }
 
+    [Fact]
+    public async Task CaseDetailPage_RendersCreateDraftProgrammeAction()
+    {
+        var response = await _client.GetAsync("/Cases/1");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Create draft programme", html);
+        Assert.Contains("Delete programme", html);
+    }
+
+    [Fact]
+    public async Task BuilderPage_RendersSessionStructureAndExerciseMutationControls()
+    {
+        var response = await _client.GetAsync("/Programmes/1/Builder");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Dates and session structure", html);
+        Assert.Contains("Session structure", html);
+        Assert.Contains("Add exercise", html);
+        Assert.Contains("Remove exercise", html);
+    }
+
     public sealed class Factory : WebApplicationFactory<Program>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -152,7 +176,7 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
             Owner.FullName,
             Owner.Email,
             [new CaseDetailVm.NoteRow(1, new DateTime(2026, 5, 1, 10, 0, 0, DateTimeKind.Utc), "assessment", "Initial clinical assessment completed.")],
-            []);
+            [new CaseDetailVm.ProgrammeRow(1, "Buddy Hind Limb Rehab draft", "planned", new DateOnly(2026, 5, 1), null, 1, 0)]);
 
         private static readonly ExerciseDetailVm Exercise = new(
             1,
@@ -234,6 +258,38 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
                 new ExerciseCategoryListItem(2, "Mobility", true)
             ]);
 
+        public Task<ProgrammeVm?> CreateDraftProgrammeAsync(ulong caseId, CancellationToken ct)
+            => Task.FromResult<ProgrammeVm?>(new ProgrammeVm(
+                2,
+                1,
+                "Buddy Hind Limb Rehab draft",
+                "planned",
+                new DateOnly(2026, 5, 1),
+                null,
+                "Improving hind-limb control.",
+                "Buddy Hind Limb Rehab",
+                "Buddy",
+                "Amelia Carter",
+                [new ProgrammeVm.SessionRow(1, "single", "Improving hind-limb control.", "planned", 1, [])]));
+
+        public Task<DeleteProgrammeResult> DeleteProgrammeAsync(ulong programmeId, CancellationToken ct)
+            => Task.FromResult(new DeleteProgrammeResult(DeleteProgrammeOutcome.Deleted));
+
+        public Task<ProgrammeStatusTransitionClientResult> ActivateProgrammeAsync(ulong programmeId, CancellationToken ct)
+            => Task.FromResult(new ProgrammeStatusTransitionClientResult(ProgrammeStatusTransitionClientOutcome.Updated));
+
+        public Task<ProgrammeStatusTransitionClientResult> CompleteProgrammeAsync(ulong programmeId, CancellationToken ct)
+            => Task.FromResult(new ProgrammeStatusTransitionClientResult(ProgrammeStatusTransitionClientOutcome.Updated));
+
+        public Task<UpdateProgrammeStructureResult> UpdateProgrammeStructureAsync(ulong programmeId, ProgrammeStructureForm form, CancellationToken ct)
+            => Task.FromResult(new UpdateProgrammeStructureResult(UpdateProgrammeStructureOutcome.Updated));
+
+        public Task<AddSessionExerciseClientResult> AddSessionExerciseAsync(ulong programmeId, ulong sessionId, ulong exerciseId, CancellationToken ct)
+            => Task.FromResult(new AddSessionExerciseClientResult(AddSessionExerciseClientOutcome.Added));
+
+        public Task<RemoveSessionExerciseClientResult> RemoveSessionExerciseAsync(ulong programmeId, ulong sessionId, ulong sessionExerciseId, CancellationToken ct)
+            => Task.FromResult(new RemoveSessionExerciseClientResult(RemoveSessionExerciseClientOutcome.Removed));
+
         public Task<IReadOnlyList<CaseRow>> ListCasesAsync(CancellationToken ct)
             => Task.FromResult<IReadOnlyList<CaseRow>>([new CaseRow(1, TreatmentCase.CaseTitle, TreatmentCase.Status, TreatmentCase.StartDate, TreatmentCase.PetName, TreatmentCase.OwnerName)]);
 
@@ -250,7 +306,25 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
             => Task.FromResult<CaseDetailVm.NoteRow?>(new CaseDetailVm.NoteRow(2, DateTime.UtcNow, request.NoteType, request.NoteText));
 
         public Task<ProgrammeVm?> GetProgrammeAsync(ulong id, CancellationToken ct)
-            => Task.FromResult<ProgrammeVm?>(null);
+            => Task.FromResult<ProgrammeVm?>(new ProgrammeVm(
+                1,
+                1,
+                "Buddy Hind Limb Rehab draft",
+                "planned",
+                new DateOnly(2026, 5, 1),
+                null,
+                "Improving hind-limb control.",
+                "Buddy Hind Limb Rehab",
+                "Buddy",
+                "Amelia Carter",
+                [new ProgrammeVm.SessionRow(
+                    1,
+                    "single",
+                    "Improving hind-limb control.",
+                    "planned",
+                    1,
+                    [new ProgrammeVm.SessionExerciseRow(1, 1, "Step-ups (low)", "Controlled stepping", "https://example.test/step-up.jpg", "https://example.test/step-up.mp4", 5, 3, 5, 1, "Steady pace")])]
+            ));
 
         public Task<ProgrammeVm?> UpdateProgrammeAsync(ulong id, ProgrammeBuilderForm form, CancellationToken ct)
             => Task.FromResult<ProgrammeVm?>(null);

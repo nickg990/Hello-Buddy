@@ -5,6 +5,7 @@ param(
     [switch]$SkipPdf,
     [switch]$SkipApi,
     [switch]$SkipUi,
+    [switch]$SkipPrebuild,
     [switch]$NoNewWindows,
     [int]$StartupTimeoutSeconds = 90,
     [switch]$NoBrowser
@@ -146,18 +147,63 @@ function Open-UiInBrowser {
     Start-Process $Url | Out-Null
 }
 
+function Prepare-Projects {
+    if ($SkipPrebuild) {
+        Write-Host "Skipping sequential restore/build preflight (SkipPrebuild switch set)." -ForegroundColor Yellow
+        return
+    }
+
+    $projects = @()
+    if (-not $SkipPdf) {
+        $projects += "src/HelloBuddy.PdfService/HelloBuddy.PdfService.csproj"
+    }
+    if (-not $SkipApi) {
+        $projects += "src/HelloBuddy.Api/HelloBuddy.Api.csproj"
+    }
+    if (-not $SkipUi) {
+        $projects += "src/HelloBuddy.Ui/HelloBuddy.Ui.csproj"
+    }
+
+    if ($projects.Count -eq 0) {
+        return
+    }
+
+    Push-Location $adminRoot
+    try {
+        foreach ($project in $projects) {
+            Write-Host "Restoring $project ..." -ForegroundColor Cyan
+            dotnet restore $project
+            if ($LASTEXITCODE -ne 0) {
+                throw "dotnet restore failed for $project"
+            }
+        }
+
+        foreach ($project in $projects) {
+            Write-Host "Building $project ..." -ForegroundColor Cyan
+            dotnet build --no-restore $project
+            if ($LASTEXITCODE -ne 0) {
+                throw "dotnet build failed for $project"
+            }
+        }
+    }
+    finally {
+        Pop-Location
+    }
+}
+
 Ensure-Azurite
+Prepare-Projects
 
 if (-not $SkipPdf) {
-    Start-ServiceProcess -Title "HelloBuddy PDF" -Command "dotnet run --arch x86 --project src/HelloBuddy.PdfService/HelloBuddy.PdfService.csproj --launch-profile http"
+    Start-ServiceProcess -Title "HelloBuddy PDF" -Command "dotnet run --no-build --no-restore --project src/HelloBuddy.PdfService/HelloBuddy.PdfService.csproj --launch-profile http"
 }
 
 if (-not $SkipApi) {
-    Start-ServiceProcess -Title "HelloBuddy API" -Command "dotnet run --arch x86 --project src/HelloBuddy.Api/HelloBuddy.Api.csproj --launch-profile http"
+    Start-ServiceProcess -Title "HelloBuddy API" -Command "dotnet run --no-build --no-restore --project src/HelloBuddy.Api/HelloBuddy.Api.csproj --launch-profile http"
 }
 
 if (-not $SkipUi) {
-    Start-ServiceProcess -Title "HelloBuddy UI" -Command "`$env:Api__Uri='http://localhost:5080'; dotnet run --arch x86 --project src/HelloBuddy.Ui/HelloBuddy.Ui.csproj --launch-profile http"
+    Start-ServiceProcess -Title "HelloBuddy UI" -Command "`$env:Api__Uri='http://localhost:5080'; dotnet run --no-build --no-restore --project src/HelloBuddy.Ui/HelloBuddy.Ui.csproj --launch-profile http"
 }
 
 $deadline = (Get-Date).AddSeconds($StartupTimeoutSeconds)

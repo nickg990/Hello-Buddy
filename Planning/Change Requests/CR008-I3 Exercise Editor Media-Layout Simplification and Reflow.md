@@ -1,4 +1,4 @@
-# CR-008 - Exercise Editor Media/Layout Simplification and Reflow
+﻿# CR008-I3 - Exercise Editor Media/Layout Simplification and Reflow
 
 Date: 2026-06-05
 Status: Implemented
@@ -20,7 +20,7 @@ Business and UX benefit:
 
 1. Remove Image URL manual override field from exercise editor.
 2. Remove "Remove current image on save" checkbox.
-3. Replace removed area with video functionality aligned to CR-007 workflow.
+3. Replace removed area with video functionality aligned to CR007-I3 workflow.
 4. Present media panels horizontally in one grouped section:
    - Current image
    - Selected image
@@ -67,3 +67,4 @@ Business and UX benefit:
 
 - 2026-06-05: Logged from user request.
 - 2026-06-05: Implemented in shared exercise editor view: removed image manual override and remove-image controls, delivered boxed horizontal media/default sections, and aligned create/edit presentation with current/selected panel model. Pending deployment validation.
+

@@ -1,4 +1,4 @@
-# CR-009 - Exercise Details Media Horizontal Click-Open Layout
+﻿# CR009-I3 - Exercise Details Media Horizontal Click-Open Layout
 
 Date: 2026-06-05
 Status: Implemented
@@ -48,3 +48,4 @@ Business and UX benefit:
 
 - 2026-06-05: Logged from user request.
 - 2026-06-05: Implemented in details view with horizontal image/video tiles, click-open behavior, provider-aware video still previews (YouTube/Vimeo/direct video fallback), and no separate View/Open link labels. UI tests passing.
+

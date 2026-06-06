@@ -69,6 +69,10 @@
                         }
                     </div>
                 }
+                @if (TempData["Error"] is string layoutError)
+                {
+                    <div class="alert alert-danger" role="alert">@layoutError</div>
+                }
             </div>
             @RenderBody()
         </main>

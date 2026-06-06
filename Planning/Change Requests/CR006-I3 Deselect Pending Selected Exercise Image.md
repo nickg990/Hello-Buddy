@@ -1,4 +1,4 @@
-# CR-006 - Deselect Pending Selected Exercise Image
+﻿# CR006-I3 - Deselect Pending Selected Exercise Image
 
 Date: 2026-06-05
 Status: Implemented
@@ -54,3 +54,4 @@ Business and UX benefit:
 
 - 2026-06-05: Logged from user request.
 - 2026-06-05: Implemented in shared exercise editor view with right-click deselect for selected image and preserved left-click open behavior (no fallback clear button by request). Pending deployment validation.
+

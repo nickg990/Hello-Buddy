@@ -1,4 +1,4 @@
-# CR-007 - Video URL Live Preview with Select/Clear Workflow
+﻿# CR007-I3 - Video URL Live Preview with Select/Clear Workflow
 
 Date: 2026-06-05
 Status: Implemented
@@ -62,3 +62,4 @@ Business and UX benefit:
 
 - 2026-06-05: Logged from user request.
 - 2026-06-05: Implemented current/selected video panels, left-click open behavior, right-click deselect on selected video, and search helper popup that opens provider searches in new tabs and applies chosen URL back to the form. Pending deployment validation.
+

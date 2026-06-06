@@ -1,8 +1,8 @@
-# Increment 3 Summary and Increment 4 Handoff
+﻿# Increment 3 Summary and Increment 4 Handoff
 
 **Date:** 2026-06-05
 **Status:** Complete and handed off
-**Scope:** Hello Buddy Canine Physiotherapy Admin — Release 1, Increment 3
+**Scope:** Hello Buddy Canine Physiotherapy Admin â€” Release 1, Increment 3
 
 ## What Increment 3 delivered
 
@@ -27,14 +27,14 @@ Increment 3 established the Exercise Library as the editable content foundation 
 
 ## Change requests completed during/after Increment 3
 
-- CR-002: Exercise media upload and PDF click-through video.
-- CR-003: Azurite-first local blob emulation.
-- CR-004: Self-hosted malware scanning deferred.
-- CR-005: Live image preview on exercise edit screen.
-- CR-006: Right-click deselect for pending selected image.
-- CR-007: Video URL preview/search helper workflow.
-- CR-008: Exercise editor media/layout simplification and reflow.
-- CR-009: Exercise details media horizontal click-open layout.
+- CR002-I3: Exercise media upload and PDF click-through video.
+- CR003-I3: Azurite-first local blob emulation.
+- CR004-I3: Self-hosted malware scanning deferred.
+- CR005-I3: Live image preview on exercise edit screen.
+- CR006-I3: Right-click deselect for pending selected image.
+- CR007-I3: Video URL preview/search helper workflow.
+- CR008-I3: Exercise editor media/layout simplification and reflow.
+- CR009-I3: Exercise details media horizontal click-open layout.
 
 ## Validation status
 
@@ -52,7 +52,7 @@ Recommended dependencies for the next chat:
 - `ExerciseListItem` and `ExerciseListFilter` contracts remain stable.
 - The exercise picker should default to active exercises only.
 - The seeded exercise set should be treated as canonical test data.
-- No new schema work is required for Increment 4’s first pass.
+- No new schema work is required for Increment 4â€™s first pass.
 
 ## Open items carried forward
 
@@ -62,4 +62,5 @@ Recommended dependencies for the next chat:
 
 ## Handoff note
 
-Increment 3 is complete enough for Increment 4 to begin. The next conversation should focus on programme builder entry points, picker behavior, and how it consumes the exercise contracts and seeded data without altering Increment 3’s public surface.
+Increment 3 is complete enough for Increment 4 to begin. The next conversation should focus on programme builder entry points, picker behavior, and how it consumes the exercise contracts and seeded data without altering Increment 3â€™s public surface.
+

@@ -170,6 +170,112 @@ public sealed class AdminApiClient : IAdminApiClient
         return rows ?? new List<ExerciseCategoryListItem>();
     }
 
+    public async Task<ProgrammeVm?> CreateDraftProgrammeAsync(ulong caseId, CancellationToken ct)
+    {
+        var resp = await _http.PostAsync($"/api/cases/{caseId}/programmes", content: null, ct);
+        if (resp.StatusCode == HttpStatusCode.NotFound) return null;
+        await EnsureSuccessOrThrowAsync(resp, ct);
+        return await ReadRequiredAsync<ProgrammeVm>(resp, ct);
+    }
+
+    public async Task<DeleteProgrammeResult> DeleteProgrammeAsync(ulong programmeId, CancellationToken ct)
+    {
+        var resp = await _http.DeleteAsync($"/api/programmes/{programmeId}", ct);
+        if (resp.StatusCode == HttpStatusCode.NoContent)
+        {
+            return new DeleteProgrammeResult(DeleteProgrammeOutcome.Deleted);
+        }
+
+        if (resp.StatusCode == HttpStatusCode.NotFound)
+        {
+            return new DeleteProgrammeResult(DeleteProgrammeOutcome.NotFound, "Programme was not found.");
+        }
+
+        if (resp.StatusCode == HttpStatusCode.Conflict)
+        {
+            var message = await resp.Content.ReadAsStringAsync(ct);
+            return new DeleteProgrammeResult(
+                DeleteProgrammeOutcome.Blocked,
+                string.IsNullOrWhiteSpace(message) ? "Programme cannot be deleted." : message);
+        }
+
+        await EnsureSuccessOrThrowAsync(resp, ct);
+        return new DeleteProgrammeResult(DeleteProgrammeOutcome.Deleted);
+    }
+
+    public async Task<ProgrammeStatusTransitionClientResult> ActivateProgrammeAsync(ulong programmeId, CancellationToken ct)
+        => await PostProgrammeStatusTransitionAsync($"/api/programmes/{programmeId}/activate", ct);
+
+    public async Task<ProgrammeStatusTransitionClientResult> CompleteProgrammeAsync(ulong programmeId, CancellationToken ct)
+        => await PostProgrammeStatusTransitionAsync($"/api/programmes/{programmeId}/complete", ct);
+
+    public async Task<UpdateProgrammeStructureResult> UpdateProgrammeStructureAsync(ulong programmeId, ProgrammeStructureForm form, CancellationToken ct)
+    {
+        var resp = await _http.PutAsJsonAsync($"/api/programmes/{programmeId}/structure", form, ct);
+        if (resp.StatusCode == HttpStatusCode.NoContent)
+        {
+            return new UpdateProgrammeStructureResult(UpdateProgrammeStructureOutcome.Updated);
+        }
+
+        if (resp.StatusCode == HttpStatusCode.NotFound)
+        {
+            return new UpdateProgrammeStructureResult(UpdateProgrammeStructureOutcome.NotFound, "Programme was not found.");
+        }
+
+        if (resp.StatusCode == HttpStatusCode.BadRequest)
+        {
+            var message = await resp.Content.ReadAsStringAsync(ct);
+            return new UpdateProgrammeStructureResult(UpdateProgrammeStructureOutcome.Invalid, message);
+        }
+
+        await EnsureSuccessOrThrowAsync(resp, ct);
+        return new UpdateProgrammeStructureResult(UpdateProgrammeStructureOutcome.Updated);
+    }
+
+    public async Task<AddSessionExerciseClientResult> AddSessionExerciseAsync(ulong programmeId, ulong sessionId, ulong exerciseId, CancellationToken ct)
+    {
+        var resp = await _http.PostAsJsonAsync(
+            $"/api/programmes/{programmeId}/sessions/{sessionId}/exercises",
+            new AddSessionExerciseRequest { ExerciseId = exerciseId },
+            ct);
+
+        if (resp.StatusCode == HttpStatusCode.NoContent)
+        {
+            return new AddSessionExerciseClientResult(AddSessionExerciseClientOutcome.Added);
+        }
+
+        if (resp.StatusCode == HttpStatusCode.Conflict)
+        {
+            var message = await resp.Content.ReadAsStringAsync(ct);
+            return new AddSessionExerciseClientResult(AddSessionExerciseClientOutcome.Duplicate, message);
+        }
+
+        if (resp.StatusCode == HttpStatusCode.NotFound)
+        {
+            return new AddSessionExerciseClientResult(AddSessionExerciseClientOutcome.NotFound, "Session or exercise not found.");
+        }
+
+        await EnsureSuccessOrThrowAsync(resp, ct);
+        return new AddSessionExerciseClientResult(AddSessionExerciseClientOutcome.Added);
+    }
+
+    public async Task<RemoveSessionExerciseClientResult> RemoveSessionExerciseAsync(ulong programmeId, ulong sessionId, ulong sessionExerciseId, CancellationToken ct)
+    {
+        var resp = await _http.DeleteAsync($"/api/programmes/{programmeId}/sessions/{sessionId}/exercises/{sessionExerciseId}", ct);
+        if (resp.StatusCode == HttpStatusCode.NoContent)
+        {
+            return new RemoveSessionExerciseClientResult(RemoveSessionExerciseClientOutcome.Removed);
+        }
+
+        if (resp.StatusCode == HttpStatusCode.NotFound)
+        {
+            return new RemoveSessionExerciseClientResult(RemoveSessionExerciseClientOutcome.NotFound, "Session exercise not found.");
+        }
+
+        await EnsureSuccessOrThrowAsync(resp, ct);
+        return new RemoveSessionExerciseClientResult(RemoveSessionExerciseClientOutcome.Removed);
+    }
+
     public async Task<CaseDetailVm?> GetCaseAsync(ulong id, CancellationToken ct)
     {
         var resp = await _http.GetAsync($"/api/cases/{id}", ct);
@@ -229,6 +335,39 @@ public sealed class AdminApiClient : IAdminApiClient
         var resp = await _http.GetAsync($"/api/programmes/published/{Uri.EscapeDataString(fileName)}/download-url", ct);
         await EnsureSuccessOrThrowAsync(resp, ct);
         return await ReadRequiredAsync<DownloadUrlResponse>(resp, ct);
+    }
+
+    private async Task<ProgrammeStatusTransitionClientResult> PostProgrammeStatusTransitionAsync(string path, CancellationToken ct)
+    {
+        var resp = await _http.PostAsync(path, content: null, ct);
+        if (resp.StatusCode == HttpStatusCode.NoContent)
+        {
+            return new ProgrammeStatusTransitionClientResult(ProgrammeStatusTransitionClientOutcome.Updated);
+        }
+
+        if (resp.StatusCode == HttpStatusCode.NotFound)
+        {
+            return new ProgrammeStatusTransitionClientResult(ProgrammeStatusTransitionClientOutcome.NotFound, "Programme was not found.");
+        }
+
+        if (resp.StatusCode == HttpStatusCode.BadRequest)
+        {
+            var message = await resp.Content.ReadAsStringAsync(ct);
+            return new ProgrammeStatusTransitionClientResult(
+                ProgrammeStatusTransitionClientOutcome.Invalid,
+                string.IsNullOrWhiteSpace(message) ? "Status transition is not allowed." : message);
+        }
+
+        if (resp.StatusCode == HttpStatusCode.Conflict)
+        {
+            var message = await resp.Content.ReadAsStringAsync(ct);
+            return new ProgrammeStatusTransitionClientResult(
+                ProgrammeStatusTransitionClientOutcome.Blocked,
+                string.IsNullOrWhiteSpace(message) ? "Status transition is blocked." : message);
+        }
+
+        await EnsureSuccessOrThrowAsync(resp, ct);
+        return new ProgrammeStatusTransitionClientResult(ProgrammeStatusTransitionClientOutcome.Updated);
     }
 
     private static async Task EnsureSuccessOrThrowAsync(HttpResponseMessage response, CancellationToken ct)

@@ -31,6 +31,13 @@ public interface IAdminApiClient
     Task<ExerciseDetailVm?> UpdateExerciseAsync(ulong id, SaveExerciseRequest request, CancellationToken ct);
     Task<ExerciseDetailVm?> SetExerciseActiveAsync(ulong id, bool isActive, CancellationToken ct);
     Task<IReadOnlyList<ExerciseCategoryListItem>> ListExerciseCategoriesAsync(CancellationToken ct);
+    Task<ProgrammeVm?> CreateDraftProgrammeAsync(ulong caseId, CancellationToken ct);
+    Task<DeleteProgrammeResult> DeleteProgrammeAsync(ulong programmeId, CancellationToken ct);
+    Task<ProgrammeStatusTransitionClientResult> ActivateProgrammeAsync(ulong programmeId, CancellationToken ct);
+    Task<ProgrammeStatusTransitionClientResult> CompleteProgrammeAsync(ulong programmeId, CancellationToken ct);
+    Task<UpdateProgrammeStructureResult> UpdateProgrammeStructureAsync(ulong programmeId, ProgrammeStructureForm form, CancellationToken ct);
+    Task<AddSessionExerciseClientResult> AddSessionExerciseAsync(ulong programmeId, ulong sessionId, ulong exerciseId, CancellationToken ct);
+    Task<RemoveSessionExerciseClientResult> RemoveSessionExerciseAsync(ulong programmeId, ulong sessionId, ulong sessionExerciseId, CancellationToken ct);
     Task<ProgrammeVm?> GetProgrammeAsync(ulong id, CancellationToken ct);
     Task<ProgrammeVm?> UpdateProgrammeAsync(ulong id, ProgrammeBuilderForm form, CancellationToken ct);
     Task<PublishResponse> PublishProgrammeAsync(ulong id, CancellationToken ct);
@@ -38,3 +45,48 @@ public interface IAdminApiClient
 }
 
 public sealed record ExerciseImageContent(byte[] Bytes, string ContentType);
+
+public enum DeleteProgrammeOutcome
+{
+    Deleted,
+    NotFound,
+    Blocked,
+}
+
+public sealed record DeleteProgrammeResult(DeleteProgrammeOutcome Outcome, string? Message = null);
+
+public enum ProgrammeStatusTransitionClientOutcome
+{
+    Updated,
+    NotFound,
+    Invalid,
+    Blocked,
+}
+
+public sealed record ProgrammeStatusTransitionClientResult(ProgrammeStatusTransitionClientOutcome Outcome, string? Message = null);
+
+public enum UpdateProgrammeStructureOutcome
+{
+    Updated,
+    NotFound,
+    Invalid,
+}
+
+public sealed record UpdateProgrammeStructureResult(UpdateProgrammeStructureOutcome Outcome, string? Message = null);
+
+public enum AddSessionExerciseClientOutcome
+{
+    Added,
+    NotFound,
+    Duplicate,
+}
+
+public sealed record AddSessionExerciseClientResult(AddSessionExerciseClientOutcome Outcome, string? Message = null);
+
+public enum RemoveSessionExerciseClientOutcome
+{
+    Removed,
+    NotFound,
+}
+
+public sealed record RemoveSessionExerciseClientResult(RemoveSessionExerciseClientOutcome Outcome, string? Message = null);

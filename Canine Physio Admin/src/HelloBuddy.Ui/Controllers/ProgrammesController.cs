@@ -1,4 +1,5 @@
 using HelloBuddy.Contracts;
+using HelloBuddy.Ui.Models;
 using HelloBuddy.Ui.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,7 +19,21 @@ public class ProgrammesController : Controller
     public async Task<IActionResult> Builder(ulong id, CancellationToken ct)
     {
         var vm = await _api.GetProgrammeAsync(id, ct);
-        return vm is null ? NotFound() : View(vm);
+        if (vm is null) return NotFound();
+
+        var exercises = await _api.ListExercisesAsync(new ExerciseListFilter
+        {
+            ActiveOnly = true,
+            HasVideo = null,
+            CategoryId = null,
+            SearchText = null,
+        }, ct);
+
+        return View(new ProgrammesBuilderPageVm
+        {
+            Programme = vm,
+            AvailableExercises = exercises,
+        });
     }
 
     [HttpPost("Builder")]
@@ -29,6 +44,70 @@ public class ProgrammesController : Controller
         var updated = await _api.UpdateProgrammeAsync(id, form, ct);
         if (updated is null) return NotFound();
         TempData["Saved"] = $"Saved {form.Exercises.Count} exercise edits.";
+        TempData["BuilderScrollTarget"] = "bottom";
+        return RedirectToAction(nameof(Builder), new { id });
+    }
+
+    [HttpPost("Structure")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Structure(ulong id, ProgrammeStructureForm form, CancellationToken ct)
+    {
+        if (form.ProgrammeId != id) return BadRequest();
+
+        var result = await _api.UpdateProgrammeStructureAsync(id, form, ct);
+        switch (result.Outcome)
+        {
+            case UpdateProgrammeStructureOutcome.Updated:
+                TempData["Saved"] = "Programme dates/session structure saved.";
+                TempData["BuilderScrollTarget"] = "top";
+                break;
+            case UpdateProgrammeStructureOutcome.Invalid:
+                TempData["Error"] = string.IsNullOrWhiteSpace(result.Message)
+                    ? "Session structure is invalid."
+                    : result.Message;
+                break;
+            default:
+                return NotFound();
+        }
+
+        return RedirectToAction(nameof(Builder), new { id });
+    }
+
+    [HttpPost("Sessions/{sessionId:long}/Exercises")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddExercise(ulong id, ulong sessionId, [FromForm] ulong exerciseId, CancellationToken ct)
+    {
+        var result = await _api.AddSessionExerciseAsync(id, sessionId, exerciseId, ct);
+        switch (result.Outcome)
+        {
+            case AddSessionExerciseClientOutcome.Added:
+                TempData["Saved"] = "Exercise added to session.";
+                break;
+            case AddSessionExerciseClientOutcome.Duplicate:
+                TempData["Error"] = string.IsNullOrWhiteSpace(result.Message)
+                    ? "Exercise is already in this session."
+                    : result.Message;
+                break;
+            default:
+                TempData["Error"] = "Unable to add exercise to this session.";
+                break;
+        }
+
+        TempData["BuilderScrollSessionId"] = sessionId.ToString();
+        return RedirectToAction(nameof(Builder), new { id });
+    }
+
+    [HttpPost("Sessions/{sessionId:long}/Exercises/Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemoveExercise(ulong id, ulong sessionId, [FromForm] ulong sessionExerciseId, CancellationToken ct)
+    {
+        var result = await _api.RemoveSessionExerciseAsync(id, sessionId, sessionExerciseId, ct);
+        TempData[result.Outcome == RemoveSessionExerciseClientOutcome.Removed ? "Saved" : "Error"] =
+            result.Outcome == RemoveSessionExerciseClientOutcome.Removed
+                ? "Exercise removed from draft programme."
+                : (result.Message ?? "Exercise could not be removed.");
+
+        TempData["BuilderScrollSessionId"] = sessionId.ToString();
         return RedirectToAction(nameof(Builder), new { id });
     }
 
@@ -43,9 +122,24 @@ public class ProgrammesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Publish(ulong id, CancellationToken ct)
     {
-        var resp = await _api.PublishProgrammeAsync(id, ct);
-        TempData["PublishedFile"] = resp.FileName;
-        TempData["Published"] = $"Published {resp.FileName} ({resp.Bytes:N0} bytes).";
+        try
+        {
+            var resp = await _api.PublishProgrammeAsync(id, ct);
+            TempData["PublishedFile"] = resp.FileName;
+            TempData["Published"] = $"Published {resp.FileName} ({resp.Bytes:N0} bytes).";
+        }
+        catch (ApiValidationException ex)
+        {
+            var allErrors = ex.Errors
+                .SelectMany(kvp => kvp.Value)
+                .Where(v => !string.IsNullOrWhiteSpace(v))
+                .Distinct()
+                .ToList();
+            TempData["Error"] = allErrors.Count == 0
+                ? "Draft is incomplete and cannot be published yet."
+                : string.Join(" ", allErrors);
+        }
+
         return RedirectToAction(nameof(Builder), new { id });
     }
 

@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Net.Http.Headers;
 using HelloBuddy.Admin.Core.Data;
+using HelloBuddy.Admin.Core.Data.Entities;
 using HelloBuddy.Contracts;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -16,9 +17,11 @@ namespace HelloBuddy.Api.InMemoryTests;
 public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
 {
     private readonly HttpClient _client;
+    private readonly Factory _factory;
 
     public ApiInMemoryTests(Factory factory)
     {
+        _factory = factory;
         _client = factory.CreateClient();
         _client.DefaultRequestHeaders.Add("X-Practitioner-Id", "1");
     }
@@ -139,6 +142,236 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
         var response = await _client.PostAsync("/api/exercises/media", form);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreateDraftProgramme_FromCaseCreatesBuilderTarget()
+    {
+        var ownerCreate = await _client.PostAsJsonAsync("/api/owners", new SaveOwnerRequest
+        {
+            FirstName = "Draft",
+            LastName = "Owner",
+            Email = $"draft-owner-{Guid.NewGuid():N}@example.test"
+        });
+        Assert.Equal(HttpStatusCode.Created, ownerCreate.StatusCode);
+        var owner = await ownerCreate.Content.ReadFromJsonAsync<OwnerDetailVm>();
+        Assert.NotNull(owner);
+
+        var petCreate = await _client.PostAsJsonAsync("/api/pets", new SavePetRequest
+        {
+            OwnerId = owner.OwnerId,
+            Name = "Draft Buddy",
+            Breed = "Labrador",
+            Sex = "male",
+            IsActive = true
+        });
+        Assert.Equal(HttpStatusCode.Created, petCreate.StatusCode);
+        var pet = await petCreate.Content.ReadFromJsonAsync<PetDetailVm>();
+        Assert.NotNull(pet);
+
+        var caseCreate = await _client.PostAsJsonAsync("/api/cases", new SaveTreatmentCaseRequest
+        {
+            PetId = pet.PetId,
+            CaseTitle = "Draft Case",
+            ClinicalSummary = "Case used for draft programme creation.",
+            StartDate = DateOnly.FromDateTime(DateTime.UtcNow.Date),
+            Status = "active"
+        });
+        Assert.Equal(HttpStatusCode.Created, caseCreate.StatusCode);
+        var treatmentCase = await caseCreate.Content.ReadFromJsonAsync<CaseDetailVm>();
+        Assert.NotNull(treatmentCase);
+
+        var createProgramme = await _client.PostAsync($"/api/cases/{treatmentCase.TreatmentCaseId}/programmes", content: null);
+        Assert.Equal(HttpStatusCode.OK, createProgramme.StatusCode);
+
+        var programme = await createProgramme.Content.ReadFromJsonAsync<ProgrammeVm>();
+        Assert.NotNull(programme);
+        Assert.Equal(treatmentCase.TreatmentCaseId, programme.TreatmentCaseId);
+        Assert.Equal("planned", programme.Status);
+        Assert.Single(programme.Sessions);
+        Assert.Equal("single", programme.Sessions[0].Period);
+    }
+
+    [Fact]
+    public async Task ProgrammeDelete_DraftWithoutVersionHistory_ReturnsNoContent()
+    {
+        var (_, programme) = await CreateDraftProgrammeForDeleteAsync();
+
+        var delete = await _client.DeleteAsync($"/api/programmes/{programme.ProgrammeId}");
+        Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
+
+        var get = await _client.GetAsync($"/api/programmes/{programme.ProgrammeId}");
+        Assert.Equal(HttpStatusCode.NotFound, get.StatusCode);
+    }
+
+    [Fact]
+    public async Task ProgrammeDelete_WithVersionHistory_ReturnsConflict()
+    {
+        var (_, programme) = await CreateDraftProgrammeForDeleteAsync();
+
+        await using (var scope = _factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<CaninePhysioDbContext>();
+            db.Programmeversions.Add(new Programmeversion
+            {
+                ProgrammeId = programme.ProgrammeId,
+                VersionNumber = 1,
+                VersionStatus = "published",
+                PayloadJson = "{}",
+                PayloadSchemaVersion = "1.0.0",
+                CreatedByPractitionerId = 1,
+                CreatedDate = DateTime.UtcNow,
+                PublishedDate = DateTime.UtcNow,
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var delete = await _client.DeleteAsync($"/api/programmes/{programme.ProgrammeId}");
+        Assert.Equal(HttpStatusCode.Conflict, delete.StatusCode);
+    }
+
+    [Fact]
+    public async Task ProgrammeStructure_UpdateToAmPm_RebuildsSessions()
+    {
+        var (_, programme) = await CreateDraftProgrammeForDeleteAsync();
+
+        var update = await _client.PutAsJsonAsync(
+            $"/api/programmes/{programme.ProgrammeId}/structure",
+            new ProgrammeStructureForm
+            {
+                ProgrammeId = programme.ProgrammeId,
+                StartDate = DateOnly.FromDateTime(DateTime.UtcNow.Date),
+                EndDate = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddDays(14)),
+                SessionStructure = "am-pm",
+            });
+
+        Assert.Equal(HttpStatusCode.NoContent, update.StatusCode);
+
+        var get = await _client.GetFromJsonAsync<ProgrammeVm>($"/api/programmes/{programme.ProgrammeId}");
+        Assert.NotNull(get);
+        Assert.Equal(2, get.Sessions.Count);
+        Assert.Contains(get.Sessions, s => s.Period == "AM");
+        Assert.Contains(get.Sessions, s => s.Period == "PM");
+    }
+
+    [Fact]
+    public async Task Programme_AddAndRemoveExerciseInSession_Works()
+    {
+        var (_, programme) = await CreateDraftProgrammeForDeleteAsync();
+        var session = Assert.Single(programme.Sessions);
+
+        var exercises = await _client.GetFromJsonAsync<List<ExerciseListItem>>("/api/exercises?activeOnly=true");
+        Assert.NotNull(exercises);
+        Assert.NotEmpty(exercises);
+        var exerciseId = exercises[0].ExerciseId;
+
+        var add = await _client.PostAsJsonAsync(
+            $"/api/programmes/{programme.ProgrammeId}/sessions/{session.SessionId}/exercises",
+            new AddSessionExerciseRequest { ExerciseId = exerciseId });
+        Assert.Equal(HttpStatusCode.NoContent, add.StatusCode);
+
+        var refreshed = await _client.GetFromJsonAsync<ProgrammeVm>($"/api/programmes/{programme.ProgrammeId}");
+        Assert.NotNull(refreshed);
+        var refreshedSession = Assert.Single(refreshed.Sessions);
+        var sessionExercise = Assert.Single(refreshedSession.Exercises);
+
+        var remove = await _client.DeleteAsync(
+            $"/api/programmes/{programme.ProgrammeId}/sessions/{session.SessionId}/exercises/{sessionExercise.SessionExerciseId}");
+        Assert.Equal(HttpStatusCode.NoContent, remove.StatusCode);
+
+        var afterRemove = await _client.GetFromJsonAsync<ProgrammeVm>($"/api/programmes/{programme.ProgrammeId}");
+        Assert.NotNull(afterRemove);
+        Assert.Empty(Assert.Single(afterRemove.Sessions).Exercises);
+    }
+
+    [Fact]
+    public async Task ProgrammePublish_IncompleteDraft_ReturnsBadRequest()
+    {
+        var (_, programme) = await CreateDraftProgrammeForDeleteAsync();
+
+        var publish = await _client.PostAsync($"/api/programmes/{programme.ProgrammeId}/publish", content: null);
+        Assert.Equal(HttpStatusCode.BadRequest, publish.StatusCode);
+    }
+
+    [Fact]
+    public async Task ProgrammeStatus_ActivateThenComplete_Works()
+    {
+        var (_, programme) = await CreateDraftProgrammeForDeleteAsync();
+
+        var activate = await _client.PostAsync($"/api/programmes/{programme.ProgrammeId}/activate", content: null);
+        Assert.Equal(HttpStatusCode.NoContent, activate.StatusCode);
+
+        var afterActivate = await _client.GetFromJsonAsync<ProgrammeVm>($"/api/programmes/{programme.ProgrammeId}");
+        Assert.NotNull(afterActivate);
+        Assert.Equal("active", afterActivate.Status);
+
+        var complete = await _client.PostAsync($"/api/programmes/{programme.ProgrammeId}/complete", content: null);
+        Assert.Equal(HttpStatusCode.NoContent, complete.StatusCode);
+
+        var afterComplete = await _client.GetFromJsonAsync<ProgrammeVm>($"/api/programmes/{programme.ProgrammeId}");
+        Assert.NotNull(afterComplete);
+        Assert.Equal("completed", afterComplete.Status);
+    }
+
+    [Fact]
+    public async Task ProgrammeStatus_ActivateBlocked_WhenAnotherProgrammeIsActive()
+    {
+        var (treatmentCase, programmeOne) = await CreateDraftProgrammeForDeleteAsync();
+
+        var secondCreate = await _client.PostAsync($"/api/cases/{treatmentCase.TreatmentCaseId}/programmes", content: null);
+        Assert.Equal(HttpStatusCode.OK, secondCreate.StatusCode);
+        var programmeTwo = await secondCreate.Content.ReadFromJsonAsync<ProgrammeVm>();
+        Assert.NotNull(programmeTwo);
+
+        var activateFirst = await _client.PostAsync($"/api/programmes/{programmeOne.ProgrammeId}/activate", content: null);
+        Assert.Equal(HttpStatusCode.NoContent, activateFirst.StatusCode);
+
+        var activateSecond = await _client.PostAsync($"/api/programmes/{programmeTwo.ProgrammeId}/activate", content: null);
+        Assert.Equal(HttpStatusCode.Conflict, activateSecond.StatusCode);
+    }
+
+    private async Task<(CaseDetailVm treatmentCase, ProgrammeVm programme)> CreateDraftProgrammeForDeleteAsync()
+    {
+        var ownerCreate = await _client.PostAsJsonAsync("/api/owners", new SaveOwnerRequest
+        {
+            FirstName = "Delete",
+            LastName = "Owner",
+            Email = $"delete-owner-{Guid.NewGuid():N}@example.test"
+        });
+        Assert.Equal(HttpStatusCode.Created, ownerCreate.StatusCode);
+        var owner = await ownerCreate.Content.ReadFromJsonAsync<OwnerDetailVm>();
+        Assert.NotNull(owner);
+
+        var petCreate = await _client.PostAsJsonAsync("/api/pets", new SavePetRequest
+        {
+            OwnerId = owner.OwnerId,
+            Name = "Delete Buddy",
+            Breed = "Labrador",
+            Sex = "male",
+            IsActive = true
+        });
+        Assert.Equal(HttpStatusCode.Created, petCreate.StatusCode);
+        var pet = await petCreate.Content.ReadFromJsonAsync<PetDetailVm>();
+        Assert.NotNull(pet);
+
+        var caseCreate = await _client.PostAsJsonAsync("/api/cases", new SaveTreatmentCaseRequest
+        {
+            PetId = pet.PetId,
+            CaseTitle = "Delete Case",
+            ClinicalSummary = "Case used for programme delete tests.",
+            StartDate = DateOnly.FromDateTime(DateTime.UtcNow.Date),
+            Status = "active"
+        });
+        Assert.Equal(HttpStatusCode.Created, caseCreate.StatusCode);
+        var treatmentCase = await caseCreate.Content.ReadFromJsonAsync<CaseDetailVm>();
+        Assert.NotNull(treatmentCase);
+
+        var createProgramme = await _client.PostAsync($"/api/cases/{treatmentCase.TreatmentCaseId}/programmes", content: null);
+        Assert.Equal(HttpStatusCode.OK, createProgramme.StatusCode);
+        var programme = await createProgramme.Content.ReadFromJsonAsync<ProgrammeVm>();
+        Assert.NotNull(programme);
+
+        return (treatmentCase, programme);
     }
 
     [Fact]

@@ -1,4 +1,4 @@
-# CR-003 - Azurite-First Local Blob Emulation for Whole Admin Application
+﻿# CR003-I3 - Azurite-First Local Blob Emulation for Whole Admin Application
 
 Date: 2026-06-04
 Status: Draft for review
@@ -39,7 +39,7 @@ Gap:
 
 ## Epic
 
-Epic CR-003-E1: Blob-consistent local platform using Azurite across all admin blob workflows
+Epic CR003-I3-E1: Blob-consistent local platform using Azurite across all admin blob workflows
 
 As a developer/operator,
 I want local runs and tests to use Azurite for every blob-backed feature,
@@ -55,7 +55,7 @@ so that local behavior mirrors production storage semantics and regressions are 
 
 ## Stories (full impact coverage)
 
-### Story CR-003-S1 - Local storage mode contract and configuration
+### Story CR003-I3-S1 - Local storage mode contract and configuration
 As a platform engineer, I want explicit storage mode configuration so local and cloud behavior are deterministic.
 
 Include:
@@ -67,7 +67,7 @@ Acceptance:
 - Development starts in Azurite mode by default;
 - misconfigured mode fails fast with actionable error.
 
-### Story CR-003-S2 - Azurite provisioning in local stack tooling
+### Story CR003-I3-S2 - Azurite provisioning in local stack tooling
 As a developer, I want one command to boot local services plus blob emulator.
 
 Include:
@@ -79,7 +79,7 @@ Acceptance:
 - `run-local-admin-stack.ps1` brings up Azurite + app services in a repeatable way;
 - startup reports container readiness.
 
-### Story CR-003-S3 - API storage registration for Azurite connection model
+### Story CR003-I3-S3 - API storage registration for Azurite connection model
 As a developer, I want API storage DI to support emulator auth semantics.
 
 Include:
@@ -91,7 +91,7 @@ Acceptance:
 - API can read/write/list blobs in Azurite without cloud credentials;
 - production registration remains unchanged.
 
-### Story CR-003-S4 - Align all blob consumers to unified local blob path
+### Story CR003-I3-S4 - Align all blob consumers to unified local blob path
 As a platform owner, I want every blob-using feature to share the same local emulator path.
 
 Include:
@@ -103,7 +103,7 @@ Acceptance:
 - no blob-consuming feature silently falls back to filesystem in default local mode;
 - container naming and key conventions are documented and consistent.
 
-### Story CR-003-S5 - Local security and SAS behavior parity
+### Story CR003-I3-S5 - Local security and SAS behavior parity
 As a developer, I want local link-generation semantics to resemble production behavior.
 
 Include:
@@ -115,7 +115,7 @@ Acceptance:
 - local download links are functional and testable end-to-end;
 - parity differences are explicit and non-breaking.
 
-### Story CR-003-S6 - Tests: emulator-backed integration lane
+### Story CR003-I3-S6 - Tests: emulator-backed integration lane
 As a developer, I want automated tests that exercise blob interactions via Azurite.
 
 Include:
@@ -127,7 +127,7 @@ Acceptance:
 - integration lane validates blob behavior with Azurite;
 - failures clearly isolate storage-mode/config issues.
 
-### Story CR-003-S7 - Developer experience and documentation updates
+### Story CR003-I3-S7 - Developer experience and documentation updates
 As a team member, I want clear local setup and troubleshooting guidance.
 
 Include:
@@ -138,7 +138,7 @@ Include:
 Acceptance:
 - a new team member can run blob-backed local flows from docs alone.
 
-### Story CR-003-S8 - Rollout and fallback governance
+### Story CR003-I3-S8 - Rollout and fallback governance
 As an operator, I want safe rollout with controlled fallback behavior.
 
 Include:
@@ -163,11 +163,11 @@ Acceptance:
 
 ---
 
-## Out of scope for CR-003
+## Out of scope for CR003-I3
 
 - replacing Azure Blob in production architecture;
 - introducing a new non-Azure object store for production;
-- media-domain feature work itself (covered in CR-002);
+- media-domain feature work itself (covered in CR002-I3);
 - deep infra changes to cloud Terraform beyond local emulation needs.
 
 ---
@@ -203,3 +203,4 @@ Definition of done:
 - local developer can run full admin stack and publish/download flow without Azure credentials,
 - all blob interactions are via Azurite by default,
 - existing behavior remains available through explicit fallback only.
+

@@ -1,12 +1,12 @@
-# Hello Buddy — Cloud Admin
+﻿# Hello Buddy â€” Cloud Admin
 
 Containerised canine-physiotherapy admin running on Azure Container Apps: a public UI, an internal API, and an internal PDF service, backed by managed MySQL, Blob Storage, Key Vault, and Application Insights. Data is synthetic.
 
 ## Architecture at a glance
 
-- `ca-hello-buddy-ui` — external ingress, the only public surface.
-- `ca-hello-buddy-api` — internal-only, reached via the UI.
-- `ca-hello-buddy-pdf` — internal-only, renders programme PDFs.
+- `ca-hello-buddy-ui` â€” external ingress, the only public surface.
+- `ca-hello-buddy-api` â€” internal-only, reached via the UI.
+- `ca-hello-buddy-pdf` â€” internal-only, renders programme PDFs.
 - **MySQL Flexible Server** (private), **Blob Storage** (`published-programmes`, SAS download), **Key Vault** (secrets via managed identity), **App Insights** (telemetry).
 
 ## Quick start
@@ -14,10 +14,10 @@ Containerised canine-physiotherapy admin running on Azure Container Apps: a publ
 1.  **Prerequisites:** Azure CLI, Terraform, and an Azure subscription (Docker optional for local-only image workflows).
 2.  **Provision** (in tier order): `terraform apply` for the network tier, then MySQL, then the container platform.
 3.  **Build & push images:** `az acr build` for the `ui`, `api`, and `pdf` images to `acrhellobuddyprod`.
-4.  **Seed & verify:** run the database seed, then warm the UI: `GET https://<ui-fqdn>/healthz` → `{"status":"ok"}`.
-5.  **Use it:** open the UI URL → seeded case → programme builder → preview → publish.
+4.  **Seed & verify:** run the database seed, then warm the UI: `GET https://<ui-fqdn>/healthz` â†’ `{"status":"ok"}`.
+5.  **Use it:** open the UI URL â†’ seeded case â†’ programme builder â†’ preview â†’ publish.
 
-## Local Azurite-first storage (CR-003)
+## Local Azurite-first storage (CR003-I3)
 
 Local development now defaults to Azurite for blob-backed functionality.
 
@@ -30,7 +30,7 @@ Local tooling canonical path: `Infrastructure/local-dev` is the only supported l
 	- `Storage:ConnectionString=UseDevelopmentStorage=true`
 	- `Storage:PublishedProgrammesContainer=published-programmes`
 
-Exercise media governance policy (CR-002 hardening):
+Exercise media governance policy (CR002-I3 hardening):
 
 - `Storage:ExerciseMediaMalwareScanMode`:
 	- `StubAllowAll` (default stub hook, logs scan call)
@@ -155,8 +155,8 @@ Set-Location "C:\Projects\Hello Buddy\Infrastructure\terraform\container-tier"
 
 - **Cold-start lag:** hit `/healthz` twice to warm the UI before a demo.
 - **API returns 401:** requests need the `X-Practitioner-Id` header (the UI injects it; see DEC-010). Calling the API directly without it is rejected by design.
-- **Case load returns 500:** usually an empty database or a bad `ConnectionStrings` secret — reseed, or fix the Key Vault value.
-- **SAS download returns 403:** the link has expired (30-minute TTL by design, DEC-011) — republish the programme to regenerate a fresh link.
+- **Case load returns 500:** usually an empty database or a bad `ConnectionStrings` secret â€” reseed, or fix the Key Vault value.
+- **SAS download returns 403:** the link has expired (30-minute TTL by design, DEC-011) â€” republish the programme to regenerate a fresh link.
 
 ### Container App startup / hanging UI pages
 
@@ -165,14 +165,15 @@ When UI pages hang on every API-dependent screen (owners, pets, cases, exercise 
 1. `az containerapp revision list -g rg-hellobuddy-prod -n ca-hello-buddy-api -o table`
    Instantly tells you which app is unhealthy. `Activating` + `HealthState: None` = startup crash loop. `Healthy` + `Running` = app is fine, look elsewhere.
 2. `az containerapp logs show -g rg-hellobuddy-prod -n ca-hello-buddy-api --revision <revision-name> --tail 100 --type console`
-   Surfaces the actual exception from stdout — typically an unhandled `InvalidOperationException` from `Program.cs` startup validation.
+   Surfaces the actual exception from stdout â€” typically an unhandled `InvalidOperationException` from `Program.cs` startup validation.
 3. `az containerapp revision show -g rg-hellobuddy-prod -n ca-hello-buddy-api --revision <revision-name> --query "properties.template.containers[0].env" -o table`
-   Confirms whether config drift between the repo and the live revision is the cause. If a required env var is missing here, the Terraform definition wasn't applied (or was edited in the wrong file — the live container apps are defined in `container-tier/main.tf`, not in the unused `app-api/` / `app-ui/` / `app-pdf/` submodules).
+   Confirms whether config drift between the repo and the live revision is the cause. If a required env var is missing here, the Terraform definition wasn't applied (or was edited in the wrong file â€” the live container apps are defined in `container-tier/main.tf`, not in the unused `app-api/` / `app-ui/` / `app-pdf/` submodules).
 
 ## Cost estimate
 
-A lean band of roughly **£18–£24/month**, with headroom to the ~£30/month design budget. Container Apps scale to zero / down when idle, so the bill tracks ~40 active demand-hours/week rather than the 168 idle hours an always-on VM would charge for. Scheduling MySQL to office-hours-only in development (DEC-002) cuts data-tier compute by ~60%.
+A lean band of roughly **Â£18â€“Â£24/month**, with headroom to the ~Â£30/month design budget. Container Apps scale to zero / down when idle, so the bill tracks ~40 active demand-hours/week rather than the 168 idle hours an always-on VM would charge for. Scheduling MySQL to office-hours-only in development (DEC-002) cuts data-tier compute by ~60%.
 
 ## Carbon estimate
 
-Directional only, using the Cloud Carbon Footprint methodology and Microsoft’s Emissions Impact Dashboard guidance. The same property that makes the container model cheaper — not paying for idle compute — also lowers its energy draw versus an always-on VM serving the same intermittent demand. Exact emissions depend on the data-centre grid mix and PUE, which are not transparent at tenant level, so this is a directional claim, not an exact kilogram figure.
+Directional only, using the Cloud Carbon Footprint methodology and Microsoftâ€™s Emissions Impact Dashboard guidance. The same property that makes the container model cheaper â€” not paying for idle compute â€” also lowers its energy draw versus an always-on VM serving the same intermittent demand. Exact emissions depend on the data-centre grid mix and PUE, which are not transparent at tenant level, so this is a directional claim, not an exact kilogram figure.
+

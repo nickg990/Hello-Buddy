@@ -1,4 +1,4 @@
-# Increment 3 Error Log
+﻿# Increment 3 Error Log
 
 Last Updated: 2026-06-05
 
@@ -89,7 +89,7 @@ The image used `max-height: 100%`, which resolves against the inline `<a>` wrapp
 - Fix:
 Images are sized with an explicit `width: 224px; height: 224px; object-fit: contain` (the 240px box minus `p-2` padding). `object-fit: contain` scales any source image to fit the box while preserving aspect ratio, downscaling large images and upscaling small ones, with letterboxing as needed. Panels also got `overflow-hidden` as a safety clip. Applied to the current-image panel (Edit) and the selected-image panel (shared by Edit and Add exercise).
 
-- Status: Resolved (CR-005 refinement). Pending commit + UI redeploy to production.
+- Status: Resolved (CR005-I3 refinement). Pending commit + UI redeploy to production.
 
 ### I3-ERR-005 - Selected image preview shows file name beneath the preview box
 
@@ -144,3 +144,4 @@ Switched the pending-image preview to use `URL.createObjectURL(file)` for both t
 
 - I3-ERR-001 may be caused by private blob container access with direct public URL usage instead of SAS/private serving path.
 - I3-ERR-002 and I3-ERR-003 may share the same root cause if UI is suppressing URL/preview when image retrieval fails.
+

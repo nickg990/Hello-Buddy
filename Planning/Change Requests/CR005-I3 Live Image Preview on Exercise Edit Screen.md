@@ -1,4 +1,4 @@
-# CR-005 - Live Image Preview on Exercise Edit Screen
+﻿# CR005-I3 - Live Image Preview on Exercise Edit Screen
 
 Date: 2026-06-04
 Status: In Progress
@@ -7,7 +7,7 @@ Scope: Canine Physio Admin UI (Exercise Library editor)
 
 ## Why this change
 
-After CR-002 delivered exercise image upload, clinicians editing an exercise had no visual confirmation of the file they had just chosen until the form was saved and the page refreshed. This caused confusion about whether the correct file had been selected and made it easy to save the wrong image.
+After CR002-I3 delivered exercise image upload, clinicians editing an exercise had no visual confirmation of the file they had just chosen until the form was saved and the page refreshed. This caused confusion about whether the correct file had been selected and made it easy to save the wrong image.
 
 The change introduces an in-form live preview so the selected file is shown immediately, side by side with the existing stored image where one is present.
 
@@ -30,7 +30,7 @@ In scope:
 Out of scope:
 - No save-time confirmation popup. The user can iterate on the file picker freely and the final selection is what gets uploaded on save.
 - No changes to the API upload endpoint or storage layout.
-- No changes to the Details screen image rendering (already uses the image proxy from CR-002 follow-up).
+- No changes to the Details screen image rendering (already uses the image proxy from CR002-I3 follow-up).
 - No image cropping, rotation, or client-side resizing.
 
 ## Acceptance criteria
@@ -68,4 +68,5 @@ Out of scope:
 ## Status
 
 - 2026-06-04: View and placeholder partial implemented; pending build, smoke-test run, and deployment.
-- 2026-06-04: Refinement applied — panels constrained to a fixed 240x240 size and laid out side by side with a small gap, image itself is the clickable target (separate "View image" link removed). Pending rebuild and redeploy.
+- 2026-06-04: Refinement applied â€” panels constrained to a fixed 240x240 size and laid out side by side with a small gap, image itself is the clickable target (separate "View image" link removed). Pending rebuild and redeploy.
+

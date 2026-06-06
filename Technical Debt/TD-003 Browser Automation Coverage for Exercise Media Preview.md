@@ -1,8 +1,8 @@
-# TD-003 - Browser automation coverage for exercise media preview interactions
+﻿# TD-003 - Browser automation coverage for exercise media preview interactions
 
 Raised: 2026-06-05
 Scope: Canine Physio Admin UI test coverage
-Source: CR-005 live image preview follow-up
+Source: CR005-I3 live image preview follow-up
 Owner: UI quality and test automation workstream
 
 ---

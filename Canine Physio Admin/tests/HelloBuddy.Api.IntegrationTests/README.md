@@ -1,4 +1,4 @@
-# HelloBuddy.Api.IntegrationTests
+﻿# HelloBuddy.Api.IntegrationTests
 
 These tests run against a real MySQL database and exercise Increment 2 API CRUD flows.
 
@@ -34,7 +34,7 @@ If not set, reset uses the test connection details but forces `User=root` and cl
 
 `--arch x86` is currently required on this machine because x64 .NET 9 runtime is missing.
 
-## Azurite lane (CR-003)
+## Azurite lane (CR003-I3)
 
 An emulator-backed blob-storage test lane is available for local parity with Azure Blob workflows.
 

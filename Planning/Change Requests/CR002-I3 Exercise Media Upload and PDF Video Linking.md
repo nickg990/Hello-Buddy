@@ -1,4 +1,4 @@
-# CR-002 - Exercise Media Upload and PDF Click-Through Video
+﻿# CR002-I3 - Exercise Media Upload and PDF Click-Through Video
 
 Date: 2026-06-04
 Status: Draft for review
@@ -46,7 +46,7 @@ Decision for this CR:
 
 ## Epic
 
-Epic CR-002-E1: Practitioner-managed exercise media upload and owner-friendly PDF media interaction
+Epic CR002-I3-E1: Practitioner-managed exercise media upload and owner-friendly PDF media interaction
 
 As a practitioner,
 I want to upload an exercise image and set a video link,
@@ -63,7 +63,7 @@ so that programme outputs show clear images and owners can open the relevant vid
 
 ## Stories (full impact coverage)
 
-### Story CR-002-S1 - Media storage model and config
+### Story CR002-I3-S1 - Media storage model and config
 As a platform engineer, I want dedicated exercise-media blob configuration so uploads are durable and environment-safe.
 
 Include:
@@ -75,7 +75,7 @@ Acceptance:
 - app fails fast with clear error if media storage config is missing;
 - media container is resolved in local/dev/cloud environments.
 
-### Story CR-002-S2 - API contract for image upload and URL assignment
+### Story CR002-I3-S2 - API contract for image upload and URL assignment
 As a developer, I want clear API boundaries for media upload and exercise save so UI and API remain maintainable.
 
 Include:
@@ -87,7 +87,7 @@ Acceptance:
 - invalid file type/size returns validation problem;
 - successful upload returns canonical URL stored on exercise save.
 
-### Story CR-002-S3 - Exercise Library create/edit UX upgrade
+### Story CR002-I3-S3 - Exercise Library create/edit UX upgrade
 As a practitioner, I want to upload image files from local/remote folders and keep a video link so authoring is quick.
 
 Include:
@@ -103,7 +103,7 @@ Acceptance:
 - user can create exercise with uploaded image + video URL in one flow;
 - edit can replace image without breaking other exercise data.
 
-### Story CR-002-S4 - Exercise list/detail/admin navigation updates
+### Story CR002-I3-S4 - Exercise list/detail/admin navigation updates
 As a practitioner, I want list/detail screens to clearly indicate media availability.
 
 Include:
@@ -115,7 +115,7 @@ Acceptance:
 - image and video presence are visible at list/detail level;
 - existing list/search/filter behavior remains intact.
 
-### Story CR-002-S5 - Programme builder media propagation
+### Story CR002-I3-S5 - Programme builder media propagation
 As a practitioner, I want selected exercises in programme builder to carry media metadata to preview/publish.
 
 Include:
@@ -126,7 +126,7 @@ Acceptance:
 - exercises loaded in builder include media fields where present;
 - no regression to prescription editing/order behavior.
 
-### Story CR-002-S6 - PDF template media rendering and click-through behavior
+### Story CR002-I3-S6 - PDF template media rendering and click-through behavior
 As an owner-facing output consumer, I want PDF exercise cards to show image and open video via image/link interaction.
 
 Include:
@@ -139,7 +139,7 @@ Acceptance:
 - generated PDF shows image + clickable interaction where data exists;
 - PDFs without media still render cleanly.
 
-### Story CR-002-S7 - Security, governance, and content handling
+### Story CR002-I3-S7 - Security, governance, and content handling
 As a platform/compliance owner, I want upload controls and retention rules for media.
 
 Include:
@@ -152,7 +152,7 @@ Acceptance:
 - non-image uploads are blocked;
 - replaced images follow defined retention behavior.
 
-### Story CR-002-S8 - Seeder and migration behavior for existing exercises
+### Story CR002-I3-S8 - Seeder and migration behavior for existing exercises
 As a developer, I want predictable behavior for existing seeded/manual exercises.
 
 Include:
@@ -164,7 +164,7 @@ Acceptance:
 - seed remains idempotent;
 - existing non-media exercises remain valid.
 
-### Story CR-002-S9 - Integration tests (in-memory + testcontainer)
+### Story CR002-I3-S9 - Integration tests (in-memory + testcontainer)
 As a developer, I want end-to-end tests for upload, save, render, and immutability.
 
 Include:
@@ -177,7 +177,7 @@ Include:
 Acceptance:
 - all media workflow tests pass locally and in testcontainer lane.
 
-### Story CR-002-S10 - UI smoke and regression suite updates
+### Story CR002-I3-S10 - UI smoke and regression suite updates
 As a developer, I want smoke coverage for new media controls and unchanged core flows.
 
 Include:
@@ -188,7 +188,7 @@ Include:
 Acceptance:
 - no regressions across existing admin areas.
 
-### Story CR-002-S11 - Deployment and runbook updates
+### Story CR002-I3-S11 - Deployment and runbook updates
 As an operator, I want safe deployment instructions for media-capable release.
 
 Include:
@@ -213,7 +213,7 @@ Acceptance:
 
 ---
 
-## Out of scope for CR-002
+## Out of scope for CR002-I3
 
 - video file upload/transcoding pipeline;
 - image editing/cropping tools;
@@ -237,3 +237,4 @@ Mitigations:
 - strict server-side validation;
 - fallback textual links in PDF;
 - integration tests plus Azure re-test.
+
