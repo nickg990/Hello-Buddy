@@ -97,7 +97,7 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
     }
 
     [Fact]
-    public async Task OwnerDataControl_WithLinkedPet_AnonymisesOwner()
+    public async Task OwnerDataControl_WithLinkedPet_AnonymisesAndHidesFromPetAndCaseScreens()
     {
         var ownerCreate = await _client.PostAsJsonAsync("/api/owners", new SaveOwnerRequest
         {
@@ -118,6 +118,20 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
             IsActive = true,
         });
         Assert.Equal(HttpStatusCode.Created, petCreate.StatusCode);
+        var pet = await petCreate.Content.ReadFromJsonAsync<PetDetailVm>();
+        Assert.NotNull(pet);
+
+        var caseCreate = await _client.PostAsJsonAsync("/api/cases", new SaveTreatmentCaseRequest
+        {
+            PetId = pet.PetId,
+            CaseTitle = "Retention Case",
+            ClinicalSummary = "Retained for clinical history.",
+            StartDate = DateOnly.FromDateTime(DateTime.UtcNow.Date),
+            Status = "active"
+        });
+        Assert.Equal(HttpStatusCode.Created, caseCreate.StatusCode);
+        var treatmentCase = await caseCreate.Content.ReadFromJsonAsync<CaseDetailVm>();
+        Assert.NotNull(treatmentCase);
 
         var control = await _client.PostAsync($"/api/owners/{owner.OwnerId}/data-control", content: null);
         Assert.Equal(HttpStatusCode.OK, control.StatusCode);
@@ -125,9 +139,23 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
         Assert.NotNull(payload);
         Assert.Equal("anonymised", payload.Outcome);
         Assert.NotNull(payload.Owner);
+        Assert.True(payload.Owner.IsAnonymised);
         Assert.Equal("Anonymised", payload.Owner.FirstName);
-        Assert.StartsWith("Owner-", payload.Owner.LastName);
+        Assert.StartsWith("Owner-", payload.Owner.LastName, StringComparison.Ordinal);
         Assert.Contains("@redacted.local", payload.Owner.Email, StringComparison.OrdinalIgnoreCase);
+
+        var ownerGet = await _client.GetAsync($"/api/owners/{owner.OwnerId}");
+        Assert.Equal(HttpStatusCode.NotFound, ownerGet.StatusCode);
+
+        var ownerGetIncludingAnonymised = await _client.GetAsync($"/api/owners/{owner.OwnerId}?includeAnonymised=true");
+        Assert.Equal(HttpStatusCode.OK, ownerGetIncludingAnonymised.StatusCode);
+
+        var petGet = await _client.GetAsync($"/api/pets/{pet.PetId}");
+        Assert.Equal(HttpStatusCode.NotFound, petGet.StatusCode);
+
+        var casesList = await _client.GetFromJsonAsync<List<CaseRow>>("/api/cases");
+        Assert.NotNull(casesList);
+        Assert.DoesNotContain(casesList, x => x.TreatmentCaseId == treatmentCase.TreatmentCaseId);
 
         await using (var scope = _factory.Services.CreateAsyncScope())
         {
@@ -139,6 +167,12 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
             Assert.NotNull(audit);
             Assert.Equal((ulong)1, audit.PractitionerId);
             Assert.Contains("anonymised", audit.NewValuesJson ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+
+            var retainedPet = await db.Pets.FirstOrDefaultAsync(x => x.PetId == pet.PetId);
+            Assert.NotNull(retainedPet);
+
+            var retainedCase = await db.Treatmentcases.FirstOrDefaultAsync(x => x.TreatmentCaseId == treatmentCase.TreatmentCaseId);
+            Assert.NotNull(retainedCase);
         }
     }
 

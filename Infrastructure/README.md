@@ -17,6 +17,17 @@ Containerised canine-physiotherapy admin running on Azure Container Apps: a publ
 4.  **Seed & verify:** run the database seed, then warm the UI: `GET https://<ui-fqdn>/healthz` â†’ `{"status":"ok"}`.
 5.  **Use it:** open the UI URL â†’ seeded case â†’ programme builder â†’ preview â†’ publish.
 
+## Increment 7 operational runbooks
+
+Release-ready operational assets are in `Infrastructure/runbooks`:
+
+- `Environment-Configuration-Matrix.md` — required settings and validation checklist.
+- `Release-Runbook.md` — local gate, deploy flow, post-deploy checks, rollback drill.
+- `Backup-Restore-Runbook.md` — local reset and Azure point-in-time restore drill.
+- `Invoke-ReleaseGate.ps1` — orchestrates local release-gate test lanes.
+- `Invoke-ContainerAppRollback.ps1` — component rollback drill helper.
+- `Invoke-MySqlPointInTimeRestore.ps1` — MySQL restore helper for recovery rehearsal.
+
 ## Local Azurite-first storage (CR003-I3)
 
 Local development now defaults to Azurite for blob-backed functionality.

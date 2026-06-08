@@ -283,9 +283,10 @@ public sealed class OwnerRepository : IOwnerRepository
         _db = db;
     }
 
-    public async Task<IReadOnlyList<OwnerListItem>> ListAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<OwnerListItem>> ListAsync(bool includeAnonymised, CancellationToken ct)
     {
         return await _db.Owners
+            .Where(o => includeAnonymised || !(o.FirstName == "Anonymised" && o.Email.EndsWith("@redacted.local")))
             .OrderBy(o => o.LastName)
             .ThenBy(o => o.FirstName)
             .Select(o => new OwnerListItem(
@@ -293,14 +294,16 @@ public sealed class OwnerRepository : IOwnerRepository
                 o.FirstName + " " + o.LastName,
                 o.Email,
                 o.PhoneNumber,
-                o.Pets.Count))
+                o.Pets.Count,
+                o.FirstName == "Anonymised" && o.Email.EndsWith("@redacted.local")))
             .ToListAsync(ct);
     }
 
-    public async Task<OwnerDetailVm?> GetAsync(ulong ownerId, CancellationToken ct)
+    public async Task<OwnerDetailVm?> GetAsync(ulong ownerId, bool includeAnonymised, CancellationToken ct)
     {
         return await _db.Owners
-            .Where(o => o.OwnerId == ownerId)
+            .Where(o => o.OwnerId == ownerId
+                && (includeAnonymised || !(o.FirstName == "Anonymised" && o.Email.EndsWith("@redacted.local"))))
             .Select(o => new OwnerDetailVm(
                 o.OwnerId,
                 o.FirstName,
@@ -320,7 +323,8 @@ public sealed class OwnerRepository : IOwnerRepository
                         p.Sex,
                         p.IsActive ?? true,
                         p.Treatmentcases.Count))
-                    .ToList()))
+                        .ToList(),
+                    o.FirstName == "Anonymised" && o.Email.EndsWith("@redacted.local")))
             .FirstOrDefaultAsync(ct);
     }
 
@@ -454,6 +458,7 @@ public sealed class PetRepository : IPetRepository
     public async Task<IReadOnlyList<PetListItem>> ListAsync(CancellationToken ct)
     {
         return await _db.Pets
+            .Where(p => !(p.Owner.FirstName == "Anonymised" && p.Owner.Email.EndsWith("@redacted.local")))
             .OrderBy(p => p.Name)
             .Select(p => new PetListItem(
                 p.PetId,
@@ -470,7 +475,7 @@ public sealed class PetRepository : IPetRepository
     public async Task<PetDetailVm?> GetAsync(ulong petId, ulong practitionerId, CancellationToken ct)
     {
         return await _db.Pets
-            .Where(p => p.PetId == petId)
+            .Where(p => p.PetId == petId && !(p.Owner.FirstName == "Anonymised" && p.Owner.Email.EndsWith("@redacted.local")))
             .Select(p => new PetDetailVm(
                 p.PetId,
                 p.OwnerId,
@@ -497,12 +502,16 @@ public sealed class PetRepository : IPetRepository
 
     public Task<bool> OwnerExistsAsync(ulong ownerId, CancellationToken ct)
     {
-        return _db.Owners.AnyAsync(o => o.OwnerId == ownerId, ct);
+        return _db.Owners.AnyAsync(
+            o => o.OwnerId == ownerId && !(o.FirstName == "Anonymised" && o.Email.EndsWith("@redacted.local")),
+            ct);
     }
 
     public Task<bool> ExistsAsync(ulong petId, CancellationToken ct)
     {
-        return _db.Pets.AnyAsync(p => p.PetId == petId, ct);
+        return _db.Pets.AnyAsync(
+            p => p.PetId == petId && !(p.Owner.FirstName == "Anonymised" && p.Owner.Email.EndsWith("@redacted.local")),
+            ct);
     }
 
     public async Task<ulong> CreateAsync(SavePetRequest request, ulong practitionerId, CancellationToken ct)
@@ -592,7 +601,8 @@ public sealed class TreatmentCaseRepository : ITreatmentCaseRepository
     public async Task<IReadOnlyList<CaseRow>> ListAsync(ulong practitionerId, CancellationToken ct)
     {
         return await _db.Treatmentcases
-            .Where(tc => tc.PractitionerId == practitionerId)
+            .Where(tc => tc.PractitionerId == practitionerId
+                && !(tc.Pet.Owner.FirstName == "Anonymised" && tc.Pet.Owner.Email.EndsWith("@redacted.local")))
             .OrderByDescending(tc => tc.StartDate)
             .Select(tc => new CaseRow(
                 tc.TreatmentCaseId,
@@ -607,7 +617,9 @@ public sealed class TreatmentCaseRepository : ITreatmentCaseRepository
     public async Task<CaseDetailVm?> GetAsync(ulong treatmentCaseId, ulong practitionerId, CancellationToken ct)
     {
         var tc = await _db.Treatmentcases
-            .Where(x => x.TreatmentCaseId == treatmentCaseId && x.PractitionerId == practitionerId)
+            .Where(x => x.TreatmentCaseId == treatmentCaseId
+                && x.PractitionerId == practitionerId
+                && !(x.Pet.Owner.FirstName == "Anonymised" && x.Pet.Owner.Email.EndsWith("@redacted.local")))
             .Select(x => new
             {
                 x.TreatmentCaseId,
@@ -692,7 +704,10 @@ public sealed class TreatmentCaseRepository : ITreatmentCaseRepository
     public async Task<bool> UpdateAsync(ulong treatmentCaseId, SaveTreatmentCaseRequest request, ulong practitionerId, CancellationToken ct)
     {
         var entity = await _db.Treatmentcases
-            .FirstOrDefaultAsync(tc => tc.TreatmentCaseId == treatmentCaseId && tc.PractitionerId == practitionerId, ct);
+            .FirstOrDefaultAsync(tc => tc.TreatmentCaseId == treatmentCaseId
+                && tc.PractitionerId == practitionerId
+                && !(tc.Pet.Owner.FirstName == "Anonymised" && tc.Pet.Owner.Email.EndsWith("@redacted.local")),
+                ct);
         if (entity is null)
         {
             return false;
@@ -712,7 +727,9 @@ public sealed class TreatmentCaseRepository : ITreatmentCaseRepository
     public async Task<CaseDetailVm.NoteRow?> AddNoteAsync(ulong treatmentCaseId, CreateCaseNoteRequest request, ulong practitionerId, CancellationToken ct)
     {
         var treatmentCaseExists = await _db.Treatmentcases.AnyAsync(
-            tc => tc.TreatmentCaseId == treatmentCaseId && tc.PractitionerId == practitionerId,
+            tc => tc.TreatmentCaseId == treatmentCaseId
+                && tc.PractitionerId == practitionerId
+                && !(tc.Pet.Owner.FirstName == "Anonymised" && tc.Pet.Owner.Email.EndsWith("@redacted.local")),
             ct);
         if (!treatmentCaseExists)
         {

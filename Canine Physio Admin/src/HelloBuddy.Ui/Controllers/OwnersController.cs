@@ -16,16 +16,18 @@ public class OwnersController : Controller
     }
 
     [HttpGet("")]
-    public async Task<IActionResult> Index(CancellationToken ct)
+    public async Task<IActionResult> Index(bool showAnonymised, CancellationToken ct)
     {
-        var owners = await _api.ListOwnersAsync(ct);
+        var owners = await _api.ListOwnersAsync(showAnonymised, ct);
+        ViewBag.ShowAnonymised = showAnonymised;
         return View(owners);
     }
 
     [HttpGet("{id:long}")]
-    public async Task<IActionResult> Details(ulong id, CancellationToken ct)
+    public async Task<IActionResult> Details(ulong id, bool showAnonymised, CancellationToken ct)
     {
-        var owner = await _api.GetOwnerAsync(id, ct);
+        var owner = await _api.GetOwnerAsync(id, showAnonymised, ct);
+        ViewBag.ShowAnonymised = showAnonymised;
         return owner is null ? NotFound() : View(owner);
     }
 
@@ -60,7 +62,7 @@ public class OwnersController : Controller
     [HttpGet("{id:long}/Edit")]
     public async Task<IActionResult> Edit(ulong id, CancellationToken ct)
     {
-        var owner = await _api.GetOwnerAsync(id, ct);
+        var owner = await _api.GetOwnerAsync(id, includeAnonymised: true, ct);
         if (owner is null)
         {
             return NotFound();
@@ -108,24 +110,6 @@ public class OwnersController : Controller
         {
             ApplyApiValidation(ex);
             return View(vm);
-        }
-    }
-
-    [HttpPost("{id:long}/DataControl")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DataControl(ulong id, CancellationToken ct)
-    {
-        var result = await _api.ApplyOwnerDataControlAsync(id, ct);
-        switch (result.Outcome)
-        {
-            case OwnerDataControlClientOutcome.Deleted:
-                TempData["Saved"] = result.Message;
-                return RedirectToAction(nameof(Index));
-            case OwnerDataControlClientOutcome.Anonymised:
-                TempData["Saved"] = result.Message;
-                return RedirectToAction(nameof(Details), new { id });
-            default:
-                return NotFound();
         }
     }
 

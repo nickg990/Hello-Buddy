@@ -172,7 +172,8 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
             null,
             "Leeds",
             "LS1 1AA",
-            [new OwnerDetailVm.PetRow(1, "Buddy", "Labrador", "male", true, 1)]);
+            [new OwnerDetailVm.PetRow(1, "Buddy", "Labrador", "male", true, 1)],
+            false);
 
         private static readonly PetDetailVm Pet = new(
             1,
@@ -226,10 +227,10 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
                 new ExerciseDetailVm.InstructionStepVm(2, "Pause and encourage controlled step down.")
             ]);
 
-        public Task<IReadOnlyList<OwnerListItem>> ListOwnersAsync(CancellationToken ct)
-            => Task.FromResult<IReadOnlyList<OwnerListItem>>([new OwnerListItem(1, Owner.FullName, Owner.Email, Owner.PhoneNumber, 1)]);
+        public Task<IReadOnlyList<OwnerListItem>> ListOwnersAsync(bool includeAnonymised, CancellationToken ct)
+            => Task.FromResult<IReadOnlyList<OwnerListItem>>([new OwnerListItem(1, Owner.FullName, Owner.Email, Owner.PhoneNumber, 1, false)]);
 
-        public Task<OwnerDetailVm?> GetOwnerAsync(ulong id, CancellationToken ct)
+        public Task<OwnerDetailVm?> GetOwnerAsync(ulong id, bool includeAnonymised, CancellationToken ct)
             => Task.FromResult<OwnerDetailVm?>(id == 1 ? Owner : null);
 
         public Task<OwnerDetailVm> CreateOwnerAsync(SaveOwnerRequest request, CancellationToken ct)

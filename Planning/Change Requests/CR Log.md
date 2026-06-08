@@ -1,6 +1,6 @@
 ﻿# Change Request Log
 
-Last Updated: 2026-06-06
+Last Updated: 2026-06-08
 
 ## Purpose
 
@@ -19,6 +19,7 @@ Single place to track Change Request status, progress, and next actions.
 
 | CR | Title | Status | Owner | Date Opened | Date Updated | Progress Summary | Next Action |
 |---|---|---|---|---|---|---|---|
+| CR016-I7 | RTBF Privacy Page and Anonymised Owner Visibility Controls | Implemented | Product / Release 1 planning | 2026-06-08 | 2026-06-08 | Implemented: Privacy page RTBF action retained with confirmation/warning, owner data-control restored to delete-or-anonymise semantics, anonymised owners hidden by default with owner-page show toggle, and anonymised-owner records suppressed from pets/cases screens; API tests updated for both outcomes and visibility rules. | Validate end-to-end in local/Azure flow and close after sign-off. |
 | CR015-I5 | Exercise Video Search Provider Base URL Configuration | Implemented | Product / Release 1 planning | 2026-06-06 | 2026-06-06 | Implemented: exercise editor search provider list is now configuration-bound (description + base URL), rendered in the dropdown, wired through UI app settings and Azure container app Terraform variables, and validated by UI test coverage. | Validate end-to-end in local/Azure flow and close after sign-off. |
 | CR001-I4 | Programme Builder Multi-Select Exercise Add | Proposed | Product / Release 1 planning | 2026-06-06 | 2026-06-06 | Proposed: add multi-select capability to each session's Add exercise control so practitioners can add multiple exercises in one action while preserving per-session duplicate filtering and AM/PM independence; no batch-size cap requested. | Confirm picker UX approach (native multi-select vs enhanced searchable picker), then approve and schedule implementation. |
 | CR014-I4 | Case Detail Programme List: Bottom Status Message, Remove Id Column, Sort by Start Date | Implemented | Product / Release 1 planning | 2026-06-05 | 2026-06-05 | Implemented: programme status/delete messages now render at the bottom of the case detail page with scroll-to-bottom, programme id column removed, and programmes list ordered by start date. | Validate end-to-end in local flow and close after sign-off. |

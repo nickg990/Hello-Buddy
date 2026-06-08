@@ -127,7 +127,7 @@ public class PetsController : Controller
 
     private async Task<IReadOnlyList<SelectListItem>> GetOwnerOptionsAsync(CancellationToken ct)
     {
-        var owners = await _api.ListOwnersAsync(ct);
+        var owners = await _api.ListOwnersAsync(includeAnonymised: false, ct);
         return owners
             .Select(owner => new SelectListItem(owner.FullName, owner.OwnerId.ToString()))
             .ToList();

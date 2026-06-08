@@ -14,3 +14,11 @@ dotnet run --project src/HelloBuddy.Api/HelloBuddy.Api.csproj --launch-profile h
 dotnet test tests/HelloBuddy.Api.InMemoryTests/HelloBuddy.Api.InMemoryTests.csproj
 dotnet test tests/HelloBuddy.Api.IntegrationTests/HelloBuddy.Api.IntegrationTests.csproj
 ```
+
+## Release gate
+
+From workspace root:
+
+```powershell
+./Infrastructure/runbooks/Invoke-ReleaseGate.ps1
+```

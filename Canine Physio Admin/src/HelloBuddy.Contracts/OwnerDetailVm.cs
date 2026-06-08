@@ -10,7 +10,8 @@ public sealed record OwnerDetailVm(
     string? AddressLine2,
     string? Town,
     string? Postcode,
-    IReadOnlyList<OwnerDetailVm.PetRow> Pets)
+    IReadOnlyList<OwnerDetailVm.PetRow> Pets,
+    bool IsAnonymised)
 {
     public string FullName => $"{FirstName} {LastName}".Trim();
 

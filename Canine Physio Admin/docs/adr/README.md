@@ -15,4 +15,12 @@ Use the Nygard style with a numeric prefix:
 - Decision
 - Consequences
 
-Link each new ADR in the solution `DecisionLog.md` in the same change train.
+Link each new ADR in `Planning/Admin Decision Log.md` in the same change train.
+
+## Current ADRs
+
+- `0001-layered-release-regression-gate.md`
+- `0002-component-granular-release-and-rollback.md`
+- `0003-runbook-first-operations-and-config-matrix.md`
+
+Decision log: `Planning/Admin Decision Log.md`

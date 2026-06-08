@@ -21,15 +21,17 @@ public sealed class AdminApiClient : IAdminApiClient
         return rows ?? new List<CaseRow>();
     }
 
-    public async Task<IReadOnlyList<OwnerListItem>> ListOwnersAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<OwnerListItem>> ListOwnersAsync(bool includeAnonymised, CancellationToken ct)
     {
-        var rows = await _http.GetFromJsonAsync<List<OwnerListItem>>("/api/owners", ct);
+        var path = includeAnonymised ? "/api/owners?includeAnonymised=true" : "/api/owners";
+        var rows = await _http.GetFromJsonAsync<List<OwnerListItem>>(path, ct);
         return rows ?? new List<OwnerListItem>();
     }
 
-    public async Task<OwnerDetailVm?> GetOwnerAsync(ulong id, CancellationToken ct)
+    public async Task<OwnerDetailVm?> GetOwnerAsync(ulong id, bool includeAnonymised, CancellationToken ct)
     {
-        var resp = await _http.GetAsync($"/api/owners/{id}", ct);
+        var path = includeAnonymised ? $"/api/owners/{id}?includeAnonymised=true" : $"/api/owners/{id}";
+        var resp = await _http.GetAsync(path, ct);
         if (resp.StatusCode == HttpStatusCode.NotFound) return null;
         await EnsureSuccessOrThrowAsync(resp, ct);
         return await ReadRequiredAsync<OwnerDetailVm>(resp, ct);

@@ -1,9 +1,10 @@
 @model OwnerDetailVm
 @{
     ViewData["Title"] = Model.FullName;
+    var showAnonymised = (bool?)ViewBag.ShowAnonymised ?? false;
 }
 
-<p><a asp-action="Index">&larr; All owners</a></p>
+<p><a asp-action="Index" asp-route-showAnonymised="@showAnonymised">&larr; All owners</a></p>
 
 @if (TempData["Saved"] is string saved)
 {
@@ -18,16 +19,26 @@
     <div>
         <h1>@Model.FullName</h1>
         <p class="text-muted mb-0">Owner #@Model.OwnerId</p>
+        @if (Model.IsAnonymised)
+        {
+            <p class="mb-0"><span class="badge text-bg-secondary">Anonymised</span></p>
+        }
     </div>
     <div class="d-flex gap-2">
-        <a class="btn btn-outline-secondary" asp-action="Edit" asp-route-id="@Model.OwnerId">Edit owner</a>
-        <a class="btn btn-primary" asp-controller="Pets" asp-action="Create" asp-route-ownerId="@Model.OwnerId">Add pet</a>
-        <form asp-action="DataControl" asp-route-id="@Model.OwnerId" method="post" class="d-inline" onsubmit="return confirm('Apply GDPR data control for this owner? Records with linked clinical history will be anonymised.');">
-            @Html.AntiForgeryToken()
-            <button type="submit" class="btn btn-outline-danger">Apply GDPR data control</button>
-        </form>
+        @if (!Model.IsAnonymised)
+        {
+            <a class="btn btn-outline-secondary" asp-action="Edit" asp-route-id="@Model.OwnerId">Edit owner</a>
+            <a class="btn btn-primary" asp-controller="Pets" asp-action="Create" asp-route-ownerId="@Model.OwnerId">Add pet</a>
+        }
     </div>
 </div>
+
+@if (Model.IsAnonymised)
+{
+    <div class="alert alert-warning" role="status">
+        This owner has been anonymised. Related records remain available only on this owner page.
+    </div>
+}
 
 <div class="row g-4 mb-4">
     <div class="col-md-6">
@@ -105,7 +116,10 @@ else
                     <td>@(pet.IsActive ? "Active" : "Inactive")</td>
                     <td>@pet.CaseCount</td>
                     <td class="text-end">
-                        <a class="btn btn-sm btn-outline-primary" asp-controller="Pets" asp-action="Details" asp-route-id="@pet.PetId">Open</a>
+                        @if (!Model.IsAnonymised)
+                        {
+                            <a class="btn btn-sm btn-outline-primary" asp-controller="Pets" asp-action="Details" asp-route-id="@pet.PetId">Open</a>
+                        }
                     </td>
                 </tr>
             }

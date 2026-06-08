@@ -7,11 +7,11 @@ namespace HelloBuddy.Application.Records;
 /// </summary>
 public interface IOwnerRepository
 {
-    /// <summary>Returns a summary list of all owners (used by the owners index page).</summary>
-    Task<IReadOnlyList<OwnerListItem>> ListAsync(CancellationToken ct);
+    /// <summary>Returns a summary list of owners; anonymised owners are excluded unless explicitly requested.</summary>
+    Task<IReadOnlyList<OwnerListItem>> ListAsync(bool includeAnonymised, CancellationToken ct);
 
-    /// <summary>Returns the full detail view-model for a single owner, or <c>null</c> if not found.</summary>
-    Task<OwnerDetailVm?> GetAsync(ulong ownerId, CancellationToken ct);
+    /// <summary>Returns the full detail view-model for a single owner, or <c>null</c> if not found/visible.</summary>
+    Task<OwnerDetailVm?> GetAsync(ulong ownerId, bool includeAnonymised, CancellationToken ct);
 
     /// <summary>Creates a new owner from the supplied request and returns the generated owner id.</summary>
     Task<ulong> CreateAsync(SaveOwnerRequest request, CancellationToken ct);
@@ -23,8 +23,8 @@ public interface IOwnerRepository
     Task<bool> EmailInUseAsync(string email, ulong? excludedOwnerId, CancellationToken ct);
 
     /// <summary>
-    /// Applies GDPR-style owner data control for an owner visible to the supplied practitioner:
-    /// hard-delete when owner has no linked data, otherwise anonymise personal fields while retaining clinical records.
+    /// Applies right-to-be-forgotten data control for an owner visible to the supplied practitioner:
+    /// hard-delete when no linked data exists, otherwise anonymise personal data while retaining linked clinical records.
     /// </summary>
     Task<OwnerDataControlResult> ApplyDataControlAsync(ulong ownerId, ulong practitionerId, CancellationToken ct);
 }

@@ -268,6 +268,20 @@ public sealed class ApiTestcontainerIntegrationTests
             IsActive = true,
         });
         Assert.Equal(HttpStatusCode.Created, petCreate.StatusCode);
+        var pet = await petCreate.Content.ReadFromJsonAsync<PetDetailVm>();
+        Assert.NotNull(pet);
+
+        var caseCreate = await _client.PostAsJsonAsync("/api/cases", new SaveTreatmentCaseRequest
+        {
+            PetId = pet.PetId,
+            CaseTitle = "Audit retention case",
+            ClinicalSummary = "Clinical history retained after anonymisation.",
+            StartDate = DateOnly.FromDateTime(DateTime.UtcNow.Date),
+            Status = "active"
+        });
+        Assert.Equal(HttpStatusCode.Created, caseCreate.StatusCode);
+        var treatmentCase = await caseCreate.Content.ReadFromJsonAsync<CaseDetailVm>();
+        Assert.NotNull(treatmentCase);
 
         var control = await _client.PostAsync($"/api/owners/{owner.OwnerId}/data-control", content: null);
         Assert.Equal(HttpStatusCode.OK, control.StatusCode);
@@ -276,7 +290,19 @@ public sealed class ApiTestcontainerIntegrationTests
         Assert.NotNull(payload);
         Assert.Equal("anonymised", payload.Outcome);
         Assert.NotNull(payload.Owner);
-        Assert.Equal("Anonymised", payload.Owner.FirstName);
+        Assert.True(payload.Owner.IsAnonymised);
+
+        var ownerGet = await _client.GetAsync($"/api/owners/{owner.OwnerId}");
+        Assert.Equal(HttpStatusCode.NotFound, ownerGet.StatusCode);
+
+        var ownerGetIncludingAnonymised = await _client.GetAsync($"/api/owners/{owner.OwnerId}?includeAnonymised=true");
+        Assert.Equal(HttpStatusCode.OK, ownerGetIncludingAnonymised.StatusCode);
+
+        var petGet = await _client.GetAsync($"/api/pets/{pet.PetId}");
+        Assert.Equal(HttpStatusCode.NotFound, petGet.StatusCode);
+
+        var caseGet = await _client.GetAsync($"/api/cases/{treatmentCase.TreatmentCaseId}");
+        Assert.Equal(HttpStatusCode.NotFound, caseGet.StatusCode);
 
         await using var connection = new MySqlConnection(_fixture.ConnectionString);
         await connection.OpenAsync();
@@ -293,6 +319,16 @@ public sealed class ApiTestcontainerIntegrationTests
         var rawAudit = (string?)await auditCmd.ExecuteScalarAsync();
         Assert.False(string.IsNullOrWhiteSpace(rawAudit));
         Assert.Contains("anonymised", rawAudit, StringComparison.OrdinalIgnoreCase);
+
+        await using var retainedPetCmd = new MySqlCommand("SELECT COUNT(*) FROM Pet WHERE PetId = @petId", connection);
+        retainedPetCmd.Parameters.AddWithValue("@petId", pet.PetId);
+        var retainedPetCount = Convert.ToInt32(await retainedPetCmd.ExecuteScalarAsync());
+        Assert.Equal(1, retainedPetCount);
+
+        await using var retainedCaseCmd = new MySqlCommand("SELECT COUNT(*) FROM TreatmentCase WHERE TreatmentCaseId = @caseId", connection);
+        retainedCaseCmd.Parameters.AddWithValue("@caseId", treatmentCase.TreatmentCaseId);
+        var retainedCaseCount = Convert.ToInt32(await retainedCaseCmd.ExecuteScalarAsync());
+        Assert.Equal(1, retainedCaseCount);
     }
 
     [Fact]
