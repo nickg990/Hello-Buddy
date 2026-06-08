@@ -111,6 +111,24 @@ public class OwnersController : Controller
         }
     }
 
+    [HttpPost("{id:long}/DataControl")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DataControl(ulong id, CancellationToken ct)
+    {
+        var result = await _api.ApplyOwnerDataControlAsync(id, ct);
+        switch (result.Outcome)
+        {
+            case OwnerDataControlClientOutcome.Deleted:
+                TempData["Saved"] = result.Message;
+                return RedirectToAction(nameof(Index));
+            case OwnerDataControlClientOutcome.Anonymised:
+                TempData["Saved"] = result.Message;
+                return RedirectToAction(nameof(Details), new { id });
+            default:
+                return NotFound();
+        }
+    }
+
     private void ApplyApiValidation(ApiValidationException ex)
     {
         foreach (var entry in ex.Errors)

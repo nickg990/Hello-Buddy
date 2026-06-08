@@ -68,6 +68,145 @@ public sealed class ProgrammeRepository : IProgrammeRepository
             .AnyAsync(p => p.ProgrammeId == programmeId && p.TreatmentCase.PractitionerId == practitionerId, ct);
     }
 
+    public async Task<bool> IsLockedForEditAsync(ulong programmeId, ulong practitionerId, CancellationToken ct)
+    {
+        var visible = await OwnsAsync(programmeId, practitionerId, ct);
+        if (!visible)
+        {
+            return false;
+        }
+
+        return await _db.Programmeversions
+            .AnyAsync(v => v.ProgrammeId == programmeId, ct);
+    }
+
+    public async Task<ProgrammeVersionHistoryVm?> GetVersionHistoryAsync(ulong programmeId, ulong practitionerId, CancellationToken ct)
+    {
+        var programmeMeta = await _db.Programmes
+            .Where(p => p.ProgrammeId == programmeId && p.TreatmentCase.PractitionerId == practitionerId)
+            .Select(p => new
+            {
+                p.ProgrammeId,
+                p.ProgrammeName,
+                p.TreatmentCaseId,
+            })
+            .FirstOrDefaultAsync(ct);
+
+        if (programmeMeta is null)
+        {
+            return null;
+        }
+
+        var versions = await _db.Programmeversions
+            .Where(v => v.ProgrammeId == programmeId)
+            .OrderByDescending(v => v.VersionNumber)
+            .Select(v => new ProgrammeVersionHistoryVm.VersionRow(
+                v.ProgrammeVersionId,
+                v.VersionNumber,
+                v.VersionStatus,
+                v.ChangeSummary,
+                v.CreatedByPractitionerId,
+                _db.Practitioners
+                    .Where(p => p.PractitionerId == v.CreatedByPractitionerId)
+                    .Select(p => p.FirstName + " " + p.LastName)
+                    .FirstOrDefault() ?? $"Practitioner #{v.CreatedByPractitionerId}",
+                v.CreatedDate,
+                v.PublishedDate,
+                v.SupersededDate,
+                v.RetiredDate))
+            .ToListAsync(ct);
+
+        return new ProgrammeVersionHistoryVm(
+            programmeMeta.ProgrammeId,
+            programmeMeta.ProgrammeName,
+            programmeMeta.TreatmentCaseId,
+            versions);
+    }
+
+    public async Task<ProgrammeVm?> CreateDraftFromPublishedAsync(ulong programmeId, ulong practitionerId, CancellationToken ct)
+    {
+        var source = await _db.Programmes
+            .Include(p => p.Sessions)
+                .ThenInclude(s => s.Sessionexercises)
+            .Include(p => p.Programmeversions)
+            .FirstOrDefaultAsync(p => p.ProgrammeId == programmeId && p.TreatmentCase.PractitionerId == practitionerId, ct);
+
+        if (source is null)
+        {
+            return null;
+        }
+
+        var hasPublishHistory = source.Programmeversions.Any(v =>
+            string.Equals(v.VersionStatus, ProgrammeDomainConstants.VersionStatusPublished, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(v.VersionStatus, ProgrammeDomainConstants.VersionStatusSuperseded, StringComparison.OrdinalIgnoreCase)
+            || v.PublishedDate.HasValue);
+
+        if (!hasPublishHistory)
+        {
+            return null;
+        }
+
+        var clone = new Programme
+        {
+            TreatmentCaseId = source.TreatmentCaseId,
+            ProgrammeName = $"{source.ProgrammeName} revision draft",
+            StartDate = source.StartDate,
+            EndDate = source.EndDate,
+            Status = ProgrammeDomainConstants.StatusPlanned,
+            IsCurrent = true,
+            Notes = source.Notes,
+        };
+
+        foreach (var sourceSession in source.Sessions.OrderBy(s => s.SortOrder))
+        {
+            var clonedSession = new Session
+            {
+                Period = sourceSession.Period,
+                Objective = sourceSession.Objective,
+                Status = ProgrammeDomainConstants.StatusPlanned,
+                SortOrder = sourceSession.SortOrder,
+            };
+
+            foreach (var sourceExercise in sourceSession.Sessionexercises.OrderBy(se => se.SortOrder))
+            {
+                clonedSession.Sessionexercises.Add(new Sessionexercise
+                {
+                    ExerciseId = sourceExercise.ExerciseId,
+                    SortOrder = sourceExercise.SortOrder,
+                    Reps = sourceExercise.Reps,
+                    Sets = sourceExercise.Sets,
+                    HoldSeconds = sourceExercise.HoldSeconds,
+                    Notes = sourceExercise.Notes,
+                });
+            }
+
+            clone.Sessions.Add(clonedSession);
+        }
+
+        _db.Programmes.Add(clone);
+        await _db.SaveChangesAsync(ct);
+
+        var draftVersion = new Programmeversion
+        {
+            ProgrammeId = clone.ProgrammeId,
+            VersionNumber = 1,
+            VersionStatus = ProgrammeDomainConstants.VersionStatusDraft,
+            PayloadJson = "{}",
+            PayloadSchemaVersion = "1.0.0",
+            ChangeSummary = $"Created from published programme {source.ProgrammeId}.",
+            CreatedByPractitionerId = practitionerId,
+            CreatedDate = DateTime.UtcNow,
+        };
+
+        _db.Programmeversions.Add(draftVersion);
+        await _db.SaveChangesAsync(ct);
+
+        clone.CurrentProgrammeVersionId = draftVersion.ProgrammeVersionId;
+        await _db.SaveChangesAsync(ct);
+
+        return await GetVmAsync(clone.ProgrammeId, practitionerId, ct);
+    }
+
     public async Task<DeleteProgrammeResult> DeleteAsync(ulong programmeId, ulong practitionerId, CancellationToken ct)
     {
         var visible = await OwnsAsync(programmeId, practitionerId, ct);
@@ -330,6 +469,7 @@ public sealed class ProgrammeRepository : IProgrammeRepository
 
     public async Task UpdateSessionExercisesAsync(
         ulong programmeId,
+        ulong practitionerId,
         IReadOnlyList<ProgrammeBuilderForm.SessionExerciseEdit> edits,
         CancellationToken ct)
     {
@@ -340,7 +480,9 @@ public sealed class ProgrammeRepository : IProgrammeRepository
 
         var ids = edits.Select(e => e.SessionExerciseId).ToList();
         var editedEntities = await _db.Sessionexercises
-            .Where(se => ids.Contains(se.SessionExerciseId) && se.Session.ProgrammeId == programmeId)
+            .Where(se => ids.Contains(se.SessionExerciseId)
+                         && se.Session.ProgrammeId == programmeId
+                         && se.Session.Programme.TreatmentCase.PractitionerId == practitionerId)
             .ToListAsync(ct);
 
         var touchedSessionIds = editedEntities
@@ -349,7 +491,9 @@ public sealed class ProgrammeRepository : IProgrammeRepository
             .ToList();
 
         var sessionEntities = await _db.Sessionexercises
-            .Where(se => touchedSessionIds.Contains(se.SessionId) && se.Session.ProgrammeId == programmeId)
+            .Where(se => touchedSessionIds.Contains(se.SessionId)
+                         && se.Session.ProgrammeId == programmeId
+                         && se.Session.Programme.TreatmentCase.PractitionerId == practitionerId)
             .ToListAsync(ct);
 
         var editsById = edits.ToDictionary(e => e.SessionExerciseId);
@@ -416,15 +560,23 @@ public sealed class ProgrammeRepository : IProgrammeRepository
 
     public async Task PersistPublishedVersionAsync(ulong programmeId, ulong practitionerId, string payloadJson, CancellationToken ct)
     {
+        IDbContextTransaction? tx = null;
+        if (_db.Database.IsRelational())
+        {
+            tx = await _db.Database.BeginTransactionAsync(ct);
+        }
+
+        try
+        {
         var programme = await _db.Programmes
             .Include(p => p.CurrentProgrammeVersion)
             .FirstOrDefaultAsync(p => p.ProgrammeId == programmeId && p.TreatmentCase.PractitionerId == practitionerId, ct)
             ?? throw new InvalidOperationException("Programme not found for publish version persistence.");
 
         if (programme.CurrentProgrammeVersion is not null
-            && string.Equals(programme.CurrentProgrammeVersion.VersionStatus, "published", StringComparison.OrdinalIgnoreCase))
+            && string.Equals(programme.CurrentProgrammeVersion.VersionStatus, ProgrammeDomainConstants.VersionStatusPublished, StringComparison.OrdinalIgnoreCase))
         {
-            programme.CurrentProgrammeVersion.VersionStatus = "superseded";
+            programme.CurrentProgrammeVersion.VersionStatus = ProgrammeDomainConstants.VersionStatusSuperseded;
             programme.CurrentProgrammeVersion.SupersededDate = DateTime.UtcNow;
         }
 
@@ -438,7 +590,7 @@ public sealed class ProgrammeRepository : IProgrammeRepository
         {
             ProgrammeId = programmeId,
             VersionNumber = nextVersion,
-            VersionStatus = "published",
+            VersionStatus = ProgrammeDomainConstants.VersionStatusPublished,
             PayloadJson = payloadJson,
             PayloadSchemaVersion = "1.0.0",
             CreatedByPractitionerId = practitionerId,
@@ -451,6 +603,19 @@ public sealed class ProgrammeRepository : IProgrammeRepository
 
         programme.CurrentProgrammeVersionId = publishedVersion.ProgrammeVersionId;
         await _db.SaveChangesAsync(ct);
+
+        if (tx is not null)
+        {
+            await tx.CommitAsync(ct);
+        }
+        }
+        finally
+        {
+            if (tx is not null)
+            {
+                await tx.DisposeAsync();
+            }
+        }
     }
 
     public async Task<ProgrammeVm?> GetVmAsync(ulong programmeId, ulong practitionerId, CancellationToken ct)

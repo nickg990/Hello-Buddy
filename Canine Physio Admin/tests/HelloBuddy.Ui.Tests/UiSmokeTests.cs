@@ -238,6 +238,12 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
         public Task<OwnerDetailVm?> UpdateOwnerAsync(ulong id, SaveOwnerRequest request, CancellationToken ct)
             => Task.FromResult<OwnerDetailVm?>(id == 1 ? Owner : null);
 
+        public Task<OwnerDataControlClientResult> ApplyOwnerDataControlAsync(ulong id, CancellationToken ct)
+            => Task.FromResult(new OwnerDataControlClientResult(
+                OwnerDataControlClientOutcome.Anonymised,
+                "Owner personal data was anonymised while linked clinical records were retained.",
+                Owner));
+
         public Task<IReadOnlyList<PetListItem>> ListPetsAsync(CancellationToken ct)
             => Task.FromResult<IReadOnlyList<PetListItem>>([new PetListItem(1, 1, "Buddy", Owner.FullName, "Labrador", "male", true, 1)]);
 
@@ -354,8 +360,68 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
                     [new ProgrammeVm.SessionExerciseRow(1, 1, "Step-ups (low)", "Controlled stepping", "https://example.test/step-up.jpg", "https://example.test/step-up.mp4", 5, 3, 5, 1, "Steady pace")])]
             ));
 
-        public Task<ProgrammeVm?> UpdateProgrammeAsync(ulong id, ProgrammeBuilderForm form, CancellationToken ct)
-            => Task.FromResult<ProgrammeVm?>(null);
+        public Task<ProgrammeVersionHistoryVm?> GetProgrammeVersionHistoryAsync(ulong id, CancellationToken ct)
+            => Task.FromResult<ProgrammeVersionHistoryVm?>(new ProgrammeVersionHistoryVm(
+                1,
+                "Buddy Hind Limb Rehab draft",
+                1,
+                [
+                    new ProgrammeVersionHistoryVm.VersionRow(
+                        1,
+                        1,
+                        "published",
+                        "Initial publication.",
+                        1,
+                        "Amelia Carter",
+                        DateTime.UtcNow.AddDays(-2),
+                        DateTime.UtcNow.AddDays(-2),
+                        null,
+                        null)
+                ]));
+
+        public Task<CreateDraftFromPublishedClientResult> CreateDraftFromPublishedAsync(ulong id, CancellationToken ct)
+            => Task.FromResult(new CreateDraftFromPublishedClientResult(
+                CreateDraftFromPublishedClientOutcome.Created,
+                new ProgrammeVm(
+                    2,
+                    1,
+                    "Buddy Hind Limb Rehab revision draft",
+                    "planned",
+                    new DateOnly(2026, 5, 1),
+                    null,
+                    "Improving hind-limb control.",
+                    "Buddy Hind Limb Rehab",
+                    "Buddy",
+                    "Amelia Carter",
+                    [new ProgrammeVm.SessionRow(
+                        1,
+                        "single",
+                        "Improving hind-limb control.",
+                        "planned",
+                        1,
+                        [new ProgrammeVm.SessionExerciseRow(1, 1, "Step-ups (low)", "Controlled stepping", "https://example.test/step-up.jpg", "https://example.test/step-up.mp4", 5, 3, 5, 1, "Steady pace")])]
+                )));
+
+        public Task<UpdateProgrammeResult> UpdateProgrammeAsync(ulong id, ProgrammeBuilderForm form, CancellationToken ct)
+            => Task.FromResult(new UpdateProgrammeResult(UpdateProgrammeOutcome.Updated, new ProgrammeVm(
+                1,
+                1,
+                "Buddy Hind Limb Rehab draft",
+                "planned",
+                new DateOnly(2026, 5, 1),
+                null,
+                "Improving hind-limb control.",
+                "Buddy Hind Limb Rehab",
+                "Buddy",
+                "Amelia Carter",
+                [new ProgrammeVm.SessionRow(
+                    1,
+                    "single",
+                    "Improving hind-limb control.",
+                    "planned",
+                    1,
+                    [new ProgrammeVm.SessionExerciseRow(1, 1, "Step-ups (low)", "Controlled stepping", "https://example.test/step-up.jpg", "https://example.test/step-up.mp4", 5, 3, 5, 1, "Steady pace")])]
+            )));
 
         public Task<PublishResponse> PublishProgrammeAsync(ulong id, CancellationToken ct)
             => Task.FromResult(new PublishResponse("https://example.test/programme.pdf", "programme-1.pdf", 1234));

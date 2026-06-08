@@ -50,6 +50,29 @@ public sealed class AdminApiClient : IAdminApiClient
         return await ReadRequiredAsync<OwnerDetailVm>(resp, ct);
     }
 
+    public async Task<OwnerDataControlClientResult> ApplyOwnerDataControlAsync(ulong id, CancellationToken ct)
+    {
+        var resp = await _http.PostAsync($"/api/owners/{id}/data-control", content: null, ct);
+        if (resp.StatusCode == HttpStatusCode.NotFound)
+        {
+            return new OwnerDataControlClientResult(OwnerDataControlClientOutcome.NotFound, "Owner was not found.");
+        }
+
+        await EnsureSuccessOrThrowAsync(resp, ct);
+        var payload = await ReadRequiredAsync<OwnerDataControlResponse>(resp, ct);
+        if (payload.Outcome.Equals("deleted", StringComparison.OrdinalIgnoreCase))
+        {
+            return new OwnerDataControlClientResult(OwnerDataControlClientOutcome.Deleted, payload.Message);
+        }
+
+        if (payload.Outcome.Equals("anonymised", StringComparison.OrdinalIgnoreCase))
+        {
+            return new OwnerDataControlClientResult(OwnerDataControlClientOutcome.Anonymised, payload.Message, payload.Owner);
+        }
+
+        return new OwnerDataControlClientResult(OwnerDataControlClientOutcome.NotFound, payload.Message);
+    }
+
     public async Task<IReadOnlyList<PetListItem>> ListPetsAsync(CancellationToken ct)
     {
         var rows = await _http.GetFromJsonAsync<List<PetListItem>>("/api/pets", ct);
@@ -228,6 +251,14 @@ public sealed class AdminApiClient : IAdminApiClient
             return new UpdateProgrammeStructureResult(UpdateProgrammeStructureOutcome.Invalid, message);
         }
 
+        if (resp.StatusCode == HttpStatusCode.Conflict)
+        {
+            var message = await resp.Content.ReadAsStringAsync(ct);
+            return new UpdateProgrammeStructureResult(
+                UpdateProgrammeStructureOutcome.Blocked,
+                string.IsNullOrWhiteSpace(message) ? "Published programmes are immutable." : message);
+        }
+
         await EnsureSuccessOrThrowAsync(resp, ct);
         return new UpdateProgrammeStructureResult(UpdateProgrammeStructureOutcome.Updated);
     }
@@ -247,6 +278,11 @@ public sealed class AdminApiClient : IAdminApiClient
         if (resp.StatusCode == HttpStatusCode.Conflict)
         {
             var message = await resp.Content.ReadAsStringAsync(ct);
+            if (message.Contains("immutable", StringComparison.OrdinalIgnoreCase))
+            {
+                return new AddSessionExerciseClientResult(AddSessionExerciseClientOutcome.Blocked, message);
+            }
+
             return new AddSessionExerciseClientResult(AddSessionExerciseClientOutcome.Duplicate, message);
         }
 
@@ -270,6 +306,14 @@ public sealed class AdminApiClient : IAdminApiClient
         if (resp.StatusCode == HttpStatusCode.NotFound)
         {
             return new RemoveSessionExerciseClientResult(RemoveSessionExerciseClientOutcome.NotFound, "Session exercise not found.");
+        }
+
+        if (resp.StatusCode == HttpStatusCode.Conflict)
+        {
+            var message = await resp.Content.ReadAsStringAsync(ct);
+            return new RemoveSessionExerciseClientResult(
+                RemoveSessionExerciseClientOutcome.Blocked,
+                string.IsNullOrWhiteSpace(message) ? "Published programmes are immutable." : message);
         }
 
         await EnsureSuccessOrThrowAsync(resp, ct);
@@ -315,12 +359,60 @@ public sealed class AdminApiClient : IAdminApiClient
         return await ReadRequiredAsync<ProgrammeVm>(resp, ct);
     }
 
-    public async Task<ProgrammeVm?> UpdateProgrammeAsync(ulong id, ProgrammeBuilderForm form, CancellationToken ct)
+    public async Task<ProgrammeVersionHistoryVm?> GetProgrammeVersionHistoryAsync(ulong id, CancellationToken ct)
+    {
+        var resp = await _http.GetAsync($"/api/programmes/{id}/versions", ct);
+        if (resp.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        await EnsureSuccessOrThrowAsync(resp, ct);
+        return await ReadRequiredAsync<ProgrammeVersionHistoryVm>(resp, ct);
+    }
+
+    public async Task<CreateDraftFromPublishedClientResult> CreateDraftFromPublishedAsync(ulong id, CancellationToken ct)
+    {
+        var resp = await _http.PostAsync($"/api/programmes/{id}/draft-from-published", content: null, ct);
+        if (resp.StatusCode == HttpStatusCode.NotFound)
+        {
+            return new CreateDraftFromPublishedClientResult(CreateDraftFromPublishedClientOutcome.NotFound, Message: "Programme was not found.");
+        }
+
+        if (resp.StatusCode == HttpStatusCode.Conflict)
+        {
+            var message = await resp.Content.ReadAsStringAsync(ct);
+            return new CreateDraftFromPublishedClientResult(
+                CreateDraftFromPublishedClientOutcome.Invalid,
+                Message: string.IsNullOrWhiteSpace(message)
+                    ? "No published version is available to branch from."
+                    : message);
+        }
+
+        await EnsureSuccessOrThrowAsync(resp, ct);
+        var programme = await ReadRequiredAsync<ProgrammeVm>(resp, ct);
+        return new CreateDraftFromPublishedClientResult(CreateDraftFromPublishedClientOutcome.Created, programme);
+    }
+
+    public async Task<UpdateProgrammeResult> UpdateProgrammeAsync(ulong id, ProgrammeBuilderForm form, CancellationToken ct)
     {
         var resp = await _http.PutAsJsonAsync($"/api/programmes/{id}", form, ct);
-        if (resp.StatusCode == HttpStatusCode.NotFound) return null;
+        if (resp.StatusCode == HttpStatusCode.NotFound)
+        {
+            return new UpdateProgrammeResult(UpdateProgrammeOutcome.NotFound);
+        }
+
+        if (resp.StatusCode == HttpStatusCode.Conflict)
+        {
+            var message = await resp.Content.ReadAsStringAsync(ct);
+            return new UpdateProgrammeResult(
+                UpdateProgrammeOutcome.Blocked,
+                Message: string.IsNullOrWhiteSpace(message) ? "Published programmes are immutable." : message);
+        }
+
         await EnsureSuccessOrThrowAsync(resp, ct);
-        return await ReadRequiredAsync<ProgrammeVm>(resp, ct);
+        var programme = await ReadRequiredAsync<ProgrammeVm>(resp, ct);
+        return new UpdateProgrammeResult(UpdateProgrammeOutcome.Updated, programme);
     }
 
     public async Task<PublishResponse> PublishProgrammeAsync(ulong id, CancellationToken ct)

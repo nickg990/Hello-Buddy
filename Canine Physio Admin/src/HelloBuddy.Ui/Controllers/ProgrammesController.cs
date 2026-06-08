@@ -44,11 +44,30 @@ public class ProgrammesController : Controller
     public async Task<IActionResult> Builder(ulong id, ProgrammeBuilderForm form, CancellationToken ct)
     {
         if (form.ProgrammeId != id) return BadRequest();
-        var updated = await _api.UpdateProgrammeAsync(id, form, ct);
-        if (updated is null) return NotFound();
+        var updateResult = await _api.UpdateProgrammeAsync(id, form, ct);
+        if (updateResult.Outcome == UpdateProgrammeOutcome.NotFound)
+        {
+            return NotFound();
+        }
+
+        if (updateResult.Outcome == UpdateProgrammeOutcome.Blocked)
+        {
+            var blockedMessage = string.IsNullOrWhiteSpace(updateResult.Message)
+                ? "Published programmes are immutable. Create a new draft to make changes."
+                : updateResult.Message;
+
+            if (IsAjaxRequest())
+            {
+                return Json(BuilderAjaxResponse.Failure(blockedMessage));
+            }
+
+            TempData["Error"] = blockedMessage;
+            return RedirectToAction(nameof(Builder), new { id });
+        }
+
         if (IsAjaxRequest())
         {
-            return Json(new { ok = true, message = $"Saved {form.Exercises.Count} exercise edits." });
+            return Json(BuilderAjaxResponse.Success($"Saved {form.Exercises.Count} exercise edits."));
         }
 
         TempData["Saved"] = $"Saved {form.Exercises.Count} exercise edits.";
@@ -67,7 +86,7 @@ public class ProgrammesController : Controller
             case UpdateProgrammeStructureOutcome.Updated:
                 if (IsAjaxRequest())
                 {
-                    return Json(new { ok = true, message = "Programme dates/session structure saved." });
+                    return Json(BuilderAjaxResponse.Success("Programme dates/session structure saved."));
                 }
 
                 TempData["Saved"] = "Programme dates/session structure saved.";
@@ -75,17 +94,27 @@ public class ProgrammesController : Controller
             case UpdateProgrammeStructureOutcome.Invalid:
                 if (IsAjaxRequest())
                 {
-                    return Json(new
-                    {
-                        ok = false,
-                        error = string.IsNullOrWhiteSpace(result.Message)
+                    return Json(BuilderAjaxResponse.Failure(
+                        string.IsNullOrWhiteSpace(result.Message)
                             ? "Session structure is invalid."
-                            : result.Message,
-                    });
+                            : result.Message));
                 }
 
                 TempData["Error"] = string.IsNullOrWhiteSpace(result.Message)
                     ? "Session structure is invalid."
+                    : result.Message;
+                break;
+            case UpdateProgrammeStructureOutcome.Blocked:
+                if (IsAjaxRequest())
+                {
+                    return Json(BuilderAjaxResponse.Failure(
+                        string.IsNullOrWhiteSpace(result.Message)
+                            ? "Published programmes are immutable. Create a new draft to make changes."
+                            : result.Message));
+                }
+
+                TempData["Error"] = string.IsNullOrWhiteSpace(result.Message)
+                    ? "Published programmes are immutable. Create a new draft to make changes."
                     : result.Message;
                 break;
             default:
@@ -105,7 +134,7 @@ public class ProgrammesController : Controller
             case AddSessionExerciseClientOutcome.Added:
                 if (IsAjaxRequest())
                 {
-                    return Json(new { ok = true, message = "Exercise added to session." });
+                    return Json(BuilderAjaxResponse.Success("Exercise added to session."));
                 }
 
                 TempData["Saved"] = "Exercise added to session.";
@@ -113,23 +142,33 @@ public class ProgrammesController : Controller
             case AddSessionExerciseClientOutcome.Duplicate:
                 if (IsAjaxRequest())
                 {
-                    return Json(new
-                    {
-                        ok = false,
-                        error = string.IsNullOrWhiteSpace(result.Message)
+                    return Json(BuilderAjaxResponse.Failure(
+                        string.IsNullOrWhiteSpace(result.Message)
                             ? "Exercise is already in this session."
-                            : result.Message,
-                    });
+                            : result.Message));
                 }
 
                 TempData["Error"] = string.IsNullOrWhiteSpace(result.Message)
                     ? "Exercise is already in this session."
                     : result.Message;
                 break;
+            case AddSessionExerciseClientOutcome.Blocked:
+                if (IsAjaxRequest())
+                {
+                    return Json(BuilderAjaxResponse.Failure(
+                        string.IsNullOrWhiteSpace(result.Message)
+                            ? "Published programmes are immutable. Create a new draft to make changes."
+                            : result.Message));
+                }
+
+                TempData["Error"] = string.IsNullOrWhiteSpace(result.Message)
+                    ? "Published programmes are immutable. Create a new draft to make changes."
+                    : result.Message;
+                break;
             default:
                 if (IsAjaxRequest())
                 {
-                    return Json(new { ok = false, error = "Unable to add exercise to this session." });
+                    return Json(BuilderAjaxResponse.Failure("Unable to add exercise to this session."));
                 }
 
                 TempData["Error"] = "Unable to add exercise to this session.";
@@ -145,16 +184,9 @@ public class ProgrammesController : Controller
         var result = await _api.RemoveSessionExerciseAsync(id, sessionId, sessionExerciseId, ct);
         if (IsAjaxRequest())
         {
-            return Json(new
-            {
-                ok = result.Outcome == RemoveSessionExerciseClientOutcome.Removed,
-                message = result.Outcome == RemoveSessionExerciseClientOutcome.Removed
-                    ? "Exercise removed from draft programme."
-                    : null,
-                error = result.Outcome == RemoveSessionExerciseClientOutcome.Removed
-                    ? null
-                    : (result.Message ?? "Exercise could not be removed."),
-            });
+            return Json(result.Outcome == RemoveSessionExerciseClientOutcome.Removed
+                ? BuilderAjaxResponse.Success("Exercise removed from draft programme.")
+                : BuilderAjaxResponse.Failure(result.Message ?? "Exercise could not be removed."));
         }
 
         TempData[result.Outcome == RemoveSessionExerciseClientOutcome.Removed ? "Saved" : "Error"] =
@@ -169,6 +201,31 @@ public class ProgrammesController : Controller
     {
         var vm = await _api.GetProgrammeAsync(id, ct);
         return vm is null ? NotFound() : View("Preview", vm);
+    }
+
+    [HttpGet("History")]
+    public async Task<IActionResult> History(ulong id, CancellationToken ct)
+    {
+        var history = await _api.GetProgrammeVersionHistoryAsync(id, ct);
+        return history is null ? NotFound() : View(history);
+    }
+
+    [HttpPost("CreateDraftFromPublished")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateDraftFromPublished(ulong id, CancellationToken ct)
+    {
+        var result = await _api.CreateDraftFromPublishedAsync(id, ct);
+        switch (result.Outcome)
+        {
+            case CreateDraftFromPublishedClientOutcome.Created:
+                TempData["Saved"] = "Created a new editable draft from published history.";
+                return RedirectToAction(nameof(Builder), new { id = result.Programme!.ProgrammeId });
+            case CreateDraftFromPublishedClientOutcome.Invalid:
+                TempData["Error"] = result.Message ?? "No published history is available for draft creation.";
+                return RedirectToAction(nameof(Builder), new { id });
+            default:
+                return NotFound();
+        }
     }
 
     [HttpPost("Publish")]

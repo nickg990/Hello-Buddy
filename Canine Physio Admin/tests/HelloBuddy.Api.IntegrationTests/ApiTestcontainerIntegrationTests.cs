@@ -205,6 +205,207 @@ public sealed class ApiTestcontainerIntegrationTests
         Assert.Equal(payloadBeforeEdit, payloadAfterEdit);
     }
 
+    [Fact]
+    public async Task OwnerDataControl_NoLinkedData_DeletesOwnerAndWritesAudit()
+    {
+        var create = await _client.PostAsJsonAsync("/api/owners", new SaveOwnerRequest
+        {
+            FirstName = "Audit",
+            LastName = "Delete",
+            Email = $"audit-delete-{Guid.NewGuid():N}@example.test"
+        });
+        Assert.Equal(HttpStatusCode.Created, create.StatusCode);
+
+        var owner = await create.Content.ReadFromJsonAsync<OwnerDetailVm>();
+        Assert.NotNull(owner);
+
+        var control = await _client.PostAsync($"/api/owners/{owner.OwnerId}/data-control", content: null);
+        Assert.Equal(HttpStatusCode.OK, control.StatusCode);
+
+        var payload = await control.Content.ReadFromJsonAsync<OwnerDataControlResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal("deleted", payload.Outcome);
+
+        var get = await _client.GetAsync($"/api/owners/{owner.OwnerId}");
+        Assert.Equal(HttpStatusCode.NotFound, get.StatusCode);
+
+        await using var connection = new MySqlConnection(_fixture.ConnectionString);
+        await connection.OpenAsync();
+        await using var auditCmd = new MySqlCommand(@"
+            SELECT NewValuesJson
+            FROM AuditLog
+            WHERE PractitionerId = 1
+              AND EntityName = 'owner'
+              AND EntityId = @ownerId
+              AND ActionType = 'gdpr-data-control'
+            ORDER BY ActionDateTime DESC
+            LIMIT 1", connection);
+        auditCmd.Parameters.AddWithValue("@ownerId", owner.OwnerId);
+        var rawAudit = (string?)await auditCmd.ExecuteScalarAsync();
+        Assert.False(string.IsNullOrWhiteSpace(rawAudit));
+        Assert.Contains("deleted", rawAudit, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task OwnerDataControl_WithLinkedPet_AnonymisesAndWritesAudit()
+    {
+        var ownerCreate = await _client.PostAsJsonAsync("/api/owners", new SaveOwnerRequest
+        {
+            FirstName = "Audit",
+            LastName = "Anon",
+            Email = $"audit-anon-{Guid.NewGuid():N}@example.test"
+        });
+        Assert.Equal(HttpStatusCode.Created, ownerCreate.StatusCode);
+        var owner = await ownerCreate.Content.ReadFromJsonAsync<OwnerDetailVm>();
+        Assert.NotNull(owner);
+
+        var petCreate = await _client.PostAsJsonAsync("/api/pets", new SavePetRequest
+        {
+            OwnerId = owner.OwnerId,
+            Name = "Audit Buddy",
+            Breed = "Labrador",
+            Sex = "male",
+            IsActive = true,
+        });
+        Assert.Equal(HttpStatusCode.Created, petCreate.StatusCode);
+
+        var control = await _client.PostAsync($"/api/owners/{owner.OwnerId}/data-control", content: null);
+        Assert.Equal(HttpStatusCode.OK, control.StatusCode);
+
+        var payload = await control.Content.ReadFromJsonAsync<OwnerDataControlResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal("anonymised", payload.Outcome);
+        Assert.NotNull(payload.Owner);
+        Assert.Equal("Anonymised", payload.Owner.FirstName);
+
+        await using var connection = new MySqlConnection(_fixture.ConnectionString);
+        await connection.OpenAsync();
+        await using var auditCmd = new MySqlCommand(@"
+            SELECT NewValuesJson
+            FROM AuditLog
+            WHERE PractitionerId = 1
+              AND EntityName = 'owner'
+              AND EntityId = @ownerId
+              AND ActionType = 'gdpr-data-control'
+            ORDER BY ActionDateTime DESC
+            LIMIT 1", connection);
+        auditCmd.Parameters.AddWithValue("@ownerId", owner.OwnerId);
+        var rawAudit = (string?)await auditCmd.ExecuteScalarAsync();
+        Assert.False(string.IsNullOrWhiteSpace(rawAudit));
+        Assert.Contains("anonymised", rawAudit, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task OwnerDataControl_WhenPractitionerNotLinked_ReturnsNotFound()
+    {
+        var ownerCreate = await _client.PostAsJsonAsync("/api/owners", new SaveOwnerRequest
+        {
+            FirstName = "Scoped",
+            LastName = "Owner",
+            Email = $"scoped-owner-{Guid.NewGuid():N}@example.test"
+        });
+        Assert.Equal(HttpStatusCode.Created, ownerCreate.StatusCode);
+        var owner = await ownerCreate.Content.ReadFromJsonAsync<OwnerDetailVm>();
+        Assert.NotNull(owner);
+
+        var petCreate = await _client.PostAsJsonAsync("/api/pets", new SavePetRequest
+        {
+            OwnerId = owner.OwnerId,
+            Name = "Scoped Buddy",
+            Breed = "Spaniel",
+            Sex = "male",
+            IsActive = true,
+        });
+        Assert.Equal(HttpStatusCode.Created, petCreate.StatusCode);
+
+        using var otherClient = _factory.CreateClient();
+        otherClient.DefaultRequestHeaders.Add("X-Practitioner-Id", "2");
+
+        var control = await otherClient.PostAsync($"/api/owners/{owner.OwnerId}/data-control", content: null);
+        Assert.Equal(HttpStatusCode.NotFound, control.StatusCode);
+    }
+
+    [Fact]
+    public async Task ProgrammeBuilderUpdate_WhenPractitionerDoesNotOwnProgramme_ReturnsNotFound()
+    {
+        var ownerCreate = await _client.PostAsJsonAsync("/api/owners", new SaveOwnerRequest
+        {
+            FirstName = "Scoped",
+            LastName = "Programme",
+            Email = $"scoped-programme-{Guid.NewGuid():N}@example.test"
+        });
+        Assert.Equal(HttpStatusCode.Created, ownerCreate.StatusCode);
+        var owner = await ownerCreate.Content.ReadFromJsonAsync<OwnerDetailVm>();
+        Assert.NotNull(owner);
+
+        var petCreate = await _client.PostAsJsonAsync("/api/pets", new SavePetRequest
+        {
+            OwnerId = owner.OwnerId,
+            Name = "Scoped Programme Buddy",
+            Breed = "Collie",
+            Sex = "male",
+            IsActive = true
+        });
+        Assert.Equal(HttpStatusCode.Created, petCreate.StatusCode);
+        var pet = await petCreate.Content.ReadFromJsonAsync<PetDetailVm>();
+        Assert.NotNull(pet);
+
+        var caseCreate = await _client.PostAsJsonAsync("/api/cases", new SaveTreatmentCaseRequest
+        {
+            PetId = pet.PetId,
+            CaseTitle = "Scoped Programme Case",
+            ClinicalSummary = "ownership test",
+            StartDate = DateOnly.FromDateTime(DateTime.UtcNow.Date),
+            Status = "active"
+        });
+        Assert.Equal(HttpStatusCode.Created, caseCreate.StatusCode);
+        var treatmentCase = await caseCreate.Content.ReadFromJsonAsync<CaseDetailVm>();
+        Assert.NotNull(treatmentCase);
+
+        var draftCreate = await _client.PostAsync($"/api/cases/{treatmentCase.TreatmentCaseId}/programmes", content: null);
+        Assert.Equal(HttpStatusCode.OK, draftCreate.StatusCode);
+        var programme = await draftCreate.Content.ReadFromJsonAsync<ProgrammeVm>();
+        Assert.NotNull(programme);
+
+        var session = Assert.Single(programme.Sessions);
+        var exercises = await _client.GetFromJsonAsync<List<ExerciseListItem>>("/api/exercises?activeOnly=true");
+        Assert.NotNull(exercises);
+        Assert.NotEmpty(exercises);
+
+        var add = await _client.PostAsJsonAsync(
+            $"/api/programmes/{programme.ProgrammeId}/sessions/{session.SessionId}/exercises",
+            new AddSessionExerciseRequest { ExerciseId = exercises[0].ExerciseId });
+        Assert.Equal(HttpStatusCode.NoContent, add.StatusCode);
+
+        var refreshed = await _client.GetFromJsonAsync<ProgrammeVm>($"/api/programmes/{programme.ProgrammeId}");
+        Assert.NotNull(refreshed);
+        var editRow = Assert.Single(Assert.Single(refreshed.Sessions).Exercises);
+
+        using var otherClient = _factory.CreateClient();
+        otherClient.DefaultRequestHeaders.Add("X-Practitioner-Id", "2");
+
+        var update = await otherClient.PutAsJsonAsync(
+            $"/api/programmes/{programme.ProgrammeId}",
+            new ProgrammeBuilderForm
+            {
+                ProgrammeId = programme.ProgrammeId,
+                Exercises =
+                [
+                    new ProgrammeBuilderForm.SessionExerciseEdit
+                    {
+                        SessionExerciseId = editRow.SessionExerciseId,
+                        Reps = 99,
+                        Sets = editRow.Sets,
+                        HoldSeconds = editRow.HoldSeconds,
+                        SortOrder = editRow.SortOrder,
+                        Notes = editRow.Notes,
+                    }
+                ]
+            });
+
+        Assert.Equal(HttpStatusCode.NotFound, update.StatusCode);
+    }
+
     private sealed class TestcontainerFactory : WebApplicationFactory<Program>
     {
         private readonly string _connectionString;

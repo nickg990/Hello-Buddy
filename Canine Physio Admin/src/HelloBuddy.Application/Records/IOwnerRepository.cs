@@ -21,4 +21,10 @@ public interface IOwnerRepository
 
     /// <summary>Checks whether <paramref name="email"/> is already used by an owner other than <paramref name="excludedOwnerId"/>.</summary>
     Task<bool> EmailInUseAsync(string email, ulong? excludedOwnerId, CancellationToken ct);
+
+    /// <summary>
+    /// Applies GDPR-style owner data control for an owner visible to the supplied practitioner:
+    /// hard-delete when owner has no linked data, otherwise anonymise personal fields while retaining clinical records.
+    /// </summary>
+    Task<OwnerDataControlResult> ApplyDataControlAsync(ulong ownerId, ulong practitionerId, CancellationToken ct);
 }

@@ -189,6 +189,8 @@ else
                                    asp-route-id="@p.ProgrammeId">Builder</a>
                                 <a class="btn btn-sm btn-outline-secondary" asp-controller="Programmes" asp-action="Preview"
                                    asp-route-id="@p.ProgrammeId" target="_blank">Preview</a>
+                                          <a class="btn btn-sm btn-outline-secondary" asp-controller="Programmes" asp-action="History"
+                                              asp-route-id="@p.ProgrammeId">History</a>
                                 <form asp-action="DeleteProgramme"
                                       asp-route-id="@Model.Case.TreatmentCaseId"
                                       asp-route-programmeId="@p.ProgrammeId"

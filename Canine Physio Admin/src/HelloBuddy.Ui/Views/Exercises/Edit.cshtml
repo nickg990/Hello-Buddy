@@ -2,7 +2,10 @@
 @{
     var isCreate = !Model.ExerciseId.HasValue;
     ViewData["Title"] = isCreate ? "Add exercise" : "Edit exercise";
-    var currentVideoUrl = Model.Form.VideoUrl ?? string.Empty;
+    var currentVideoUrlRaw = Model.Form.VideoUrl?.Trim() ?? string.Empty;
+    var hasValidCurrentVideoUrl = Uri.TryCreate(currentVideoUrlRaw, UriKind.Absolute, out var parsedCurrentVideoUrl)
+        && (parsedCurrentVideoUrl.Scheme == Uri.UriSchemeHttp || parsedCurrentVideoUrl.Scheme == Uri.UriSchemeHttps);
+    var currentVideoUrl = hasValidCurrentVideoUrl ? parsedCurrentVideoUrl!.ToString() : string.Empty;
 }
 
 <p><a asp-action="Index">&larr; Exercise library</a></p>

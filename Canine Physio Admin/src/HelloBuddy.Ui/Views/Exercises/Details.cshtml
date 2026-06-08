@@ -1,6 +1,11 @@
 @model ExerciseDetailVm
 @{
     ViewData["Title"] = Model.Title;
+
+    var videoUrl = Model.VideoUrl?.Trim();
+    var hasValidVideoUrl = Uri.TryCreate(videoUrl, UriKind.Absolute, out var parsedVideoUrl)
+        && (parsedVideoUrl.Scheme == Uri.UriSchemeHttp || parsedVideoUrl.Scheme == Uri.UriSchemeHttps);
+    var safeVideoUrl = hasValidVideoUrl ? parsedVideoUrl!.ToString() : string.Empty;
 }
 
 <p><a asp-action="Index">&larr; Exercise library</a></p>
@@ -72,9 +77,9 @@
                     <div>
                         <label class="form-label">Video</label>
                         <div class="exercise-media-panel exercise-media-panel--tile border rounded p-2 d-flex align-items-center justify-content-center bg-light overflow-hidden">
-                            @if (!string.IsNullOrWhiteSpace(Model.VideoUrl))
+                            @if (!string.IsNullOrWhiteSpace(safeVideoUrl))
                             {
-                                <a id="details-video-link" href="@Model.VideoUrl" target="_blank" rel="noopener noreferrer" title="Open video in new tab" class="d-inline-flex flex-column align-items-center text-decoration-none">
+                                <a id="details-video-link" href="@safeVideoUrl" target="_blank" rel="noopener noreferrer" title="Open video in new tab" class="d-inline-flex flex-column align-items-center text-decoration-none">
                                     <img id="details-video-thumb" src="#" alt="Video preview" class="exercise-media-item exercise-media-item--cover d-none" />
                                     <video id="details-video-player" class="exercise-media-item exercise-media-item--cover exercise-media-video d-none" muted playsinline preload="metadata"></video>
                                     <div id="details-video-fallback" class="text-center text-muted">

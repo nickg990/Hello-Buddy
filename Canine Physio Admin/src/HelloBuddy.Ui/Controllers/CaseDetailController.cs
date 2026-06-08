@@ -1,5 +1,6 @@
 using HelloBuddy.Ui.Services;
 using HelloBuddy.Ui.Models;
+using HelloBuddy.Contracts;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HelloBuddy.Ui.Controllers;
@@ -40,7 +41,14 @@ public class CaseDetailController : Controller
             }
 
             TempData["Saved"] = "Case note added.";
-            return RedirectToAction(nameof(Index), new { id });
+            var refreshed = await _api.GetCaseAsync(id, ct);
+            return refreshed is null
+                ? NotFound()
+                : View("Index", new CaseDetailPageVm
+                {
+                    Case = refreshed,
+                    NewNote = new CreateCaseNoteRequest(),
+                });
         }
         catch (ApiValidationException ex)
         {

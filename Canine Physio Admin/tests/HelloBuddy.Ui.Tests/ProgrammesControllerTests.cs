@@ -18,7 +18,7 @@ public sealed class ProgrammesControllerTests
     {
         var api = Substitute.For<IAdminApiClient>();
         api.UpdateProgrammeAsync(1, Arg.Any<ProgrammeBuilderForm>(), Arg.Any<CancellationToken>())
-            .Returns(CreateProgrammeVm());
+            .Returns(new UpdateProgrammeResult(UpdateProgrammeOutcome.Updated, CreateProgrammeVm()));
 
         var sut = CreateSut(api, ajaxRequest: true);
         var form = new ProgrammeBuilderForm

@@ -19,6 +19,7 @@ public interface IAdminApiClient
     Task<OwnerDetailVm?> GetOwnerAsync(ulong id, CancellationToken ct);
     Task<OwnerDetailVm> CreateOwnerAsync(SaveOwnerRequest request, CancellationToken ct);
     Task<OwnerDetailVm?> UpdateOwnerAsync(ulong id, SaveOwnerRequest request, CancellationToken ct);
+    Task<OwnerDataControlClientResult> ApplyOwnerDataControlAsync(ulong id, CancellationToken ct);
     Task<IReadOnlyList<PetListItem>> ListPetsAsync(CancellationToken ct);
     Task<PetDetailVm?> GetPetAsync(ulong id, CancellationToken ct);
     Task<PetDetailVm> CreatePetAsync(SavePetRequest request, CancellationToken ct);
@@ -39,7 +40,9 @@ public interface IAdminApiClient
     Task<AddSessionExerciseClientResult> AddSessionExerciseAsync(ulong programmeId, ulong sessionId, ulong exerciseId, CancellationToken ct);
     Task<RemoveSessionExerciseClientResult> RemoveSessionExerciseAsync(ulong programmeId, ulong sessionId, ulong sessionExerciseId, CancellationToken ct);
     Task<ProgrammeVm?> GetProgrammeAsync(ulong id, CancellationToken ct);
-    Task<ProgrammeVm?> UpdateProgrammeAsync(ulong id, ProgrammeBuilderForm form, CancellationToken ct);
+    Task<ProgrammeVersionHistoryVm?> GetProgrammeVersionHistoryAsync(ulong id, CancellationToken ct);
+    Task<CreateDraftFromPublishedClientResult> CreateDraftFromPublishedAsync(ulong id, CancellationToken ct);
+    Task<UpdateProgrammeResult> UpdateProgrammeAsync(ulong id, ProgrammeBuilderForm form, CancellationToken ct);
     Task<PublishResponse> PublishProgrammeAsync(ulong id, CancellationToken ct);
     Task<DownloadUrlResponse> GetDownloadUrlAsync(string fileName, CancellationToken ct);
 }
@@ -54,6 +57,15 @@ public enum DeleteProgrammeOutcome
 }
 
 public sealed record DeleteProgrammeResult(DeleteProgrammeOutcome Outcome, string? Message = null);
+
+public enum OwnerDataControlClientOutcome
+{
+    Deleted,
+    Anonymised,
+    NotFound,
+}
+
+public sealed record OwnerDataControlClientResult(OwnerDataControlClientOutcome Outcome, string Message, OwnerDetailVm? Owner = null);
 
 public enum ProgrammeStatusTransitionClientOutcome
 {
@@ -70,15 +82,26 @@ public enum UpdateProgrammeStructureOutcome
     Updated,
     NotFound,
     Invalid,
+    Blocked,
 }
 
 public sealed record UpdateProgrammeStructureResult(UpdateProgrammeStructureOutcome Outcome, string? Message = null);
+
+public enum UpdateProgrammeOutcome
+{
+    Updated,
+    NotFound,
+    Blocked,
+}
+
+public sealed record UpdateProgrammeResult(UpdateProgrammeOutcome Outcome, ProgrammeVm? Programme = null, string? Message = null);
 
 public enum AddSessionExerciseClientOutcome
 {
     Added,
     NotFound,
     Duplicate,
+    Blocked,
 }
 
 public sealed record AddSessionExerciseClientResult(AddSessionExerciseClientOutcome Outcome, string? Message = null);
@@ -87,6 +110,16 @@ public enum RemoveSessionExerciseClientOutcome
 {
     Removed,
     NotFound,
+    Blocked,
 }
 
 public sealed record RemoveSessionExerciseClientResult(RemoveSessionExerciseClientOutcome Outcome, string? Message = null);
+
+public enum CreateDraftFromPublishedClientOutcome
+{
+    Created,
+    NotFound,
+    Invalid,
+}
+
+public sealed record CreateDraftFromPublishedClientResult(CreateDraftFromPublishedClientOutcome Outcome, ProgrammeVm? Programme = null, string? Message = null);

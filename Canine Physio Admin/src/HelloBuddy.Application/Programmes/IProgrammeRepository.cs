@@ -17,6 +17,18 @@ public interface IProgrammeRepository
     /// <summary>Returns <c>true</c> when the practitioner owns (via case) the programme.</summary>
     Task<bool> OwnsAsync(ulong programmeId, ulong practitionerId, CancellationToken ct);
 
+    /// <summary>Returns <c>true</c> when a visible programme has published version history and must be treated as immutable.</summary>
+    Task<bool> IsLockedForEditAsync(ulong programmeId, ulong practitionerId, CancellationToken ct);
+
+    /// <summary>Returns version history for a visible programme, or <c>null</c> when not visible.</summary>
+    Task<ProgrammeVersionHistoryVm?> GetVersionHistoryAsync(ulong programmeId, ulong practitionerId, CancellationToken ct);
+
+    /// <summary>
+    /// Creates a new editable draft based on a published programme snapshot.
+    /// Returns <c>null</c> when programme is not visible or has no publish history.
+    /// </summary>
+    Task<ProgrammeVm?> CreateDraftFromPublishedAsync(ulong programmeId, ulong practitionerId, CancellationToken ct);
+
     /// <summary>Deletes the supplied programme when visible and eligible according to business guardrails.</summary>
     Task<DeleteProgrammeResult> DeleteAsync(ulong programmeId, ulong practitionerId, CancellationToken ct);
 
@@ -35,8 +47,8 @@ public interface IProgrammeRepository
     /// <summary>Transitions an active programme to completed.</summary>
     Task<ProgrammeStatusTransitionResult> CompleteAsync(ulong programmeId, ulong practitionerId, CancellationToken ct);
 
-    /// <summary>Applies edits to session-exercise rows belonging to the supplied programme.</summary>
-    Task UpdateSessionExercisesAsync(ulong programmeId, IReadOnlyList<ProgrammeBuilderForm.SessionExerciseEdit> edits, CancellationToken ct);
+    /// <summary>Applies edits to session-exercise rows belonging to the supplied programme and practitioner scope.</summary>
+    Task UpdateSessionExercisesAsync(ulong programmeId, ulong practitionerId, IReadOnlyList<ProgrammeBuilderForm.SessionExerciseEdit> edits, CancellationToken ct);
 
     /// <summary>Creates a published immutable programme version and marks it current for the supplied programme.</summary>
     Task PersistPublishedVersionAsync(ulong programmeId, ulong practitionerId, string payloadJson, CancellationToken ct);

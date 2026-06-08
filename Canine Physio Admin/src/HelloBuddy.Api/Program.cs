@@ -28,6 +28,11 @@ if (!string.IsNullOrWhiteSpace(keyVaultUri))
         new DefaultAzureCredential());
 }
 
+var allowedPractitionerIds = new HashSet<ulong>(
+    builder.Configuration
+        .GetSection("Security:AllowedPractitionerIds")
+        .Get<ulong[]>() ?? Array.Empty<ulong>());
+
 var connectionString = builder.Configuration.GetConnectionString("CaninePhysioDb")
     ?? throw new InvalidOperationException(
         "ConnectionStrings:CaninePhysioDb is not configured.");
@@ -140,10 +145,17 @@ app.Use(async (ctx, next) =>
     if (ctx.Request.Path.StartsWithSegments("/api"))
     {
         if (!ctx.Request.Headers.TryGetValue(PractitionerHeader, out var raw) ||
-            !ulong.TryParse(raw.ToString(), out _))
+            !ulong.TryParse(raw.ToString(), out var practitionerId))
         {
             ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
             await ctx.Response.WriteAsync($"Missing or invalid {PractitionerHeader} header.");
+            return;
+        }
+
+        if (allowedPractitionerIds.Count > 0 && !allowedPractitionerIds.Contains(practitionerId))
+        {
+            ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+            await ctx.Response.WriteAsync($"{PractitionerHeader} is not allowed.");
             return;
         }
     }

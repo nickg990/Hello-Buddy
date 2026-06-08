@@ -34,6 +34,15 @@ public sealed class ProgrammeService : IProgrammeService
     public Task<ProgrammeVm?> CreateDraftAsync(ulong treatmentCaseId, ulong practitionerId, CancellationToken ct)
         => _repository.CreateDraftAsync(treatmentCaseId, practitionerId, ct);
 
+    public Task<bool> IsLockedForEditAsync(ulong programmeId, ulong practitionerId, CancellationToken ct)
+        => _repository.IsLockedForEditAsync(programmeId, practitionerId, ct);
+
+    public Task<ProgrammeVersionHistoryVm?> GetVersionHistoryAsync(ulong programmeId, ulong practitionerId, CancellationToken ct)
+        => _repository.GetVersionHistoryAsync(programmeId, practitionerId, ct);
+
+    public Task<ProgrammeVm?> CreateDraftFromPublishedAsync(ulong programmeId, ulong practitionerId, CancellationToken ct)
+        => _repository.CreateDraftFromPublishedAsync(programmeId, practitionerId, ct);
+
     public async Task<ProgrammeVm?> UpdateAsync(ulong programmeId, ProgrammeBuilderForm form, ulong practitionerId, CancellationToken ct)
     {
         if (!await _repository.OwnsAsync(programmeId, practitionerId, ct))
@@ -41,7 +50,7 @@ public sealed class ProgrammeService : IProgrammeService
             return null;
         }
 
-        await _repository.UpdateSessionExercisesAsync(programmeId, form.Exercises, ct);
+        await _repository.UpdateSessionExercisesAsync(programmeId, practitionerId, form.Exercises, ct);
         return await _repository.GetVmAsync(programmeId, practitionerId, ct);
     }
 
@@ -52,7 +61,12 @@ public sealed class ProgrammeService : IProgrammeService
         => _repository.UpdateStructureAsync(programmeId, practitionerId, form, ct);
 
     public Task<AddSessionExerciseResult> AddSessionExerciseAsync(ulong programmeId, ulong sessionId, ulong exerciseId, ulong practitionerId, CancellationToken ct)
-        => _repository.AddSessionExerciseAsync(programmeId, practitionerId, sessionId, exerciseId, ct);
+        => _repository.AddSessionExerciseAsync(
+            programmeId: programmeId,
+            practitionerId: practitionerId,
+            sessionId: sessionId,
+            exerciseId: exerciseId,
+            ct: ct);
 
     public Task<RemoveSessionExerciseResult> RemoveSessionExerciseAsync(ulong programmeId, ulong sessionId, ulong sessionExerciseId, ulong practitionerId, CancellationToken ct)
         => _repository.RemoveSessionExerciseAsync(programmeId, practitionerId, sessionId, sessionExerciseId, ct);

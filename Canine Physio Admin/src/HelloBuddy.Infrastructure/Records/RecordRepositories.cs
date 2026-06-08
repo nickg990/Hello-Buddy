@@ -6,6 +6,7 @@ using HelloBuddy.Contracts;
 using HelloBuddy.Infrastructure.Programmes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text.Json;
 
 namespace HelloBuddy.Infrastructure.Records;
 
@@ -367,6 +368,77 @@ public sealed class OwnerRepository : IOwnerRepository
 
         await _db.SaveChangesAsync(ct);
         return true;
+    }
+
+    public async Task<OwnerDataControlResult> ApplyDataControlAsync(ulong ownerId, ulong practitionerId, CancellationToken ct)
+    {
+        var owner = await _db.Owners
+            .Include(o => o.Pets)
+                .ThenInclude(p => p.PractitionerPets)
+            .Include(o => o.Pets)
+                .ThenInclude(p => p.Treatmentcases)
+            .Include(o => o.Useraccounts)
+            .FirstOrDefaultAsync(o => o.OwnerId == ownerId, ct);
+
+        if (owner is null)
+        {
+            return OwnerDataControlResult.NotFound;
+        }
+
+        var hasNoLinkedData = owner.Pets.Count == 0 && owner.Useraccounts.Count == 0;
+        var linkedToPractitioner = hasNoLinkedData || owner.Pets.Any(p =>
+            p.PractitionerPets.Any(pp => pp.PractitionerId == practitionerId && pp.AssignedTo == null)
+            || p.Treatmentcases.Any(tc => tc.PractitionerId == practitionerId));
+
+        if (!linkedToPractitioner)
+        {
+            return OwnerDataControlResult.NotFound;
+        }
+
+        if (owner.Pets.Count == 0 && owner.Useraccounts.Count == 0)
+        {
+            AddOwnerDataControlAudit(owner.OwnerId, practitionerId, OwnerDataControlResult.Deleted);
+            _db.Owners.Remove(owner);
+            await _db.SaveChangesAsync(ct);
+            return OwnerDataControlResult.Deleted;
+        }
+
+        owner.FirstName = "Anonymised";
+        owner.LastName = $"Owner-{owner.OwnerId}";
+        owner.Email = $"anonymised-owner-{owner.OwnerId}@redacted.local";
+        owner.PhoneNumber = null;
+        owner.AddressLine1 = null;
+        owner.AddressLine2 = null;
+        owner.Town = null;
+        owner.Postcode = null;
+
+        foreach (var account in owner.Useraccounts)
+        {
+            account.IsActive = false;
+            account.Email = $"anonymised-user-{account.UserAccountId}-{owner.OwnerId}@redacted.local";
+            account.LastLoginDate = null;
+        }
+
+        AddOwnerDataControlAudit(owner.OwnerId, practitionerId, OwnerDataControlResult.Anonymised);
+        await _db.SaveChangesAsync(ct);
+        return OwnerDataControlResult.Anonymised;
+    }
+
+    private void AddOwnerDataControlAudit(ulong ownerId, ulong practitionerId, OwnerDataControlResult outcome)
+    {
+        _db.Auditlogs.Add(new Auditlog
+        {
+            PractitionerId = practitionerId,
+            EntityName = "owner",
+            EntityId = ownerId,
+            ActionType = "gdpr-data-control",
+            NewValuesJson = JsonSerializer.Serialize(new
+            {
+                outcome = outcome.ToString().ToLowerInvariant(),
+                ownerId,
+            }),
+            ActionDateTime = DateTime.UtcNow,
+        });
     }
 }
 

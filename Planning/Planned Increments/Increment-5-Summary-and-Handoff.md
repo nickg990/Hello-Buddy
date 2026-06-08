@@ -40,12 +40,25 @@ Increment 5 delivered the preview, publish, and file-delivery slice as a working
 - ERR-I5-002: Sort-order move landed one slot later than requested. Resolved with insertion/reflow algorithm and regression tests.
 - ERR-I5-003: Multi-session sort edit inconsistent on session 2. Resolved with strengthened multi-session ordering coverage.
 
+## Open code-review findings and proposed fixes
+
+- ERR-I5-004: Replace inline publish checks with one reusable publish validator shared by preview and publish so required rules stay aligned.
+- ERR-I5-005: Make publish version persistence transactional so supersede, version insert, and current-pointer update commit atomically.
+- ERR-I5-006: Enforce practitioner ownership directly in repository write paths for builder updates (defense-in-depth consistency).
+- ERR-I5-007: Align add-exercise boundary parameter ordering (or use named arguments) to remove silent transposition risk.
+- ERR-I5-008: Use typed AJAX response contracts instead of anonymous JSON objects while preserving current payload shape.
+
 ## Validation status
 
 - Full solution test run: passing (60 passed, 0 failed).
 - UI test project: passing, including smoke and controller-contract coverage.
 - API in-memory and integration coverage: passing for Increment 5 publish/sort/download paths.
 - Standards conformance spot-fix pass completed for the Increment 5 touched surface.
+
+### Post-review test implementation note (2026-06-08)
+
+- Added and passed a Testcontainers integration test proving non-owning practitioners cannot mutate builder exercise edits (`ProgrammeBuilderUpdate_WhenPractitionerDoesNotOwnProgramme_ReturnsNotFound`).
+- Re-ran targeted suites after Increment 5/6 hardening updates: API in-memory + UI controller tests passing (37 passed, 0 failed).
 
 ## What Increment 6 should consume
 

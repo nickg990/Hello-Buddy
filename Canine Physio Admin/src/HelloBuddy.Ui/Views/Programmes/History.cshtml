@@ -1,0 +1,55 @@
+@model ProgrammeVersionHistoryVm
+@{
+    ViewData["Title"] = "Programme version history";
+}
+
+<p><a asp-controller="Programmes" asp-action="Builder" asp-route-id="@Model.ProgrammeId">&larr; Back to builder</a></p>
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1 class="mb-1">Version history</h1>
+        <p class="text-muted mb-0">Programme #@Model.ProgrammeId · @Model.ProgrammeName</p>
+    </div>
+    <form method="post" asp-action="CreateDraftFromPublished" asp-route-id="@Model.ProgrammeId">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-primary">Create new draft from published</button>
+    </form>
+</div>
+
+@if (Model.Versions.Count == 0)
+{
+    <div class="alert alert-info">No version records exist yet for this programme.</div>
+}
+else
+{
+    <div class="d-grid gap-3">
+        @foreach (var v in Model.Versions)
+        {
+            <article class="card" aria-label="Version @v.VersionNumber">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h2 class="h5 mb-0">Version @v.VersionNumber</h2>
+                        <span class="badge text-bg-secondary">@v.VersionStatus</span>
+                    </div>
+
+                    <dl class="row mb-0">
+                        <dt class="col-sm-3">Created</dt>
+                        <dd class="col-sm-9">@v.CreatedDate.ToString("yyyy-MM-dd HH:mm")</dd>
+
+                        <dt class="col-sm-3">Published</dt>
+                        <dd class="col-sm-9">@(v.PublishedDate?.ToString("yyyy-MM-dd HH:mm") ?? "-")</dd>
+
+                        <dt class="col-sm-3">Superseded</dt>
+                        <dd class="col-sm-9">@(v.SupersededDate?.ToString("yyyy-MM-dd HH:mm") ?? "-")</dd>
+
+                        <dt class="col-sm-3">Author</dt>
+                        <dd class="col-sm-9">@v.CreatedByPractitionerName</dd>
+
+                        <dt class="col-sm-3">Summary</dt>
+                        <dd class="col-sm-9 mb-0">@(string.IsNullOrWhiteSpace(v.ChangeSummary) ? "-" : v.ChangeSummary)</dd>
+                    </dl>
+                </div>
+            </article>
+        }
+    </div>
+}

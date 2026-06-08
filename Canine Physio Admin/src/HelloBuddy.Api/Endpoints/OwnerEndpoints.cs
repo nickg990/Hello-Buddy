@@ -1,4 +1,5 @@
 using FluentValidation;
+using HelloBuddy.Admin.Core.Identity;
 using HelloBuddy.Application.Records;
 using HelloBuddy.Contracts;
 
@@ -74,6 +75,27 @@ public static class OwnerEndpoints
 
             var owner = await owners.GetAsync((ulong)id, ct);
             return Results.Ok(owner);
+        });
+
+        app.MapPost("/api/owners/{id:long}/data-control", async (
+            long id,
+            IOwnerRepository owners,
+            ICurrentPractitionerAccessor practitioner,
+            CancellationToken ct) =>
+        {
+            var result = await owners.ApplyDataControlAsync((ulong)id, practitioner.PractitionerId, ct);
+            return result switch
+            {
+                OwnerDataControlResult.Deleted => Results.Ok(new OwnerDataControlResponse(
+                    Outcome: "deleted",
+                    Message: "Owner record was permanently deleted because no linked clinical data was present.",
+                    Owner: null)),
+                OwnerDataControlResult.Anonymised => Results.Ok(new OwnerDataControlResponse(
+                    Outcome: "anonymised",
+                    Message: "Owner personal data was anonymised while linked clinical records were retained.",
+                    Owner: await owners.GetAsync((ulong)id, ct))),
+                _ => Results.NotFound(),
+            };
         });
 
         return app;

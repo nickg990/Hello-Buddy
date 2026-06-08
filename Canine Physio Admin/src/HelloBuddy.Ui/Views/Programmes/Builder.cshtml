@@ -237,7 +237,12 @@
         <h1 class="mb-1">@programme.ProgrammeName</h1>
         <p class="text-muted mb-0">Programme #@programme.ProgrammeId · @programme.CaseTitle · @programme.PetName (@programme.OwnerName)</p>
     </div>
-    <div>
+    <div class="d-flex gap-2 flex-wrap justify-content-end">
+        <a class="btn btn-outline-secondary" asp-action="History" asp-route-id="@programme.ProgrammeId">Version history</a>
+        <form method="post" asp-action="CreateDraftFromPublished" asp-route-id="@programme.ProgrammeId" class="d-inline">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-outline-primary">New draft from published</button>
+        </form>
         <form method="post" asp-action="Publish" asp-route-id="@programme.ProgrammeId" class="d-inline">
             @Html.AntiForgeryToken()
             <button type="submit" class="btn btn-success">Publish PDF</button>

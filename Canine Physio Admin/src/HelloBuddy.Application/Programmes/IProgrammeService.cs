@@ -14,6 +14,18 @@ public interface IProgrammeService
     /// <summary>Creates a draft programme from a treatment case for the supplied practitioner, or <c>null</c> when not visible.</summary>
     Task<ProgrammeVm?> CreateDraftAsync(ulong treatmentCaseId, ulong practitionerId, CancellationToken ct);
 
+    /// <summary>Returns <c>true</c> when the programme has publish history and should be treated as immutable.</summary>
+    Task<bool> IsLockedForEditAsync(ulong programmeId, ulong practitionerId, CancellationToken ct);
+
+    /// <summary>Returns version history for a visible programme, or <c>null</c> when not visible.</summary>
+    Task<ProgrammeVersionHistoryVm?> GetVersionHistoryAsync(ulong programmeId, ulong practitionerId, CancellationToken ct);
+
+    /// <summary>
+    /// Creates a new editable draft based on the supplied programme's published history.
+    /// Returns <c>null</c> when programme is not visible or has no published history.
+    /// </summary>
+    Task<ProgrammeVm?> CreateDraftFromPublishedAsync(ulong programmeId, ulong practitionerId, CancellationToken ct);
+
     /// <summary>Applies builder edits and returns the refreshed view-model, or <c>null</c> when the programme is not visible.</summary>
     Task<ProgrammeVm?> UpdateAsync(ulong programmeId, ProgrammeBuilderForm form, ulong practitionerId, CancellationToken ct);
 

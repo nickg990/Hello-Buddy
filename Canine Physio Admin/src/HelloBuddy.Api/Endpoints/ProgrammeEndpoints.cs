@@ -33,6 +33,34 @@ public static class ProgrammeEndpoints
             return vm is null ? Results.NotFound() : Results.Ok(vm);
         });
 
+        app.MapGet("/api/programmes/{id:long}/versions", async (
+            long id,
+            IProgrammeService programmes,
+            ICurrentPractitionerAccessor practitioner,
+            CancellationToken ct) =>
+        {
+            var history = await programmes.GetVersionHistoryAsync((ulong)id, practitioner.PractitionerId, ct);
+            return history is null ? Results.NotFound() : Results.Ok(history);
+        });
+
+        app.MapPost("/api/programmes/{id:long}/draft-from-published", async (
+            long id,
+            IProgrammeService programmes,
+            ICurrentPractitionerAccessor practitioner,
+            CancellationToken ct) =>
+        {
+            var existing = await programmes.GetAsync((ulong)id, practitioner.PractitionerId, ct);
+            if (existing is null)
+            {
+                return Results.NotFound();
+            }
+
+            var draft = await programmes.CreateDraftFromPublishedAsync((ulong)id, practitioner.PractitionerId, ct);
+            return draft is null
+                ? Results.Conflict("This programme has no published history to branch from.")
+                : Results.Ok(draft);
+        });
+
         app.MapPut("/api/programmes/{id:long}", async (
             long id,
             ProgrammeBuilderForm form,
@@ -42,6 +70,11 @@ public static class ProgrammeEndpoints
         {
             var key = (ulong)id;
             if (form.ProgrammeId != key) return Results.BadRequest("ProgrammeId mismatch.");
+
+            if (await programmes.IsLockedForEditAsync(key, practitioner.PractitionerId, ct))
+            {
+                return Results.Conflict("Published programmes are immutable. Create a new draft to make changes.");
+            }
 
             var updated = await programmes.UpdateAsync(key, form, practitioner.PractitionerId, ct);
             return updated is null ? Results.NotFound() : Results.Ok(updated);
@@ -107,6 +140,11 @@ public static class ProgrammeEndpoints
             var key = (ulong)id;
             if (form.ProgrammeId != key) return Results.BadRequest("ProgrammeId mismatch.");
 
+            if (await programmes.IsLockedForEditAsync(key, practitioner.PractitionerId, ct))
+            {
+                return Results.Conflict("Published programmes are immutable. Create a new draft to make changes.");
+            }
+
             var result = await programmes.UpdateStructureAsync(key, form, practitioner.PractitionerId, ct);
             return result switch
             {
@@ -125,6 +163,11 @@ public static class ProgrammeEndpoints
             ICurrentPractitionerAccessor practitioner,
             CancellationToken ct) =>
         {
+            if (await programmes.IsLockedForEditAsync((ulong)id, practitioner.PractitionerId, ct))
+            {
+                return Results.Conflict("Published programmes are immutable. Create a new draft to make changes.");
+            }
+
             var result = await programmes.AddSessionExerciseAsync(
                 (ulong)id,
                 (ulong)sessionId,
@@ -148,6 +191,11 @@ public static class ProgrammeEndpoints
             ICurrentPractitionerAccessor practitioner,
             CancellationToken ct) =>
         {
+            if (await programmes.IsLockedForEditAsync((ulong)id, practitioner.PractitionerId, ct))
+            {
+                return Results.Conflict("Published programmes are immutable. Create a new draft to make changes.");
+            }
+
             var result = await programmes.RemoveSessionExerciseAsync(
                 (ulong)id,
                 (ulong)sessionId,
