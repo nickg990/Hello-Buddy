@@ -1,20 +1,49 @@
 @model HelloBuddy.Contracts.ProgrammeVm
 @{
-    Layout = null;
+    ViewData["Title"] = $"Preview: {Model.ProgrammeName}";
+    var previewPdfUrl = Url.Action("PreviewPdf", "Programmes", new { id = Model.ProgrammeId, download = false });
+    var savePdfUrl = Url.Action("PreviewPdf", "Programmes", new { id = Model.ProgrammeId, download = true });
 }
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-    <meta charset="utf-8" />
-    <title>@Model.ProgrammeName — @Model.PetName</title>
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-</head>
+<partial name="_BackLink" model="@Url.Action("Builder", "Programmes", new { id = Model.ProgrammeId })" />
 
-<body>
-    <div class="programme-preview programme-preview-standalone">
-        <partial name="_ProgrammePreviewDocument" model="Model" />
+<div class="d-flex justify-content-between align-items-start mb-3 gap-2 flex-wrap">
+    <div>
+        <h1 class="mb-1">Preview PDF</h1>
+        <p class="text-muted mb-0">@Model.ProgrammeName · @Model.PetName (@Model.OwnerName)</p>
     </div>
-    </body>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-primary" href="@savePdfUrl">Save PDF</a>
+    </div>
+</div>
 
-</html>
+<div class="card">
+    <div class="card-body">
+        <div class="programme-preview-frame-wrap">
+            <div class="programme-preview-loading" id="preview-loading" role="status" aria-live="polite">
+                <div class="spinner-border text-primary" aria-hidden="true"></div>
+                <span class="programme-preview-loading-text">Loading PDF preview…</span>
+            </div>
+            <iframe src="@previewPdfUrl" title="Programme PDF preview" class="programme-preview-frame" id="preview-frame"></iframe>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var frame = document.getElementById('preview-frame');
+            var loading = document.getElementById('preview-loading');
+            if (!frame || !loading) {
+                return;
+            }
+            var hide = function () { loading.classList.add('d-none'); };
+            frame.addEventListener('load', hide);
+            // Safety net: hide the spinner after a timeout in case the load event
+            // does not fire (e.g. some browser PDF viewers). Do NOT inspect the
+            // iframe's initial about:blank document, which reports "complete"
+            // immediately and would hide the spinner before the PDF loads.
+            window.setTimeout(hide, 15000);
+        })();
+    </script>
+}

@@ -8,7 +8,7 @@
     var safeVideoUrl = hasValidVideoUrl ? parsedVideoUrl!.ToString() : string.Empty;
 }
 
-<p><a asp-action="Index">&larr; Exercise library</a></p>
+<partial name="_BackLink" model="@Url.Action("Index")" />
 
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>

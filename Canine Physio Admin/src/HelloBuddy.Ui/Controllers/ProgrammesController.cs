@@ -67,10 +67,11 @@ public class ProgrammesController : Controller
 
         if (IsAjaxRequest())
         {
-            return Json(BuilderAjaxResponse.Success($"Saved {form.Exercises.Count} exercise edits."));
+            var savedMessage = $"Saved {form.Sessions.Count} session summaries and {form.Exercises.Count} exercise edits.";
+            return Json(BuilderAjaxResponse.Success(savedMessage));
         }
 
-        TempData["Saved"] = $"Saved {form.Exercises.Count} exercise edits.";
+        TempData["Saved"] = $"Saved {form.Sessions.Count} session summaries and {form.Exercises.Count} exercise edits.";
         return RedirectToAction(nameof(Builder), new { id });
     }
 
@@ -201,6 +202,23 @@ public class ProgrammesController : Controller
     {
         var vm = await _api.GetProgrammeAsync(id, ct);
         return vm is null ? NotFound() : View("Preview", vm);
+    }
+
+    [HttpGet("PreviewPdf")]
+    public async Task<IActionResult> PreviewPdf(ulong id, bool download, CancellationToken ct)
+    {
+        var pdf = await _api.GetProgrammePreviewPdfAsync(id, ct);
+        if (pdf is null)
+        {
+            return NotFound();
+        }
+
+        if (download)
+        {
+            return File(pdf.Bytes, pdf.ContentType, pdf.FileName);
+        }
+
+        return File(pdf.Bytes, pdf.ContentType);
     }
 
     [HttpGet("History")]

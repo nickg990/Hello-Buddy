@@ -50,6 +50,9 @@ public interface IProgrammeService
     /// <summary>Returns publish-blocking draft validation errors keyed by field.</summary>
     Task<Dictionary<string, string[]>> ValidateDraftForPublishAsync(ulong programmeId, ulong practitionerId, CancellationToken ct);
 
+    /// <summary>Renders a transient PDF preview for the supplied programme; <c>null</c> when not visible.</summary>
+    Task<PreviewPdfDocument?> RenderPreviewPdfAsync(ulong programmeId, ulong practitionerId, CancellationToken ct);
+
     /// <summary>Renders the programme to PDF and stores it, returning the publish metadata; <c>null</c> when not visible.</summary>
     Task<PublishResponse?> PublishAsync(ulong programmeId, ulong practitionerId, CancellationToken ct);
 }

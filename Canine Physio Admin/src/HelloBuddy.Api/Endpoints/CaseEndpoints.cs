@@ -106,6 +106,36 @@ public static class CaseEndpoints
             return note is null ? Results.NotFound() : Results.Ok(note);
         });
 
+        app.MapPut("/api/cases/{id:long}/notes/{noteId:long}", async (
+            long id,
+            long noteId,
+            CreateCaseNoteRequest request,
+            ITreatmentCaseRepository cases,
+            ICurrentPractitionerAccessor practitioner,
+            IValidator<CreateCaseNoteRequest> validator,
+            CancellationToken ct) =>
+        {
+            var validationResult = await validator.ValidateAsync(request, ct);
+            if (!validationResult.IsValid)
+            {
+                return Results.ValidationProblem(validationResult.ToDictionary());
+            }
+
+            var note = await cases.UpdateNoteAsync((ulong)id, (ulong)noteId, request, practitioner.PractitionerId, ct);
+            return note is null ? Results.NotFound() : Results.Ok(note);
+        });
+
+        app.MapDelete("/api/cases/{id:long}/notes/{noteId:long}", async (
+            long id,
+            long noteId,
+            ITreatmentCaseRepository cases,
+            ICurrentPractitionerAccessor practitioner,
+            CancellationToken ct) =>
+        {
+            var deleted = await cases.DeleteNoteAsync((ulong)id, (ulong)noteId, practitioner.PractitionerId, ct);
+            return deleted ? Results.NoContent() : Results.NotFound();
+        });
+
         return app;
     }
 }

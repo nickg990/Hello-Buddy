@@ -21,4 +21,10 @@ public interface ITreatmentCaseRepository
 
     /// <summary>Appends a note to a treatment case; returns the persisted row or <c>null</c> if the case is not visible.</summary>
     Task<CaseDetailVm.NoteRow?> AddNoteAsync(ulong treatmentCaseId, CreateCaseNoteRequest request, ulong practitionerId, CancellationToken ct);
+
+    /// <summary>Updates an existing note on a treatment case; returns the persisted row or <c>null</c> if the case/note is not visible.</summary>
+    Task<CaseDetailVm.NoteRow?> UpdateNoteAsync(ulong treatmentCaseId, ulong noteId, CreateCaseNoteRequest request, ulong practitionerId, CancellationToken ct);
+
+    /// <summary>Permanently deletes a note from a treatment case; returns <c>false</c> when the case/note is not visible or not found.</summary>
+    Task<bool> DeleteNoteAsync(ulong treatmentCaseId, ulong noteId, ulong practitionerId, CancellationToken ct);
 }

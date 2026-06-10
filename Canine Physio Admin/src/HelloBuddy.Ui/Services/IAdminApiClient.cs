@@ -15,6 +15,8 @@ public interface IAdminApiClient
     Task<CaseDetailVm> CreateCaseAsync(SaveTreatmentCaseRequest request, CancellationToken ct);
     Task<CaseDetailVm?> UpdateCaseAsync(ulong id, SaveTreatmentCaseRequest request, CancellationToken ct);
     Task<CaseDetailVm.NoteRow?> AddCaseNoteAsync(ulong id, CreateCaseNoteRequest request, CancellationToken ct);
+    Task<CaseDetailVm.NoteRow?> UpdateCaseNoteAsync(ulong id, ulong noteId, CreateCaseNoteRequest request, CancellationToken ct);
+    Task<bool> DeleteCaseNoteAsync(ulong id, ulong noteId, CancellationToken ct);
     Task<IReadOnlyList<OwnerListItem>> ListOwnersAsync(bool includeAnonymised, CancellationToken ct);
     Task<OwnerDetailVm?> GetOwnerAsync(ulong id, bool includeAnonymised, CancellationToken ct);
     Task<OwnerDetailVm> CreateOwnerAsync(SaveOwnerRequest request, CancellationToken ct);
@@ -43,11 +45,13 @@ public interface IAdminApiClient
     Task<ProgrammeVersionHistoryVm?> GetProgrammeVersionHistoryAsync(ulong id, CancellationToken ct);
     Task<CreateDraftFromPublishedClientResult> CreateDraftFromPublishedAsync(ulong id, CancellationToken ct);
     Task<UpdateProgrammeResult> UpdateProgrammeAsync(ulong id, ProgrammeBuilderForm form, CancellationToken ct);
+    Task<PdfDocumentContent?> GetProgrammePreviewPdfAsync(ulong id, CancellationToken ct);
     Task<PublishResponse> PublishProgrammeAsync(ulong id, CancellationToken ct);
     Task<DownloadUrlResponse> GetDownloadUrlAsync(string fileName, CancellationToken ct);
 }
 
 public sealed record ExerciseImageContent(byte[] Bytes, string ContentType);
+public sealed record PdfDocumentContent(byte[] Bytes, string ContentType, string FileName);
 
 public enum DeleteProgrammeOutcome
 {

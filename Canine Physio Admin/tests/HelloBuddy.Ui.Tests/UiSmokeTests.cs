@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using HelloBuddy.Contracts;
 using HelloBuddy.Ui.Services;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -17,6 +18,7 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
     public UiSmokeTests(Factory factory)
     {
         _client = factory.CreateClient();
+        ((StubAdminApiClient)factory.Services.GetRequiredService<IAdminApiClient>()).ResetNotes();
     }
 
     [Theory]
@@ -111,6 +113,110 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
     }
 
     [Fact]
+    public async Task AddCaseNote_WhenSubmitted_DisplaysTypeAndNoteInCaseNotesBox()
+    {
+        var get = await _client.GetAsync("/Cases/1");
+        Assert.Equal(HttpStatusCode.OK, get.StatusCode);
+
+        var getHtml = await get.Content.ReadAsStringAsync();
+        var token = ExtractAntiForgeryToken(getHtml);
+
+        const string noteType = "Progress review";
+        const string noteText = "Buddy completed three unaided sit-to-stand repetitions today.";
+
+        var form = new FormUrlEncodedContent([
+            new KeyValuePair<string, string>("NewNote.NoteType", noteType),
+            new KeyValuePair<string, string>("NewNote.NoteText", noteText),
+            new KeyValuePair<string, string>("__RequestVerificationToken", token),
+        ]);
+
+        var post = await _client.PostAsync("/Cases/1/Notes", form);
+
+        Assert.Equal(HttpStatusCode.OK, post.StatusCode);
+        var postHtml = await post.Content.ReadAsStringAsync();
+
+        // The newly added note must be visible in the case notes box after clicking Add note.
+        Assert.Contains(noteType, postHtml);
+        Assert.Contains(noteText, postHtml);
+        Assert.Contains("Case note added.", postHtml);
+        Assert.DoesNotContain("No case notes recorded yet.", postHtml);
+    }
+
+    [Fact]
+    public async Task CaseDetailPage_RendersNoteEditAndDeleteControls()
+    {
+        var get = await _client.GetAsync("/Cases/1");
+        Assert.Equal(HttpStatusCode.OK, get.StatusCode);
+
+        var html = await get.Content.ReadAsStringAsync();
+
+        Assert.Contains("data-edit-note", html);
+        Assert.Contains("/Cases/1/Notes/1/Delete", html);
+        Assert.Contains("id=\"editNoteModal\"", html);
+    }
+
+    [Fact]
+    public async Task UpdateCaseNote_WhenSubmitted_PersistsChangesAndRefreshes()
+    {
+        var get = await _client.GetAsync("/Cases/1");
+        var token = ExtractAntiForgeryToken(await get.Content.ReadAsStringAsync());
+
+        const string updatedText = "Reviewed and revised assessment after second visit.";
+        var form = new FormUrlEncodedContent([
+            new KeyValuePair<string, string>("NoteType", "assessment"),
+            new KeyValuePair<string, string>("NoteText", updatedText),
+            new KeyValuePair<string, string>("__RequestVerificationToken", token),
+        ]);
+
+        var post = await _client.PostAsync("/Cases/1/Notes/1/Update", form);
+
+        Assert.Equal(HttpStatusCode.OK, post.StatusCode);
+        var html = await post.Content.ReadAsStringAsync();
+        Assert.Contains(updatedText, html);
+        Assert.Contains("Case note updated.", html);
+    }
+
+    [Fact]
+    public async Task DeleteCaseNote_WhenSubmitted_RemovesNoteAndRefreshes()
+    {
+        var get = await _client.GetAsync("/Cases/1");
+        var token = ExtractAntiForgeryToken(await get.Content.ReadAsStringAsync());
+
+        var form = new FormUrlEncodedContent([
+            new KeyValuePair<string, string>("__RequestVerificationToken", token),
+        ]);
+
+        var post = await _client.PostAsync("/Cases/1/Notes/1/Delete", form);
+
+        Assert.Equal(HttpStatusCode.OK, post.StatusCode);
+        var html = await post.Content.ReadAsStringAsync();
+        Assert.Contains("Case note deleted.", html);
+        Assert.DoesNotContain("Initial clinical assessment completed.", html);
+    }
+
+    [Fact]
+    public async Task Layout_RendersToastContainerAndStickyHeader()
+    {
+        var get = await _client.GetAsync("/Cases/1");
+        Assert.Equal(HttpStatusCode.OK, get.StatusCode);
+
+        var html = await get.Content.ReadAsStringAsync();
+        Assert.Contains("app-toast-container", html);
+        Assert.Contains("site-header", html);
+    }
+
+    private static string ExtractAntiForgeryToken(string html)
+    {
+        var tokenMatch = Regex.Match(
+            html,
+            "<input[^>]*name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"",
+            RegexOptions.IgnoreCase);
+
+        Assert.True(tokenMatch.Success, "Expected an antiforgery token on the form.");
+        return tokenMatch.Groups[1].Value;
+    }
+
+    [Fact]
     public async Task BuilderPage_RendersSessionStructureAndExerciseMutationControls()
     {
         var response = await _client.GetAsync("/Programmes/1/Builder");
@@ -121,8 +227,84 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
         Assert.Contains("Session structure", html);
         Assert.Contains("Add exercise", html);
         Assert.Contains("Remove exercise", html);
-        Assert.Contains("Live preview", html);
-        Assert.DoesNotContain("Open preview", html);
+        Assert.Contains("Open preview page", html);
+        Assert.DoesNotContain("Live preview", html);
+    }
+
+    [Fact]
+    public async Task BuilderPage_RendersExerciseImageInsideLeftPlaceholderWithVideoFromImage()
+    {
+        var response = await _client.GetAsync("/Programmes/1/Builder");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var html = await response.Content.ReadAsStringAsync();
+
+        // Left image placeholder box exists.
+        Assert.Contains("exercise-row-media", html);
+
+        // The image is rendered inside the placeholder box, wrapped by the video link
+        // (clicking the image opens the video). There is no separate "Watch video" link.
+        var mediaBox = Regex.Match(
+            html,
+            "<div class=\"exercise-row-media\">.*?</div>",
+            RegexOptions.Singleline);
+        Assert.True(mediaBox.Success, "Expected an exercise-row-media placeholder box.");
+        Assert.Matches(
+            "<a [^>]*class=\"exercise-row-media-link\"[^>]*>\\s*<img [^>]*src=\"/Exercises/1/Image\"",
+            mediaBox.Value);
+        Assert.DoesNotContain("Watch video", html);
+    }
+
+    [Fact]
+    public async Task PrivacyPage_RendersOwnerDropdownForRtbf()
+    {
+        var response = await _client.GetAsync("/Home/Privacy");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("<select class=\"form-select\" id=\"ownerId\" name=\"ownerId\" required>", html);
+        Assert.Contains("Amelia Carter", html);
+    }
+
+    [Fact]
+    public async Task PrivacyRtbfPost_WhenOwnerExists_ShowsSuccessMessage()
+    {
+        var response = await PostRightToBeForgottenAsync(ownerId: 1);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Owner personal data was anonymised while linked clinical records were retained.", html);
+    }
+
+    [Fact]
+    public async Task PrivacyRtbfPost_WhenOwnerNotFound_ShowsErrorMessage()
+    {
+        var response = await PostRightToBeForgottenAsync(ownerId: 999);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Owner was not found or is not linked to the current practitioner.", html);
+    }
+
+    private async Task<HttpResponseMessage> PostRightToBeForgottenAsync(ulong ownerId)
+    {
+        var get = await _client.GetAsync("/Home/Privacy");
+        Assert.Equal(HttpStatusCode.OK, get.StatusCode);
+
+        var html = await get.Content.ReadAsStringAsync();
+        var tokenMatch = Regex.Match(
+            html,
+            "<input[^>]*name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"",
+            RegexOptions.IgnoreCase);
+
+        Assert.True(tokenMatch.Success, "Expected antiforgery token on the privacy form.");
+
+        var form = new FormUrlEncodedContent([
+            new KeyValuePair<string, string>("ownerId", ownerId.ToString()),
+            new KeyValuePair<string, string>("__RequestVerificationToken", tokenMatch.Groups[1].Value),
+        ]);
+
+        return await _client.PostAsync("/Home/RightToBeForgotten", form);
     }
 
     [Fact]
@@ -145,6 +327,18 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
         var html = await response.Content.ReadAsStringAsync();
         Assert.Contains("Live preview", html);
         Assert.Contains("preview-programme-name", html);
+    }
+
+    [Fact]
+    public async Task PreviewPage_RendersLoadingSpinnerForPdfFrame()
+    {
+        var response = await _client.GetAsync("/Programmes/1/Preview");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("id=\"preview-loading\"", html);
+        Assert.Contains("spinner-border", html);
+        Assert.Contains("id=\"preview-frame\"", html);
     }
 
     public class Factory : WebApplicationFactory<Program>
@@ -207,6 +401,25 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
             [new CaseDetailVm.NoteRow(1, new DateTime(2026, 5, 1, 10, 0, 0, DateTimeKind.Utc), "assessment", "Initial clinical assessment completed.")],
             [new CaseDetailVm.ProgrammeRow(1, "Buddy Hind Limb Rehab draft", "planned", new DateOnly(2026, 5, 1), null, 1, 0)]);
 
+        private readonly List<CaseDetailVm.NoteRow> _caseNotes =
+        [
+            new CaseDetailVm.NoteRow(1, new DateTime(2026, 5, 1, 10, 0, 0, DateTimeKind.Utc), "assessment", "Initial clinical assessment completed.")
+        ];
+
+        private ulong _nextNoteId = 2;
+
+        public void ResetNotes()
+        {
+            _caseNotes.Clear();
+            _caseNotes.Add(new CaseDetailVm.NoteRow(1, new DateTime(2026, 5, 1, 10, 0, 0, DateTimeKind.Utc), "assessment", "Initial clinical assessment completed."));
+            _nextNoteId = 2;
+        }
+
+        private CaseDetailVm BuildTreatmentCase() => TreatmentCase with
+        {
+            Notes = _caseNotes.OrderByDescending(n => n.CreatedDate).ToList(),
+        };
+
         private static readonly ExerciseDetailVm Exercise = new(
             1,
             1,
@@ -240,10 +453,14 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
             => Task.FromResult<OwnerDetailVm?>(id == 1 ? Owner : null);
 
         public Task<OwnerDataControlClientResult> ApplyOwnerDataControlAsync(ulong id, CancellationToken ct)
-            => Task.FromResult(new OwnerDataControlClientResult(
-                OwnerDataControlClientOutcome.Anonymised,
-                "Owner personal data was anonymised while linked clinical records were retained.",
-                Owner));
+            => Task.FromResult(id == 1
+                ? new OwnerDataControlClientResult(
+                    OwnerDataControlClientOutcome.Anonymised,
+                    "Owner personal data was anonymised while linked clinical records were retained.",
+                    Owner)
+                : new OwnerDataControlClientResult(
+                    OwnerDataControlClientOutcome.NotFound,
+                    "Owner was not found or is not linked to the current practitioner."));
 
         public Task<IReadOnlyList<PetListItem>> ListPetsAsync(CancellationToken ct)
             => Task.FromResult<IReadOnlyList<PetListItem>>([new PetListItem(1, 1, "Buddy", Owner.FullName, "Labrador", "male", true, 1)]);
@@ -327,18 +544,55 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
 
         public Task<IReadOnlyList<CaseRow>> ListCasesAsync(CancellationToken ct)
             => Task.FromResult<IReadOnlyList<CaseRow>>([new CaseRow(1, TreatmentCase.CaseTitle, TreatmentCase.Status, TreatmentCase.StartDate, TreatmentCase.PetName, TreatmentCase.OwnerName)]);
-
         public Task<CaseDetailVm?> GetCaseAsync(ulong id, CancellationToken ct)
-            => Task.FromResult<CaseDetailVm?>(id == 1 ? TreatmentCase : null);
+            => Task.FromResult<CaseDetailVm?>(id == 1 ? BuildTreatmentCase() : null);
 
         public Task<CaseDetailVm> CreateCaseAsync(SaveTreatmentCaseRequest request, CancellationToken ct)
-            => Task.FromResult(TreatmentCase);
+            => Task.FromResult(BuildTreatmentCase());
 
         public Task<CaseDetailVm?> UpdateCaseAsync(ulong id, SaveTreatmentCaseRequest request, CancellationToken ct)
-            => Task.FromResult<CaseDetailVm?>(id == 1 ? TreatmentCase : null);
+            => Task.FromResult<CaseDetailVm?>(id == 1 ? BuildTreatmentCase() : null);
 
         public Task<CaseDetailVm.NoteRow?> AddCaseNoteAsync(ulong id, CreateCaseNoteRequest request, CancellationToken ct)
-            => Task.FromResult<CaseDetailVm.NoteRow?>(new CaseDetailVm.NoteRow(2, DateTime.UtcNow, request.NoteType, request.NoteText));
+        {
+            if (id != 1)
+            {
+                return Task.FromResult<CaseDetailVm.NoteRow?>(null);
+            }
+
+            var note = new CaseDetailVm.NoteRow(_nextNoteId++, DateTime.UtcNow, request.NoteType, request.NoteText);
+            _caseNotes.Add(note);
+            return Task.FromResult<CaseDetailVm.NoteRow?>(note);
+        }
+
+        public Task<CaseDetailVm.NoteRow?> UpdateCaseNoteAsync(ulong id, ulong noteId, CreateCaseNoteRequest request, CancellationToken ct)
+        {
+            if (id != 1)
+            {
+                return Task.FromResult<CaseDetailVm.NoteRow?>(null);
+            }
+
+            var index = _caseNotes.FindIndex(n => n.TreatmentCaseNoteId == noteId);
+            if (index < 0)
+            {
+                return Task.FromResult<CaseDetailVm.NoteRow?>(null);
+            }
+
+            var updated = _caseNotes[index] with { NoteType = request.NoteType, NoteText = request.NoteText };
+            _caseNotes[index] = updated;
+            return Task.FromResult<CaseDetailVm.NoteRow?>(updated);
+        }
+
+        public Task<bool> DeleteCaseNoteAsync(ulong id, ulong noteId, CancellationToken ct)
+        {
+            if (id != 1)
+            {
+                return Task.FromResult(false);
+            }
+
+            var removed = _caseNotes.RemoveAll(n => n.TreatmentCaseNoteId == noteId) > 0;
+            return Task.FromResult(removed);
+        }
 
         public Task<ProgrammeVm?> GetProgrammeAsync(ulong id, CancellationToken ct)
             => Task.FromResult<ProgrammeVm?>(new ProgrammeVm(
@@ -423,6 +677,9 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
                     1,
                     [new ProgrammeVm.SessionExerciseRow(1, 1, "Step-ups (low)", "Controlled stepping", "https://example.test/step-up.jpg", "https://example.test/step-up.mp4", 5, 3, 5, 1, "Steady pace")])]
             )));
+
+        public Task<PdfDocumentContent?> GetProgrammePreviewPdfAsync(ulong id, CancellationToken ct)
+            => Task.FromResult<PdfDocumentContent?>(new PdfDocumentContent([0x25, 0x50, 0x44, 0x46], "application/pdf", $"programme-preview-{id}.pdf"));
 
         public Task<PublishResponse> PublishProgrammeAsync(ulong id, CancellationToken ct)
             => Task.FromResult(new PublishResponse("https://example.test/programme.pdf", "programme-1.pdf", 1234));

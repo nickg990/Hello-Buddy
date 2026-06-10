@@ -18,7 +18,12 @@ public class HomeController : Controller
 
     public IActionResult Index() => View();
 
-    public IActionResult Privacy() => View();
+    [HttpGet]
+    public async Task<IActionResult> Privacy(CancellationToken ct)
+    {
+        var owners = await _api.ListOwnersAsync(includeAnonymised: false, ct);
+        return View(new HomePrivacyVm { Owners = owners });
+    }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -26,7 +31,7 @@ public class HomeController : Controller
     {
         if (ownerId == 0)
         {
-            TempData["Error"] = "Enter a valid owner id before continuing.";
+            TempData["Error"] = "Select a valid owner before continuing.";
             return RedirectToAction(nameof(Privacy));
         }
 

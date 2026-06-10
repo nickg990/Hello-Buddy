@@ -13,10 +13,12 @@
 
 <body>
     <a class="visually-hidden-focusable bg-dark text-white p-2" href="#main-content">Skip to main content</a>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+    <header class="site-header">
+        <nav class="navbar site-navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">HelloBuddy.Ui</a>
+                <a class="navbar-brand p-0" asp-area="" asp-controller="Home" asp-action="Index">
+                    <img src="~/img/logo-disc.svg" alt="Hello Buddy" class="brand-logo" />
+                </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
                         aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -34,10 +36,6 @@
                                      <a class="nav-link text-dark" asp-area="" asp-controller="Pets"
                                          asp-action="Index">Pets</a>
                                 </li>
-                                <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Cases"
-                               asp-action="Index">Cases</a>
-                        </li>
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Exercises"
                                asp-action="Index">Exercise library</a>
@@ -53,25 +51,46 @@
     </header>
     <div class="container">
         <main id="main-content" role="main" class="pb-3" tabindex="-1">
-            <div aria-live="polite" aria-atomic="true">
-                @if (TempData["Saved"] is string layoutSaved)
+            @{
+                var toastSaved = TempData["Saved"] as string;
+                var toastError = TempData["Error"] as string;
+                var toastPublished = TempData["Published"] as string;
+                var toastPublishedFile = TempData["PublishedFile"] as string;
+            }
+            <div class="toast-container app-toast-container position-fixed top-0 end-0 p-3" aria-live="polite" aria-atomic="true">
+                @if (!string.IsNullOrEmpty(toastSaved))
                 {
-                    <div class="alert alert-success">@layoutSaved</div>
-                }
-                @if (TempData["Published"] is string layoutPublished)
-                {
-                    <div class="alert alert-success" role="alert">
-                        @layoutPublished
-                        @if (TempData["PublishedFile"] is string publishedFile)
-                        {
-                            <a class="alert-link ms-2" asp-controller="Programmes" asp-action="Download"
-                               asp-route-fileName="@publishedFile" target="_blank" rel="noopener">Download PDF</a>
-                        }
+                    <div class="toast text-bg-success border-0 app-toast" role="status" aria-live="polite" aria-atomic="true" data-bs-delay="5000">
+                        <div class="d-flex">
+                            <div class="toast-body">@toastSaved</div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
                     </div>
                 }
-                @if (TempData["Error"] is string layoutError)
+                @if (!string.IsNullOrEmpty(toastPublished))
                 {
-                    <div class="alert alert-danger" role="alert">@layoutError</div>
+                    <div class="toast text-bg-success border-0 app-toast" role="status" aria-live="polite" aria-atomic="true" data-bs-delay="8000">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                @toastPublished
+                                @if (!string.IsNullOrEmpty(toastPublishedFile))
+                                {
+                                    <a class="alert-link ms-1" asp-controller="Programmes" asp-action="Download"
+                                       asp-route-fileName="@toastPublishedFile" target="_blank" rel="noopener">Download PDF</a>
+                                }
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(toastError))
+                {
+                    <div class="toast text-bg-danger border-0 app-toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="8000">
+                        <div class="d-flex">
+                            <div class="toast-body">@toastError</div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
                 }
             </div>
             @RenderBody()
@@ -80,7 +99,7 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2026 - HelloBuddy.Ui - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            &copy; 2026 Net Intentions Ltd
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

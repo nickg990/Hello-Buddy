@@ -353,6 +353,22 @@ public sealed class AdminApiClient : IAdminApiClient
         return await ReadRequiredAsync<CaseDetailVm.NoteRow>(resp, ct);
     }
 
+    public async Task<CaseDetailVm.NoteRow?> UpdateCaseNoteAsync(ulong id, ulong noteId, CreateCaseNoteRequest request, CancellationToken ct)
+    {
+        var resp = await _http.PutAsJsonAsync($"/api/cases/{id}/notes/{noteId}", request, ct);
+        if (resp.StatusCode == HttpStatusCode.NotFound) return null;
+        await EnsureSuccessOrThrowAsync(resp, ct);
+        return await ReadRequiredAsync<CaseDetailVm.NoteRow>(resp, ct);
+    }
+
+    public async Task<bool> DeleteCaseNoteAsync(ulong id, ulong noteId, CancellationToken ct)
+    {
+        var resp = await _http.DeleteAsync($"/api/cases/{id}/notes/{noteId}", ct);
+        if (resp.StatusCode == HttpStatusCode.NotFound) return false;
+        await EnsureSuccessOrThrowAsync(resp, ct);
+        return true;
+    }
+
     public async Task<ProgrammeVm?> GetProgrammeAsync(ulong id, CancellationToken ct)
     {
         var resp = await _http.GetAsync($"/api/programmes/{id}", ct);
@@ -415,6 +431,26 @@ public sealed class AdminApiClient : IAdminApiClient
         await EnsureSuccessOrThrowAsync(resp, ct);
         var programme = await ReadRequiredAsync<ProgrammeVm>(resp, ct);
         return new UpdateProgrammeResult(UpdateProgrammeOutcome.Updated, programme);
+    }
+
+    public async Task<PdfDocumentContent?> GetProgrammePreviewPdfAsync(ulong id, CancellationToken ct)
+    {
+        var resp = await _http.GetAsync($"/api/programmes/{id}/preview-pdf", ct);
+        if (resp.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        await EnsureSuccessOrThrowAsync(resp, ct);
+
+        var bytes = await resp.Content.ReadAsByteArrayAsync(ct);
+        var contentType = resp.Content.Headers.ContentType?.MediaType;
+        var fileName = $"programme-preview-{id}.pdf";
+
+        return new PdfDocumentContent(
+            bytes,
+            string.IsNullOrWhiteSpace(contentType) ? "application/pdf" : contentType,
+            fileName);
     }
 
     public async Task<PublishResponse> PublishProgrammeAsync(ulong id, CancellationToken ct)

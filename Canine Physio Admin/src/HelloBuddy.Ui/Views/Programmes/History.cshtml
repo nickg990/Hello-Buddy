@@ -3,7 +3,7 @@
     ViewData["Title"] = "Programme version history";
 }
 
-<p><a asp-controller="Programmes" asp-action="Builder" asp-route-id="@Model.ProgrammeId">&larr; Back to builder</a></p>
+<partial name="_BackLink" model="@Url.Action("Builder", "Programmes", new { id = Model.ProgrammeId })" />
 
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>

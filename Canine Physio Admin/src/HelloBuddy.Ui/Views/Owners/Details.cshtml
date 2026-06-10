@@ -4,7 +4,7 @@
     var showAnonymised = (bool?)ViewBag.ShowAnonymised ?? false;
 }
 
-<p><a asp-action="Index" asp-route-showAnonymised="@showAnonymised">&larr; All owners</a></p>
+<partial name="_BackLink" model="@Url.Action("Index", new { showAnonymised })" />
 
 @if (TempData["Saved"] is string saved)
 {

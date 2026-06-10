@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Net.Http.Headers;
+using System.Text.RegularExpressions;
 using HelloBuddy.Admin.Core.Data;
 using HelloBuddy.Admin.Core.Data.Entities;
 using HelloBuddy.Admin.Pdf;
@@ -212,6 +213,110 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
         using var client = new Factory().CreateClient();
         var response = await client.GetAsync("/api/owners");
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CaseNotes_AddNoteAppearsAndPersistsAcrossReload()
+    {
+        var (treatmentCase, _) = await CreateDraftProgrammeForDeleteAsync();
+
+        var addNote = await _client.PostAsJsonAsync(
+            $"/api/cases/{treatmentCase.TreatmentCaseId}/notes",
+            new CreateCaseNoteRequest
+            {
+                NoteType = "follow-up",
+                NoteText = "Owner reports improved comfort after weekend exercises.",
+            });
+        Assert.Equal(HttpStatusCode.OK, addNote.StatusCode);
+
+        var getCase = await _client.GetFromJsonAsync<CaseDetailVm>($"/api/cases/{treatmentCase.TreatmentCaseId}");
+        Assert.NotNull(getCase);
+        Assert.Contains(getCase.Notes, n => n.NoteText.Contains("improved comfort", StringComparison.OrdinalIgnoreCase));
+
+        var getCaseReload = await _client.GetFromJsonAsync<CaseDetailVm>($"/api/cases/{treatmentCase.TreatmentCaseId}");
+        Assert.NotNull(getCaseReload);
+        Assert.Contains(getCaseReload.Notes, n => n.NoteText.Contains("improved comfort", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task CaseNotes_EmptyNoteText_ReturnsBadRequest()
+    {
+        var (treatmentCase, _) = await CreateDraftProgrammeForDeleteAsync();
+
+        var addNote = await _client.PostAsJsonAsync(
+            $"/api/cases/{treatmentCase.TreatmentCaseId}/notes",
+            new CreateCaseNoteRequest
+            {
+                NoteType = "follow-up",
+                NoteText = "   ",
+            });
+        Assert.Equal(HttpStatusCode.BadRequest, addNote.StatusCode);
+    }
+
+    [Fact]
+    public async Task CaseNotes_UpdateNote_PersistsNewTextAndType()
+    {
+        var (treatmentCase, _) = await CreateDraftProgrammeForDeleteAsync();
+
+        var addNote = await _client.PostAsJsonAsync(
+            $"/api/cases/{treatmentCase.TreatmentCaseId}/notes",
+            new CreateCaseNoteRequest { NoteType = "follow-up", NoteText = "Original note text." });
+        Assert.Equal(HttpStatusCode.OK, addNote.StatusCode);
+        var created = await addNote.Content.ReadFromJsonAsync<CaseDetailVm.NoteRow>();
+        Assert.NotNull(created);
+
+        var update = await _client.PutAsJsonAsync(
+            $"/api/cases/{treatmentCase.TreatmentCaseId}/notes/{created.TreatmentCaseNoteId}",
+            new CreateCaseNoteRequest { NoteType = "assessment", NoteText = "Revised note text." });
+        Assert.Equal(HttpStatusCode.OK, update.StatusCode);
+
+        var getCase = await _client.GetFromJsonAsync<CaseDetailVm>($"/api/cases/{treatmentCase.TreatmentCaseId}");
+        Assert.NotNull(getCase);
+        var stored = Assert.Single(getCase.Notes, n => n.TreatmentCaseNoteId == created.TreatmentCaseNoteId);
+        Assert.Equal("assessment", stored.NoteType);
+        Assert.Equal("Revised note text.", stored.NoteText);
+    }
+
+    [Fact]
+    public async Task CaseNotes_UpdateMissingNote_ReturnsNotFound()
+    {
+        var (treatmentCase, _) = await CreateDraftProgrammeForDeleteAsync();
+
+        var update = await _client.PutAsJsonAsync(
+            $"/api/cases/{treatmentCase.TreatmentCaseId}/notes/999999",
+            new CreateCaseNoteRequest { NoteType = "assessment", NoteText = "No such note." });
+        Assert.Equal(HttpStatusCode.NotFound, update.StatusCode);
+    }
+
+    [Fact]
+    public async Task CaseNotes_DeleteNote_RemovesFromCase()
+    {
+        var (treatmentCase, _) = await CreateDraftProgrammeForDeleteAsync();
+
+        var addNote = await _client.PostAsJsonAsync(
+            $"/api/cases/{treatmentCase.TreatmentCaseId}/notes",
+            new CreateCaseNoteRequest { NoteType = "follow-up", NoteText = "Note to be deleted." });
+        Assert.Equal(HttpStatusCode.OK, addNote.StatusCode);
+        var created = await addNote.Content.ReadFromJsonAsync<CaseDetailVm.NoteRow>();
+        Assert.NotNull(created);
+
+        var delete = await _client.DeleteAsync(
+            $"/api/cases/{treatmentCase.TreatmentCaseId}/notes/{created.TreatmentCaseNoteId}");
+        Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
+
+        var getCase = await _client.GetFromJsonAsync<CaseDetailVm>($"/api/cases/{treatmentCase.TreatmentCaseId}");
+        Assert.NotNull(getCase);
+        Assert.DoesNotContain(getCase.Notes, n => n.TreatmentCaseNoteId == created.TreatmentCaseNoteId);
+    }
+
+    [Fact]
+    public async Task CaseNotes_DeleteMissingNote_ReturnsNotFound()
+    {
+        var (treatmentCase, _) = await CreateDraftProgrammeForDeleteAsync();
+
+        var delete = await _client.DeleteAsync(
+            $"/api/cases/{treatmentCase.TreatmentCaseId}/notes/999999");
+        Assert.Equal(HttpStatusCode.NotFound, delete.StatusCode);
     }
 
     [Fact]
@@ -1092,6 +1197,86 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
     }
 
     [Fact]
+    public async Task ProgrammePreviewPdf_WithVisibleProgramme_ReturnsPdfBytes()
+    {
+        var (_, programme) = await CreateDraftProgrammeForDeleteAsync();
+        var preview = await _client.GetAsync($"/api/programmes/{programme.ProgrammeId}/preview-pdf");
+
+        Assert.Equal(HttpStatusCode.OK, preview.StatusCode);
+        Assert.Equal("application/pdf", preview.Content.Headers.ContentType?.MediaType);
+        var bytes = await preview.Content.ReadAsByteArrayAsync();
+        Assert.NotEmpty(bytes);
+    }
+
+    [Fact]
+    public async Task ProgrammePdfTemplate_WithImageAndVideo_RendersImageInsideLeftMediaBoxLinkingToVideo()
+    {
+        var template = new RazorProgrammePdfTemplate();
+        var vm = BuildProgrammeVmWithExercise(
+            imageUrl: "https://media.example.test/step-up.jpg",
+            videoUrl: "https://media.example.test/step-up.mp4");
+
+        var html = await template.RenderAsync(vm);
+
+        // The left media placeholder box exists and the image is rendered inside it,
+        // wrapped by the video link (clicking the image opens the video).
+        var mediaBox = Regex.Match(html, "<div class=\"ex-media\">.*?</div>", RegexOptions.Singleline);
+        Assert.True(mediaBox.Success, "Expected an ex-media placeholder box in the PDF HTML.");
+        Assert.Matches(
+            "<a href=\"https://media.example.test/step-up.mp4\">\\s*<img src=\"https://media.example.test/step-up.jpg\"",
+            mediaBox.Value);
+        Assert.DoesNotContain("Watch video", html);
+    }
+
+    [Fact]
+    public async Task ProgrammePdfTemplate_WithoutImage_RendersPlaceholderBox()
+    {
+        var template = new RazorProgrammePdfTemplate();
+        var vm = BuildProgrammeVmWithExercise(imageUrl: null, videoUrl: null);
+
+        var html = await template.RenderAsync(vm);
+
+        var mediaBox = Regex.Match(html, "<div class=\"ex-media\">.*?</div>", RegexOptions.Singleline);
+        Assert.True(mediaBox.Success, "Expected an ex-media placeholder box even when no image exists.");
+        Assert.Contains("No image", mediaBox.Value);
+    }
+
+    private static ProgrammeVm BuildProgrammeVmWithExercise(string? imageUrl, string? videoUrl)
+        => new(
+            1,
+            1,
+            "Buddy Hind Limb Rehab",
+            "planned",
+            new DateOnly(2026, 5, 1),
+            null,
+            "Improving hind-limb control.",
+            "Buddy Hind Limb Rehab",
+            "Buddy",
+            "Amelia Carter",
+            [
+                new ProgrammeVm.SessionRow(
+                    1,
+                    "single",
+                    "Improving hind-limb control.",
+                    "planned",
+                    1,
+                    [
+                        new ProgrammeVm.SessionExerciseRow(
+                            1,
+                            1,
+                            "Step-ups (low)",
+                            "Controlled stepping",
+                            imageUrl,
+                            videoUrl,
+                            5,
+                            3,
+                            5,
+                            1,
+                            "Steady pace")
+                    ])
+            ]);
+
+    [Fact]
     public async Task ProgrammeStatus_ActivateThenComplete_Works()
     {
         var (_, programme) = await CreateDraftProgrammeForDeleteAsync();
@@ -1169,7 +1354,27 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
         var programme = await createProgramme.Content.ReadFromJsonAsync<ProgrammeVm>();
         Assert.NotNull(programme);
 
-        return (treatmentCase, programme);
+        var session = Assert.Single(programme.Sessions);
+        var update = await _client.PutAsJsonAsync(
+            $"/api/programmes/{programme.ProgrammeId}",
+            new ProgrammeBuilderForm
+            {
+                ProgrammeId = programme.ProgrammeId,
+                Sessions =
+                [
+                    new ProgrammeBuilderForm.SessionEdit
+                    {
+                        SessionId = session.SessionId,
+                        Objective = "Session purpose summary for integration tests.",
+                    }
+                ],
+            });
+        Assert.Equal(HttpStatusCode.OK, update.StatusCode);
+
+        var updatedProgramme = await update.Content.ReadFromJsonAsync<ProgrammeVm>();
+        Assert.NotNull(updatedProgramme);
+
+        return (treatmentCase, updatedProgramme);
     }
 
     [Fact]

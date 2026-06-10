@@ -8,7 +8,7 @@
     var currentVideoUrl = hasValidCurrentVideoUrl ? parsedCurrentVideoUrl!.ToString() : string.Empty;
 }
 
-<p><a asp-action="Index">&larr; Exercise library</a></p>
+<partial name="_BackLink" model="@Url.Action("Index")" />
 
 <h1>@ViewData["Title"]</h1>
 

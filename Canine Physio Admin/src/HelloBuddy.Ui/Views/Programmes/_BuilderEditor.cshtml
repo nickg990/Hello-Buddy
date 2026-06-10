@@ -69,6 +69,7 @@
 </form>
 
 @{ var editIndex = 0; }
+@{ var sessionIndex = 0; }
 @foreach (var session in programme.Sessions)
 {
     var sessionExerciseIds = session.Exercises.Select(e => e.ExerciseId).ToHashSet();
@@ -76,12 +77,22 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <div>
                 <strong>Session @session.SortOrder</strong> &mdash; @session.Period
-                @if (!string.IsNullOrWhiteSpace(session.Objective))
-                {
-                    <span class="text-muted">- @session.Objective</span>
-                }
             </div>
             <span class="badge bg-secondary">@session.Status</span>
+        </div>
+
+        <div class="card-body border-bottom">
+            <label class="form-label" for="session-objective-@session.SessionId">Session purpose summary</label>
+            <input type="hidden" form="session-edits-form" name="Sessions[@sessionIndex].SessionId" value="@session.SessionId" />
+            <textarea id="session-objective-@session.SessionId"
+                      form="session-edits-form"
+                      class="form-control"
+                      name="Sessions[@sessionIndex].Objective"
+                      rows="2"
+                      maxlength="4000"
+                      required
+                      data-initial-value="@session.Objective">@session.Objective</textarea>
+            <div class="form-text">Required: summarise the purpose for this session.</div>
         </div>
 
         <div class="card-body border-bottom bg-light-subtle">
@@ -151,23 +162,44 @@
                         var notesId = $"ex-{session.SessionId}-{i}-notes";
                         <tr>
                             <td>
-                                <strong>@ex.ExerciseTitle</strong>
-                                @if (!string.IsNullOrWhiteSpace(ex.ObjectiveSummary))
-                                {
-                                    <div class="text-muted small">@ex.ObjectiveSummary</div>
-                                }
-                                @if (!string.IsNullOrWhiteSpace(ex.ImageUrl))
-                                {
-                                    <div class="mt-2">
-                                        <img src="@Url.Action("Image", "Exercises", new { id = ex.ExerciseId })" alt="@ex.ExerciseTitle image" class="img-thumbnail" style="max-height: 90px;" />
+                                <div class="d-flex gap-2">
+                                    <div class="exercise-row-media">
+                                        @if (!string.IsNullOrWhiteSpace(ex.ImageUrl))
+                                        {
+                                            @if (!string.IsNullOrWhiteSpace(ex.VideoUrl))
+                                            {
+                                                <a href="@ex.VideoUrl" target="_blank" rel="noopener noreferrer"
+                                                   class="exercise-row-media-link"
+                                                   title="Play video for @ex.ExerciseTitle"
+                                                   aria-label="Play video for @ex.ExerciseTitle">
+                                                    <img src="@Url.Action("Image", "Exercises", new { id = ex.ExerciseId })" alt="@ex.ExerciseTitle image" />
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <img src="@Url.Action("Image", "Exercises", new { id = ex.ExerciseId })" alt="@ex.ExerciseTitle image" />
+                                            }
+                                        }
+                                        else if (!string.IsNullOrWhiteSpace(ex.VideoUrl))
+                                        {
+                                            <a href="@ex.VideoUrl" target="_blank" rel="noopener noreferrer"
+                                               class="exercise-row-media-link exercise-row-media-placeholder"
+                                               title="Play video for @ex.ExerciseTitle"
+                                               aria-label="Play video for @ex.ExerciseTitle">Video</a>
+                                        }
+                                        else
+                                        {
+                                            <span class="exercise-row-media-placeholder">No image</span>
+                                        }
                                     </div>
-                                }
-                                @if (!string.IsNullOrWhiteSpace(ex.VideoUrl))
-                                {
-                                    <div class="small mt-1">
-                                        <a href="@ex.VideoUrl" target="_blank" rel="noopener noreferrer">Watch video</a>
+                                    <div>
+                                        <strong>@ex.ExerciseTitle</strong>
+                                        @if (!string.IsNullOrWhiteSpace(ex.ObjectiveSummary))
+                                        {
+                                            <div class="text-muted small">@ex.ObjectiveSummary</div>
+                                        }
                                     </div>
-                                }
+                                </div>
                                 <input type="hidden" form="session-edits-form" name="@(prefix).SessionExerciseId" value="@ex.SessionExerciseId" />
                             </td>
                             <td>
@@ -176,19 +208,19 @@
                             </td>
                             <td>
                                 <label for="@repsId" class="visually-hidden">Reps for @ex.ExerciseTitle</label>
-                                <input id="@repsId" form="session-edits-form" type="number" min="0" max="65535" class="form-control form-control-sm" name="@(prefix).Reps" value="@ex.Reps" data-preview-field="reps" data-session-exercise-id="@ex.SessionExerciseId" data-initial-value="@ex.Reps" />
+                                <input id="@repsId" form="session-edits-form" type="number" min="0" max="65535" class="form-control form-control-sm" name="@(prefix).Reps" value="@ex.Reps" data-initial-value="@ex.Reps" />
                             </td>
                             <td>
                                 <label for="@setsId" class="visually-hidden">Sets for @ex.ExerciseTitle</label>
-                                <input id="@setsId" form="session-edits-form" type="number" min="0" max="65535" class="form-control form-control-sm" name="@(prefix).Sets" value="@ex.Sets" data-preview-field="sets" data-session-exercise-id="@ex.SessionExerciseId" data-initial-value="@ex.Sets" />
+                                <input id="@setsId" form="session-edits-form" type="number" min="0" max="65535" class="form-control form-control-sm" name="@(prefix).Sets" value="@ex.Sets" data-initial-value="@ex.Sets" />
                             </td>
                             <td>
                                 <label for="@holdId" class="visually-hidden">Hold seconds for @ex.ExerciseTitle</label>
-                                <input id="@holdId" form="session-edits-form" type="number" min="0" max="65535" class="form-control form-control-sm" name="@(prefix).HoldSeconds" value="@ex.HoldSeconds" data-preview-field="holdSeconds" data-session-exercise-id="@ex.SessionExerciseId" data-initial-value="@ex.HoldSeconds" />
+                                <input id="@holdId" form="session-edits-form" type="number" min="0" max="65535" class="form-control form-control-sm" name="@(prefix).HoldSeconds" value="@ex.HoldSeconds" data-initial-value="@ex.HoldSeconds" />
                             </td>
                             <td>
                                 <label for="@notesId" class="visually-hidden">Notes for @ex.ExerciseTitle</label>
-                                <input id="@notesId" form="session-edits-form" type="text" class="form-control form-control-sm" name="@(prefix).Notes" value="@ex.Notes" data-preview-field="notes" data-session-exercise-id="@ex.SessionExerciseId" data-initial-value="@ex.Notes" />
+                                <input id="@notesId" form="session-edits-form" type="text" class="form-control form-control-sm" name="@(prefix).Notes" value="@ex.Notes" data-initial-value="@ex.Notes" />
                             </td>
                         </tr>
                         editIndex++;
@@ -203,6 +235,7 @@
             </table>
         </div>
     </div>
+    sessionIndex++;
 }
 
 <div id="session-edits-bottom" class="card mb-3">

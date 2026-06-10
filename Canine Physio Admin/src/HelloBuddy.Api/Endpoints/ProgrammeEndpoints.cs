@@ -221,6 +221,18 @@ public static class ProgrammeEndpoints
             return result is null ? Results.NotFound() : Results.Ok(result);
         });
 
+        app.MapGet("/api/programmes/{id:long}/preview-pdf", async (
+            long id,
+            IProgrammeService programmes,
+            ICurrentPractitionerAccessor practitioner,
+            CancellationToken ct) =>
+        {
+            var preview = await programmes.RenderPreviewPdfAsync((ulong)id, practitioner.PractitionerId, ct);
+            return preview is null
+                ? Results.NotFound()
+                : Results.File(preview.Bytes, preview.ContentType);
+        });
+
         app.MapGet("/api/programmes/published/{fileName}/download-url", async (
             string fileName,
             IFileStore fileStore,

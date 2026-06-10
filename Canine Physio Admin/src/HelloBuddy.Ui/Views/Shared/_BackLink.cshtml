@@ -1,0 +1,10 @@
+@*
+    Generic back link (ERR-AT-004). Navigates to the previous page via browser history
+    (wired in site.js). The optional model value is a fallback href used when no history
+    is available (for example, when the page is opened directly).
+*@
+@model string?
+@{
+    var fallbackHref = string.IsNullOrWhiteSpace(Model) ? Url.Content("~/") : Model;
+}
+<p><a href="@fallbackHref" class="back-link" data-back-link>&larr; Back</a></p>

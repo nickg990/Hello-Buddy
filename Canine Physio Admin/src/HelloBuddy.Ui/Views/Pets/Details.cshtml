@@ -3,7 +3,7 @@
     ViewData["Title"] = Model.Name;
 }
 
-<p><a asp-action="Index">&larr; All pets</a></p>
+<partial name="_BackLink" model="@Url.Action("Index")" />
 
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>

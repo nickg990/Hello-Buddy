@@ -50,6 +50,9 @@ public interface IProgrammeRepository
     /// <summary>Applies edits to session-exercise rows belonging to the supplied programme and practitioner scope.</summary>
     Task UpdateSessionExercisesAsync(ulong programmeId, ulong practitionerId, IReadOnlyList<ProgrammeBuilderForm.SessionExerciseEdit> edits, CancellationToken ct);
 
+    /// <summary>Applies per-session objective edits belonging to the supplied programme and practitioner scope.</summary>
+    Task UpdateSessionObjectivesAsync(ulong programmeId, ulong practitionerId, IReadOnlyList<ProgrammeBuilderForm.SessionEdit> edits, CancellationToken ct);
+
     /// <summary>Creates a published immutable programme version and marks it current for the supplied programme.</summary>
     Task PersistPublishedVersionAsync(ulong programmeId, ulong practitionerId, string payloadJson, CancellationToken ct);
 }

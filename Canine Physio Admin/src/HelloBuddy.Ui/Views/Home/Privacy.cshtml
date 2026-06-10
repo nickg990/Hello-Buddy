@@ -1,4 +1,5 @@
-﻿@{
+﻿@model HelloBuddy.Ui.Models.HomePrivacyVm
+@{
     ViewData["Title"] = "Privacy and Data Rights";
 }
 <h1>@ViewData["Title"]</h1>
@@ -39,8 +40,14 @@
         <form asp-action="RightToBeForgotten" method="post" class="row g-3" onsubmit="return confirm('Apply right-to-be-forgotten data control for this owner? This action cannot be reversed.');">
             @Html.AntiForgeryToken()
             <div class="col-sm-6 col-md-4">
-                <label class="form-label" for="ownerId">Owner ID</label>
-                <input class="form-control" type="number" min="1" step="1" id="ownerId" name="ownerId" required />
+                <label class="form-label" for="ownerId">Owner</label>
+                <select class="form-select" id="ownerId" name="ownerId" required>
+                    <option value="">Select owner...</option>
+                    @foreach (var owner in Model.Owners)
+                    {
+                        <option value="@owner.OwnerId">@owner.FullName (@owner.Email)</option>
+                    }
+                </select>
             </div>
             <div class="col-12">
                 <button type="submit" class="btn btn-danger">Apply right to be forgotten</button>

@@ -24,17 +24,20 @@ public class CaseDetailController : Controller
 
     [HttpPost("Notes")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Notes(ulong id, CaseDetailPageVm vm, CancellationToken ct)
+    public async Task<IActionResult> Notes(
+        ulong id,
+        [Bind(Prefix = nameof(CaseDetailPageVm.NewNote))] CreateCaseNoteRequest newNote,
+        CancellationToken ct)
     {
         if (!ModelState.IsValid)
         {
             var current = await _api.GetCaseAsync(id, ct);
-            return current is null ? NotFound() : View("Index", new CaseDetailPageVm { Case = current, NewNote = vm.NewNote });
+            return current is null ? NotFound() : View("Index", new CaseDetailPageVm { Case = current, NewNote = newNote });
         }
 
         try
         {
-            var note = await _api.AddCaseNoteAsync(id, vm.NewNote, ct);
+            var note = await _api.AddCaseNoteAsync(id, newNote, ct);
             if (note is null)
             {
                 return NotFound();
@@ -56,13 +59,45 @@ public class CaseDetailController : Controller
             {
                 foreach (var error in entry.Value)
                 {
-                    ModelState.AddModelError($"NewNote.{entry.Key}", error);
+                    ModelState.AddModelError($"{nameof(CaseDetailPageVm.NewNote)}.{entry.Key}", error);
                 }
             }
 
             var current = await _api.GetCaseAsync(id, ct);
-            return current is null ? NotFound() : View("Index", new CaseDetailPageVm { Case = current, NewNote = vm.NewNote });
+            return current is null ? NotFound() : View("Index", new CaseDetailPageVm { Case = current, NewNote = newNote });
         }
+    }
+
+    [HttpPost("Notes/{noteId:long}/Update")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateNote(ulong id, ulong noteId, CreateCaseNoteRequest editNote, CancellationToken ct)
+    {
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = "Enter note text before saving.";
+            return RedirectToAction(nameof(Index), new { id });
+        }
+
+        try
+        {
+            var note = await _api.UpdateCaseNoteAsync(id, noteId, editNote, ct);
+            TempData[note is null ? "Error" : "Saved"] = note is null ? "Case note was not found." : "Case note updated.";
+        }
+        catch (ApiValidationException)
+        {
+            TempData["Error"] = "Enter valid note details before saving.";
+        }
+
+        return RedirectToAction(nameof(Index), new { id });
+    }
+
+    [HttpPost("Notes/{noteId:long}/Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteNote(ulong id, ulong noteId, CancellationToken ct)
+    {
+        var deleted = await _api.DeleteCaseNoteAsync(id, noteId, ct);
+        TempData[deleted ? "Saved" : "Error"] = deleted ? "Case note deleted." : "Case note was not found.";
+        return RedirectToAction(nameof(Index), new { id });
     }
 
     [HttpPost("Programmes")]
@@ -87,16 +122,13 @@ public class CaseDetailController : Controller
         switch (result.Outcome)
         {
             case DeleteProgrammeOutcome.Deleted:
-                TempData["CaseProgrammeMessage"] = "Programme deleted.";
-                TempData["CaseProgrammeMessageType"] = "success";
+                TempData["Saved"] = "Programme deleted.";
                 break;
             case DeleteProgrammeOutcome.Blocked:
-                TempData["CaseProgrammeMessage"] = result.Message ?? "Programme cannot be deleted because it has version history.";
-                TempData["CaseProgrammeMessageType"] = "danger";
+                TempData["Error"] = result.Message ?? "Programme cannot be deleted because it has version history.";
                 break;
             default:
-                TempData["CaseProgrammeMessage"] = "Programme not found.";
-                TempData["CaseProgrammeMessageType"] = "danger";
+                TempData["Error"] = "Programme not found.";
                 break;
         }
 
@@ -113,8 +145,7 @@ public class CaseDetailController : Controller
 
         if (normalizedCurrent == normalizedTarget)
         {
-            TempData["CaseProgrammeMessage"] = "Programme status unchanged.";
-            TempData["CaseProgrammeMessageType"] = "success";
+            TempData["Saved"] = "Programme status unchanged.";
             return RedirectToAction(nameof(Index), new { id });
         }
 
@@ -127,22 +158,19 @@ public class CaseDetailController : Controller
                 result = await _api.CompleteProgrammeAsync(programmeId, ct);
                 break;
             default:
-                TempData["CaseProgrammeMessage"] = "Select a valid status action.";
-                TempData["CaseProgrammeMessageType"] = "danger";
+                TempData["Error"] = "Select a valid status action.";
                 return RedirectToAction(nameof(Index), new { id });
         }
 
         if (result.Outcome == ProgrammeStatusTransitionClientOutcome.Updated)
         {
-            TempData["CaseProgrammeMessage"] = normalizedTarget == "active"
+            TempData["Saved"] = normalizedTarget == "active"
                 ? "Programme activated."
                 : "Programme completed.";
-            TempData["CaseProgrammeMessageType"] = "success";
         }
         else
         {
-            TempData["CaseProgrammeMessage"] = result.Message ?? "Programme status could not be updated.";
-            TempData["CaseProgrammeMessageType"] = "danger";
+            TempData["Error"] = result.Message ?? "Programme status could not be updated.";
         }
 
         return RedirectToAction(nameof(Index), new { id });

@@ -50,6 +50,7 @@ public sealed class ProgrammeService : IProgrammeService
             return null;
         }
 
+        await _repository.UpdateSessionObjectivesAsync(programmeId, practitionerId, form.Sessions, ct);
         await _repository.UpdateSessionExercisesAsync(programmeId, practitionerId, form.Exercises, ct);
         return await _repository.GetVmAsync(programmeId, practitionerId, ct);
     }
@@ -102,6 +103,11 @@ public sealed class ProgrammeService : IProgrammeService
 
         foreach (var session in vm.Sessions)
         {
+            if (string.IsNullOrWhiteSpace(session.Objective))
+            {
+                errors[$"Session[{session.SessionId}].Objective"] = ["Add a purpose summary for every session before publishing."];
+            }
+
             foreach (var exercise in session.Exercises)
             {
                 var keyPrefix = $"Session[{session.SessionId}]Exercise[{exercise.SessionExerciseId}]";
@@ -123,6 +129,21 @@ public sealed class ProgrammeService : IProgrammeService
         }
 
         return errors;
+    }
+
+    public async Task<PreviewPdfDocument?> RenderPreviewPdfAsync(ulong programmeId, ulong practitionerId, CancellationToken ct)
+    {
+        var vm = await _repository.GetVmAsync(programmeId, practitionerId, ct);
+        if (vm is null)
+        {
+            return null;
+        }
+
+        var renderVm = await BuildRenderVmAsync(vm, ct);
+        var html = await _template.RenderAsync(renderVm, ct);
+        var pdf = await _pdfRenderer.RenderAsync(html, ct);
+        var fileName = $"programme-preview-{programmeId}.pdf";
+        return new PreviewPdfDocument(pdf, "application/pdf", fileName);
     }
 
     public async Task<PublishResponse?> PublishAsync(ulong programmeId, ulong practitionerId, CancellationToken ct)

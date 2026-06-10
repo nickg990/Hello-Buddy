@@ -22,7 +22,7 @@ public sealed class BuilderBrowserIntegrationTests
     private const string OptInVariable = "HELLOBUDDY_RUN_BROWSER_TESTS";
 
     [Fact]
-    public async Task BuilderPreview_UpdatesInPlace_WhenLeftPaneFieldsChange()
+    public async Task BuilderPreview_OpensDedicatedPreviewPage_WithPdfFrame()
     {
         if (!IsOptedIn())
         {
@@ -54,21 +54,14 @@ public sealed class BuilderBrowserIntegrationTests
         await page.GoToAsync(builderUrl);
 
         var content = await page.GetContentAsync();
-        Assert.DoesNotContain("Open preview", content);
+        Assert.Contains("Open preview page", content);
 
-        await page.WaitForSelectorAsync("#preview-programme-name");
+        await page.ClickAsync("a[href='/Programmes/1/Preview']");
 
-        await page.EvaluateExpressionAsync(
-            "(() => { const input = document.querySelector('#programme-name'); input.value = 'Buddy Live Preview'; input.dispatchEvent(new Event('input', { bubbles: true })); })()");
+        await page.WaitForSelectorAsync("iframe[title='Programme PDF preview']");
 
-        await page.WaitForFunctionAsync(
-            "() => document.querySelector('#preview-programme-name')?.textContent?.includes('Buddy Live Preview') === true");
-
-        await page.EvaluateExpressionAsync(
-            "(() => { const input = document.querySelector(\"input[data-preview-field='reps'][data-session-exercise-id='1']\"); input.value = '12'; input.dispatchEvent(new Event('input', { bubbles: true })); })()");
-
-        await page.WaitForFunctionAsync(
-            "() => document.querySelector(\"tr[data-preview-session-exercise-id='1'] [data-preview-field='reps']\")?.textContent?.trim() === '12'");
+        var previewContent = await page.GetContentAsync();
+        Assert.Contains("Save PDF", previewContent);
     }
 
     private static bool IsOptedIn()

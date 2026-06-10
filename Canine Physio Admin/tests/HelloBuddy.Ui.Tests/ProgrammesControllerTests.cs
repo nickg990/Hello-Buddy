@@ -24,6 +24,10 @@ public sealed class ProgrammesControllerTests
         var form = new ProgrammeBuilderForm
         {
             ProgrammeId = 1,
+            Sessions =
+            {
+                new ProgrammeBuilderForm.SessionEdit { SessionId = 1, Objective = "Improve stability" },
+            },
             Exercises =
             {
                 new ProgrammeBuilderForm.SessionExerciseEdit { SessionExerciseId = 10, Reps = 10, Sets = 3, SortOrder = 1 },
@@ -36,7 +40,7 @@ public sealed class ProgrammesControllerTests
         var json = Assert.IsType<JsonResult>(result);
         var payload = JsonSerializer.Serialize(json.Value);
         Assert.Contains("\"ok\":true", payload);
-        Assert.Contains("Saved 2 exercise edits.", payload);
+        Assert.Contains("Saved 1 session summaries and 2 exercise edits.", payload);
     }
 
     [Fact]

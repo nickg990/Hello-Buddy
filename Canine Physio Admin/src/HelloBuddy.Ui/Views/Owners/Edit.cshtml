@@ -4,7 +4,7 @@
     ViewData["Title"] = isCreate ? "Add owner" : "Edit owner";
 }
 
-<p><a asp-action="Index">&larr; All owners</a></p>
+<partial name="_BackLink" model="@Url.Action("Index")" />
 
 <h1>@ViewData["Title"]</h1>
 

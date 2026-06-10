@@ -4,7 +4,7 @@
     ViewData["Title"] = isCreate ? "Add pet" : "Edit pet";
 }
 
-<p><a asp-action="Index">&larr; All pets</a></p>
+<partial name="_BackLink" model="@Url.Action("Index")" />
 
 <h1>@ViewData["Title"]</h1>
 

@@ -49,7 +49,7 @@ public sealed class ProgrammeRepository : IProgrammeRepository
                 new Session
                 {
                     Period = ProgrammeDomainConstants.SessionPeriodSingle,
-                    Objective = treatmentCase.ClinicalSummary,
+                    Objective = null,
                     Status = ProgrammeDomainConstants.StatusPlanned,
                     SortOrder = 1,
                 },
@@ -302,7 +302,7 @@ public sealed class ProgrammeRepository : IProgrammeRepository
                 programme.Sessions.Add(new Session
                 {
                     Period = targetPeriods[i],
-                    Objective = programme.Notes,
+                    Objective = null,
                     Status = ProgrammeDomainConstants.StatusPlanned,
                     SortOrder = (byte)(i + 1),
                 });
@@ -553,6 +553,40 @@ public sealed class ProgrammeRepository : IProgrammeRepository
             {
                 sorted[index].SortOrder = (ushort)(index + 1);
             }
+        }
+
+        await _db.SaveChangesAsync(ct);
+    }
+
+    public async Task UpdateSessionObjectivesAsync(
+        ulong programmeId,
+        ulong practitionerId,
+        IReadOnlyList<ProgrammeBuilderForm.SessionEdit> edits,
+        CancellationToken ct)
+    {
+        if (edits.Count == 0)
+        {
+            return;
+        }
+
+        var ids = edits.Select(e => e.SessionId).ToList();
+        var sessions = await _db.Sessions
+            .Where(s => ids.Contains(s.SessionId)
+                        && s.ProgrammeId == programmeId
+                        && s.Programme.TreatmentCase.PractitionerId == practitionerId)
+            .ToListAsync(ct);
+
+        var editsById = edits.ToDictionary(e => e.SessionId);
+        foreach (var session in sessions)
+        {
+            if (!editsById.TryGetValue(session.SessionId, out var edit))
+            {
+                continue;
+            }
+
+            session.Objective = string.IsNullOrWhiteSpace(edit.Objective)
+                ? null
+                : edit.Objective.Trim();
         }
 
         await _db.SaveChangesAsync(ct);

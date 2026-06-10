@@ -14,9 +14,7 @@
             }
 
             const editorPanelUrl = root.dataset.editorPanelUrl;
-            const previewPanelUrl = root.dataset.previewPanelUrl;
             const feedback = document.getElementById('builder-feedback');
-            let previewSyncTimer = null;
 
             const hasChanged = (input) => {
                 if (input.type === 'radio' || input.type === 'checkbox') {
@@ -38,17 +36,19 @@
             };
 
             const renderFeedback = (kind, text) => {
-                if (!feedback) {
-                    return;
-                }
-
                 if (!text) {
-                    feedback.innerHTML = '';
                     return;
                 }
 
-                const alertClass = kind === 'error' ? 'alert-danger' : 'alert-success';
-                feedback.innerHTML = '<div class="alert ' + alertClass + ' mb-3" role="status">' + text + '</div>';
+                if (typeof window.showToast === 'function') {
+                    window.showToast(text, kind === 'error' ? 'error' : 'success');
+                    return;
+                }
+
+                if (feedback) {
+                    const alertClass = kind === 'error' ? 'alert-danger' : 'alert-success';
+                    feedback.innerHTML = '<div class="alert ' + alertClass + ' mb-3" role="status">' + text + '</div>';
+                }
             };
 
             const bindChangeState = () => {
@@ -57,23 +57,13 @@
                 const sessionControls = document.querySelectorAll('[form="session-edits-form"]');
                 const saveSessionButton = document.getElementById('save-session-edits');
 
-                const schedulePreviewSync = () => {
-                    if (previewSyncTimer) {
-                        clearTimeout(previewSyncTimer);
-                    }
-
-                    previewSyncTimer = setTimeout(syncPreviewFromInputs, 250);
-                };
-
                 if (setupForm) {
                     const setupControls = setupForm.querySelectorAll('input, select, textarea');
                     setupForm.addEventListener('input', function () {
                         updateSaveState(setupControls, saveSetupButton);
-                        schedulePreviewSync();
                     });
                     setupForm.addEventListener('change', function () {
                         updateSaveState(setupControls, saveSetupButton);
-                        schedulePreviewSync();
                     });
                     updateSaveState(setupControls, saveSetupButton);
                 }
@@ -81,93 +71,30 @@
                 sessionControls.forEach(function (input) {
                     input.addEventListener('input', function () {
                         updateSaveState(sessionControls, saveSessionButton);
-                        schedulePreviewSync();
                     });
                     input.addEventListener('change', function () {
                         updateSaveState(sessionControls, saveSessionButton);
-                        schedulePreviewSync();
                     });
                 });
                 updateSaveState(sessionControls, saveSessionButton);
             };
 
-            const setText = (selector, value) => {
-                const element = document.querySelector(selector);
-                if (element) {
-                    element.textContent = value;
-                }
-            };
-
-            const syncPreviewFromInputs = () => {
-                const programmeNameInput = document.querySelector('[data-preview-field="programmeName"]');
-                const startDateInput = document.querySelector('[data-preview-field="startDate"]');
-                const endDateInput = document.querySelector('[data-preview-field="endDate"]');
-
-                if (programmeNameInput) {
-                    const value = (programmeNameInput.value || '').trim();
-                    setText('#preview-programme-name', value.length > 0 ? value : 'Untitled programme');
-                }
-
-                if (startDateInput) {
-                    setText('#preview-start-date', startDateInput.value || '-');
-                }
-
-                if (endDateInput) {
-                    const value = endDateInput.value || '';
-                    setText('#preview-end-date', value);
-                    const separator = document.getElementById('preview-date-separator');
-                    if (separator) {
-                        separator.classList.toggle('d-none', value.length === 0);
-                    }
-                }
-
-                const mappedFields = ['reps', 'sets', 'holdSeconds', 'notes'];
-                mappedFields.forEach(function (fieldName) {
-                    const controls = document.querySelectorAll('[data-preview-field="' + fieldName + '"][data-session-exercise-id]');
-                    controls.forEach(function (control) {
-                        const sessionExerciseId = control.dataset.sessionExerciseId;
-                        if (!sessionExerciseId) {
-                            return;
-                        }
-
-                        const row = document.querySelector('[data-preview-session-exercise-id="' + sessionExerciseId + '"]');
-                        if (!row) {
-                            return;
-                        }
-
-                        const target = row.querySelector('[data-preview-field="' + fieldName + '"]');
-                        if (!target) {
-                            return;
-                        }
-
-                        const raw = (control.value || '').trim();
-                        target.textContent = raw.length > 0 ? raw : '-';
-                    });
-                });
-            };
-
             const refreshPanels = async () => {
                 const editorHost = document.getElementById('builder-editor-container');
-                const previewHost = document.getElementById('builder-preview-container');
-                if (!editorHost || !previewHost) {
+                if (!editorHost) {
                     return;
                 }
 
                 const currentScroll = window.scrollY;
-                const [editorResponse, previewResponse] = await Promise.all([
-                    fetch(editorPanelUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } }),
-                    fetch(previewPanelUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                ]);
+                const editorResponse = await fetch(editorPanelUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
 
-                if (!editorResponse.ok || !previewResponse.ok) {
-                    throw new Error('Failed to refresh builder panels.');
+                if (!editorResponse.ok) {
+                    throw new Error('Failed to refresh builder panel.');
                 }
 
                 editorHost.innerHTML = await editorResponse.text();
-                previewHost.innerHTML = await previewResponse.text();
                 bindChangeState();
                 bindAsyncForms();
-                syncPreviewFromInputs();
                 window.scrollTo({ top: currentScroll, behavior: 'auto' });
             };
 
@@ -225,12 +152,11 @@
 
             bindChangeState();
             bindAsyncForms();
-            syncPreviewFromInputs();
         })();
     </script>
 }
 
-<p><a asp-controller="CaseDetail" asp-action="Index" asp-route-id="@programme.TreatmentCaseId">&larr; Back to case</a></p>
+<partial name="_BackLink" model="@Url.Action("Index", "CaseDetail", new { id = programme.TreatmentCaseId })" />
 
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
@@ -238,6 +164,7 @@
         <p class="text-muted mb-0">Programme #@programme.ProgrammeId · @programme.CaseTitle · @programme.PetName (@programme.OwnerName)</p>
     </div>
     <div class="d-flex gap-2 flex-wrap justify-content-end">
+        <a class="btn btn-outline-secondary" asp-action="Preview" asp-route-id="@programme.ProgrammeId">Open preview page</a>
         <a class="btn btn-outline-secondary" asp-action="History" asp-route-id="@programme.ProgrammeId">Version history</a>
         <form method="post" asp-action="CreateDraftFromPublished" asp-route-id="@programme.ProgrammeId" class="d-inline">
             @Html.AntiForgeryToken()
@@ -254,12 +181,8 @@
 
 <div id="builder-root"
      data-editor-panel-url="@Url.Action("BuilderEditorPanel", "Programmes", new { id = programme.ProgrammeId })"
-     data-preview-panel-url="@Url.Action("BuilderPreviewPanel", "Programmes", new { id = programme.ProgrammeId })"
      class="row g-3 align-items-start">
-    <div class="col-12 col-xxl-7" id="builder-editor-container">
+    <div class="col-12" id="builder-editor-container">
         <partial name="_BuilderEditor" model="Model" />
-    </div>
-    <div class="col-12 col-xxl-5" id="builder-preview-container">
-        <partial name="_BuilderPreviewPane" model="Model.Programme" />
     </div>
 </div>

@@ -754,6 +754,51 @@ public sealed class TreatmentCaseRepository : ITreatmentCaseRepository
             entity.NoteType,
             entity.NoteText);
     }
+
+    public async Task<CaseDetailVm.NoteRow?> UpdateNoteAsync(ulong treatmentCaseId, ulong noteId, CreateCaseNoteRequest request, ulong practitionerId, CancellationToken ct)
+    {
+        var entity = await _db.Treatmentcasenotes
+            .FirstOrDefaultAsync(
+                n => n.TreatmentCaseNoteId == noteId
+                    && n.TreatmentCaseId == treatmentCaseId
+                    && n.TreatmentCase.PractitionerId == practitionerId
+                    && !(n.TreatmentCase.Pet.Owner.FirstName == "Anonymised" && n.TreatmentCase.Pet.Owner.Email.EndsWith("@redacted.local")),
+                ct);
+        if (entity is null)
+        {
+            return null;
+        }
+
+        entity.NoteType = RecordNormalization.NullIfWhiteSpace(request.NoteType);
+        entity.NoteText = request.NoteText.Trim();
+
+        await _db.SaveChangesAsync(ct);
+
+        return new CaseDetailVm.NoteRow(
+            entity.TreatmentCaseNoteId,
+            entity.CreatedDate,
+            entity.NoteType,
+            entity.NoteText);
+    }
+
+    public async Task<bool> DeleteNoteAsync(ulong treatmentCaseId, ulong noteId, ulong practitionerId, CancellationToken ct)
+    {
+        var entity = await _db.Treatmentcasenotes
+            .FirstOrDefaultAsync(
+                n => n.TreatmentCaseNoteId == noteId
+                    && n.TreatmentCaseId == treatmentCaseId
+                    && n.TreatmentCase.PractitionerId == practitionerId
+                    && !(n.TreatmentCase.Pet.Owner.FirstName == "Anonymised" && n.TreatmentCase.Pet.Owner.Email.EndsWith("@redacted.local")),
+                ct);
+        if (entity is null)
+        {
+            return false;
+        }
+
+        _db.Treatmentcasenotes.Remove(entity);
+        await _db.SaveChangesAsync(ct);
+        return true;
+    }
 }
 
 internal static class RecordNormalization

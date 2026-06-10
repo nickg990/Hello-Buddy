@@ -6,7 +6,14 @@ namespace HelloBuddy.Contracts;
 public sealed class ProgrammeBuilderForm
 {
     public ulong ProgrammeId { get; set; }
+    public List<SessionEdit> Sessions { get; set; } = new();
     public List<SessionExerciseEdit> Exercises { get; set; } = new();
+
+    public sealed class SessionEdit
+    {
+        public ulong SessionId { get; set; }
+        public string? Objective { get; set; }
+    }
 
     public sealed class SessionExerciseEdit
     {
