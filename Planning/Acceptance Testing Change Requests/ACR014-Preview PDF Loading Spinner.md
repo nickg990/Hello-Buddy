@@ -32,9 +32,12 @@ Out of scope:
 
 - View: `Views/Programmes/Preview.cshtml` adds a Bootstrap `spinner-border` overlay over the
   preview frame with accessible status text, and a small script that hides the overlay on the
-  iframe's `load` event (with a `readyState` safety net for already-loaded frames).
+  iframe's `load` event, with a 15s timeout fallback if the load event never fires.
 - CSS: `wwwroot/css/site.css` adds `.programme-preview-loading` (centred overlay) and makes the
   preview frame wrap `position: relative` so the overlay is positioned correctly.
+- Fix (post-test): the initial `readyState === 'complete'` safety net was removed because a new
+  iframe's `about:blank` document reports `complete` immediately, hiding the spinner before the
+  PDF loaded. Replaced with a timeout fallback so the spinner stays until the real `load` event.
 
 ## Risks and mitigations
 
@@ -42,8 +45,8 @@ Risks:
 - Spinner could persist if the iframe load event does not fire.
 
 Mitigations:
-- A `readyState === 'complete'` safety net hides the spinner if the frame loaded before the
-  handler was bound.
+- A 15-second timeout fallback hides the spinner if the iframe `load` event never fires (e.g.
+  some browser PDF viewers).
 
 ## Verification
 
