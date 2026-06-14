@@ -44,14 +44,7 @@ public class CaseDetailController : Controller
             }
 
             TempData["Saved"] = "Case note added.";
-            var refreshed = await _api.GetCaseAsync(id, ct);
-            return refreshed is null
-                ? NotFound()
-                : View("Index", new CaseDetailPageVm
-                {
-                    Case = refreshed,
-                    NewNote = new CreateCaseNoteRequest(),
-                });
+            return RedirectToAction(nameof(Index), new { id });
         }
         catch (ApiValidationException ex)
         {
@@ -123,9 +116,6 @@ public class CaseDetailController : Controller
         {
             case DeleteProgrammeOutcome.Deleted:
                 TempData["Saved"] = "Programme deleted.";
-                break;
-            case DeleteProgrammeOutcome.Blocked:
-                TempData["Error"] = result.Message ?? "Programme cannot be deleted because it has version history.";
                 break;
             default:
                 TempData["Error"] = "Programme not found.";

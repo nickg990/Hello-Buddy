@@ -76,6 +76,8 @@ public sealed class MySqlTestcontainerFixture : IAsyncLifetime
             await cmd.ExecuteNonQueryAsync();
         }
 
+        await IntegrationTestSchemaUpgrade.ApplyIncrement8CompatAsync(connection);
+
         // After DROP/CREATE DATABASE the test user's GRANTs on the named DB persist in mysql.* tables.
         // Re-fetch the connection string for ApiTestcontainerIntegrationTests to use.
         ConnectionString = _container.GetConnectionString() + ";SslMode=None;AllowPublicKeyRetrieval=True";

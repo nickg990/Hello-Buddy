@@ -1,4 +1,4 @@
-@model ExerciseIndexVm
+﻿@model ExerciseIndexVm
 @{
     ViewData["Title"] = "Exercise library";
 }
@@ -42,7 +42,7 @@
             </div>
         </div>
         <div class="col-md-1 d-grid">
-            <button type="submit" class="btn btn-outline-primary">Apply</button>
+            <button type="submit" class="btn btn-outline-secondary">Apply</button>
         </div>
     </div>
 </form>
@@ -78,10 +78,11 @@ else
                     <td>@(exercise.HasVideo ? "Yes" : "No")</td>
                     <td>@exercise.UpdatedDate.ToString("dd MMM yyyy")</td>
                     <td class="text-end">
-                        <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@exercise.ExerciseId">Open</a>
+                        <a class="btn btn-sm btn-outline-secondary" asp-action="Details" asp-route-id="@exercise.ExerciseId">Open</a>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
 }
+

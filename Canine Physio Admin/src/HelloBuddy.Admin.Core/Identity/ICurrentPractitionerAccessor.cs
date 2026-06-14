@@ -1,12 +1,17 @@
 namespace HelloBuddy.Admin.Core.Identity;
 
 /// <summary>
-/// Resolves the currently active practitioner. Day-2 implementation is a seeded
-/// single-practitioner placeholder (see Five-Day Delivery Plan contingency #6 and
-/// HANDOVER decision D4). Swap for an Entra-ID-backed implementation later
-/// without touching call sites.
+/// Resolves the currently active practitioner identity. The UI implementation
+/// reads cookie claims; the API implementation reads request headers forwarded
+/// by the UI. Hardening to signed tokens is tracked as TD-005.
 /// </summary>
 public interface ICurrentPractitionerAccessor
 {
     ulong PractitionerId { get; }
+
+    /// <summary>Display name ("FirstName LastName") of the current practitioner.</summary>
+    string PractitionerName { get; }
+
+    /// <summary>Role string: "physiotherapist" or "administrator".</summary>
+    string PractitionerRole { get; }
 }

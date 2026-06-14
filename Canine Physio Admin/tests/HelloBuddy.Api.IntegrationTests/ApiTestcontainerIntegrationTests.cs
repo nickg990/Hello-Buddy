@@ -237,7 +237,7 @@ public sealed class ApiTestcontainerIntegrationTests
             WHERE PractitionerId = 1
               AND EntityName = 'owner'
               AND EntityId = @ownerId
-              AND ActionType = 'gdpr-data-control'
+              AND ActionType = 'gdpr-deletion'
             ORDER BY ActionDateTime DESC
             LIMIT 1", connection);
         auditCmd.Parameters.AddWithValue("@ownerId", owner.OwnerId);
@@ -247,13 +247,13 @@ public sealed class ApiTestcontainerIntegrationTests
     }
 
     [Fact]
-    public async Task OwnerDataControl_WithLinkedPet_AnonymisesAndWritesAudit()
+    public async Task OwnerDataControl_WithLinkedPet_DeletesLinkedRecordsAndWritesAudit()
     {
         var ownerCreate = await _client.PostAsJsonAsync("/api/owners", new SaveOwnerRequest
         {
             FirstName = "Audit",
-            LastName = "Anon",
-            Email = $"audit-anon-{Guid.NewGuid():N}@example.test"
+            LastName = "Delete",
+            Email = $"audit-linked-delete-{Guid.NewGuid():N}@example.test"
         });
         Assert.Equal(HttpStatusCode.Created, ownerCreate.StatusCode);
         var owner = await ownerCreate.Content.ReadFromJsonAsync<OwnerDetailVm>();
@@ -274,8 +274,8 @@ public sealed class ApiTestcontainerIntegrationTests
         var caseCreate = await _client.PostAsJsonAsync("/api/cases", new SaveTreatmentCaseRequest
         {
             PetId = pet.PetId,
-            CaseTitle = "Audit retention case",
-            ClinicalSummary = "Clinical history retained after anonymisation.",
+            CaseTitle = "Audit deletion case",
+            ClinicalSummary = "Clinical history deleted after RTBF request.",
             StartDate = DateOnly.FromDateTime(DateTime.UtcNow.Date),
             Status = "active"
         });
@@ -288,15 +288,14 @@ public sealed class ApiTestcontainerIntegrationTests
 
         var payload = await control.Content.ReadFromJsonAsync<OwnerDataControlResponse>();
         Assert.NotNull(payload);
-        Assert.Equal("anonymised", payload.Outcome);
-        Assert.NotNull(payload.Owner);
-        Assert.True(payload.Owner.IsAnonymised);
+        Assert.Equal("deleted", payload.Outcome);
+        Assert.Null(payload.Owner);
 
         var ownerGet = await _client.GetAsync($"/api/owners/{owner.OwnerId}");
         Assert.Equal(HttpStatusCode.NotFound, ownerGet.StatusCode);
 
-        var ownerGetIncludingAnonymised = await _client.GetAsync($"/api/owners/{owner.OwnerId}?includeAnonymised=true");
-        Assert.Equal(HttpStatusCode.OK, ownerGetIncludingAnonymised.StatusCode);
+        var ownerGetAfterDeletion = await _client.GetAsync($"/api/owners/{owner.OwnerId}");
+        Assert.Equal(HttpStatusCode.NotFound, ownerGetAfterDeletion.StatusCode);
 
         var petGet = await _client.GetAsync($"/api/pets/{pet.PetId}");
         Assert.Equal(HttpStatusCode.NotFound, petGet.StatusCode);
@@ -312,23 +311,23 @@ public sealed class ApiTestcontainerIntegrationTests
             WHERE PractitionerId = 1
               AND EntityName = 'owner'
               AND EntityId = @ownerId
-              AND ActionType = 'gdpr-data-control'
+              AND ActionType = 'gdpr-deletion'
             ORDER BY ActionDateTime DESC
             LIMIT 1", connection);
         auditCmd.Parameters.AddWithValue("@ownerId", owner.OwnerId);
         var rawAudit = (string?)await auditCmd.ExecuteScalarAsync();
         Assert.False(string.IsNullOrWhiteSpace(rawAudit));
-        Assert.Contains("anonymised", rawAudit, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("deleted", rawAudit, StringComparison.OrdinalIgnoreCase);
 
         await using var retainedPetCmd = new MySqlCommand("SELECT COUNT(*) FROM Pet WHERE PetId = @petId", connection);
         retainedPetCmd.Parameters.AddWithValue("@petId", pet.PetId);
         var retainedPetCount = Convert.ToInt32(await retainedPetCmd.ExecuteScalarAsync());
-        Assert.Equal(1, retainedPetCount);
+        Assert.Equal(0, retainedPetCount);
 
         await using var retainedCaseCmd = new MySqlCommand("SELECT COUNT(*) FROM TreatmentCase WHERE TreatmentCaseId = @caseId", connection);
         retainedCaseCmd.Parameters.AddWithValue("@caseId", treatmentCase.TreatmentCaseId);
         var retainedCaseCount = Convert.ToInt32(await retainedCaseCmd.ExecuteScalarAsync());
-        Assert.Equal(1, retainedCaseCount);
+        Assert.Equal(0, retainedCaseCount);
     }
 
     [Fact]

@@ -207,7 +207,7 @@ public sealed class ApiIntegrationTests : IClassFixture<ApiIntegrationTests.Fact
     }
 
     [Fact]
-    public async Task CaseDraftProgramme_DeleteBlockedWhenVersionHistoryExists_ReturnsConflict()
+    public async Task CaseDraftProgramme_DeleteWithVersionHistoryForceDeletes_ReturnsNoContent()
     {
         var ownerCreate = await _client.PostAsJsonAsync("/api/owners", new SaveOwnerRequest
         {
@@ -263,8 +263,12 @@ public sealed class ApiIntegrationTests : IClassFixture<ApiIntegrationTests.Fact
             await cmd.ExecuteNonQueryAsync();
         }
 
+        // Force-delete removes version history and succeeds.
         var deleteProgramme = await _client.DeleteAsync($"/api/programmes/{programme.ProgrammeId}");
-        Assert.Equal(HttpStatusCode.Conflict, deleteProgramme.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, deleteProgramme.StatusCode);
+
+        var getProgramme = await _client.GetAsync($"/api/programmes/{programme.ProgrammeId}");
+        Assert.Equal(HttpStatusCode.NotFound, getProgramme.StatusCode);
     }
 
     [Fact]
@@ -478,6 +482,12 @@ public sealed class ApiIntegrationTests : IClassFixture<ApiIntegrationTests.Fact
                 ?? "Server=localhost;Port=3306;Database=canine_physiotherapy;User=root;Password=P3nyf@n01;SslMode=None";
 
             _dbConnection = dbConnection;
+
+            // Ensure schema/data is aligned before the API host starts; startup
+            // seeding queries exercise attribution columns introduced in Increment 8.
+            IntegrationTestDatabaseReset.ResetToSeedAsync(_dbConnection)
+                .GetAwaiter()
+                .GetResult();
 
             builder.UseEnvironment("IntegrationTesting");
             builder.UseSetting("ConnectionStrings:CaninePhysioDb", dbConnection);

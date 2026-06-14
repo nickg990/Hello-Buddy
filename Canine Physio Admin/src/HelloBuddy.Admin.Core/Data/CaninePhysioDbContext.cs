@@ -34,6 +34,8 @@ public partial class CaninePhysioDbContext : DbContext
 
     public virtual DbSet<Practitioner> Practitioners { get; set; }
 
+    public virtual DbSet<Practitionerlogin> Practitionerlogins { get; set; }
+
     public virtual DbSet<PractitionerPet> PractitionerPets { get; set; }
 
     public virtual DbSet<Programme> Programmes { get; set; }

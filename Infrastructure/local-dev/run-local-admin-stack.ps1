@@ -234,7 +234,7 @@ if (-not $SkipApi) {
 }
 
 if (-not $SkipUi) {
-    Start-ServiceProcess -Title "HelloBuddy UI" -Command "`$env:Api__Uri='http://localhost:5080'; dotnet run --no-build --no-restore --project src/HelloBuddy.Ui/HelloBuddy.Ui.csproj --launch-profile http"
+    Start-ServiceProcess -Title "HelloBuddy UI" -Command "`$env:Api__Uri='http://localhost:5080'; `$env:Auth__UseDbBackedServices='true'; dotnet run --no-build --no-restore --project src/HelloBuddy.Ui/HelloBuddy.Ui.csproj --launch-profile http"
 }
 
 $deadline = (Get-Date).AddSeconds($StartupTimeoutSeconds)

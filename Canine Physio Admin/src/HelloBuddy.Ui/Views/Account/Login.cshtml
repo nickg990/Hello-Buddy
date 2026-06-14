@@ -1,0 +1,39 @@
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title text-center mb-4">Canine Physio - Admin Login</h2>
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @Html.ValidationSummary(excludePropertyErrors: false)
+                        </div>
+                    }
+
+                    <form method="post" asp-action="Login">
+                        <div class="mb-3">
+                            <label for="Email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="Email" name="Email" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="Password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="Password" name="Password" required />
+                        </div>
+
+                        <!-- Honeypot: bots often fill "email" fields by pattern -->
+                        <input type="hidden" name="AdminEmail" value="" />
+
+                        <button type="submit" class="btn btn-primary w-100">Sign In</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

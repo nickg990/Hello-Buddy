@@ -11,6 +11,11 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Templates\Programme.cshtml" />
+    <!-- Logo embedded from the UI project so the PDF service is self-contained.
+         Dockerfile.api copies all of src/ so this relative path resolves during build. -->
+    <EmbeddedResource Include="..\HelloBuddy.Ui\wwwroot\img\logo-disc.svg">
+      <LogicalName>HelloBuddy.Admin.Pdf.Templates.logo-disc.svg</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
   <PropertyGroup>

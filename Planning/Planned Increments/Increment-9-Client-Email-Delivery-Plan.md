@@ -1,7 +1,12 @@
 # Increment 9 — Client Email Delivery (Send Programme PDF) Plan
 
+> **CANCELLED / WITHDRAWN (2026-06-12).** The email/Send PDF capability was implemented and then
+> withdrawn as over-complicating Release 1. Removal is tracked by
+> [ACR015](../Acceptance%20Testing%20Change%20Requests/ACR015-Remove%20Email%20PDF%20Functionality.md).
+> This plan is retained for historical context only and should not be implemented.
+
 **Created:** 2026-06-11
-**Status:** Draft for review (key decisions confirmed 2026-06-11 — see Section 9; minor questions in Section 10)
+**Status:** Cancelled / Withdrawn (2026-06-12) — superseded by ACR015 (remove email functionality)
 **Scope:** Hello Buddy Canine Physiotherapy Admin — Release 1, Increment 9
 **Parent plan:** [Release-1-Prototype-Epic-and-Increment-Stories.md](../Release-1-Prototype-Epic-and-Increment-Stories.md)
 **Depends on:** Increment 8 plan in [Increment-8-Login-and-System-Administration-Plan.md](Increment-8-Login-and-System-Administration-Plan.md) (logged-in physio identity/email)

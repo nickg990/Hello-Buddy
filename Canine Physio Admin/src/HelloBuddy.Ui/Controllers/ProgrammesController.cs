@@ -3,12 +3,15 @@ using HelloBuddy.Ui.Models;
 using HelloBuddy.Ui.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.Text.RegularExpressions;
 
 namespace HelloBuddy.Ui.Controllers;
 
 [Route("Programmes/{id:long}")]
 public class ProgrammesController : Controller
 {
+    private static readonly Regex MultiWhitespaceRegex = new(@"\s+", RegexOptions.Compiled);
+
     private readonly IAdminApiClient _api;
     private readonly ILogger<ProgrammesController> _logger;
 
@@ -201,11 +204,41 @@ public class ProgrammesController : Controller
     public async Task<IActionResult> Preview(ulong id, CancellationToken ct)
     {
         var vm = await _api.GetProgrammeAsync(id, ct);
-        return vm is null ? NotFound() : View("Preview", vm);
+        if (vm is null)
+        {
+            return NotFound();
+        }
+
+        var history = await _api.GetProgrammeVersionHistoryAsync(id, ct);
+        ViewData["IsLockedForEdit"] = history is { Versions.Count: > 0 };
+        return View("Preview", vm);
+    }
+
+    [HttpGet("Versions/{versionId:long}/Pdf")]
+    public async Task<IActionResult> ViewVersionPdf(ulong id, ulong versionId, CancellationToken ct)
+    {
+        var doc = await _api.GetProgrammeVersionPdfAsync(id, versionId, ct);
+        if (doc is null)
+        {
+            return NotFound();
+        }
+
+        return File(doc.Bytes, doc.ContentType);
+    }
+
+    [HttpPost("Versions/{versionId:long}/Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteVersion(ulong id, ulong versionId, CancellationToken ct)
+    {
+        var deleted = await _api.DeleteProgrammeVersionAsync(id, versionId, ct);
+        TempData[deleted ? "Saved" : "Error"] = deleted
+            ? "Version deleted."
+            : "Version not found.";
+        return RedirectToAction(nameof(History), new { id });
     }
 
     [HttpGet("PreviewPdf")]
-    public async Task<IActionResult> PreviewPdf(ulong id, bool download, CancellationToken ct)
+    public async Task<IActionResult> PreviewPdf(ulong id, bool download, string? downloadToken, CancellationToken ct)
     {
         var pdf = await _api.GetProgrammePreviewPdfAsync(id, ct);
         if (pdf is null)
@@ -215,7 +248,25 @@ public class ProgrammesController : Controller
 
         if (download)
         {
-            return File(pdf.Bytes, pdf.ContentType, pdf.FileName);
+            if (!string.IsNullOrWhiteSpace(downloadToken))
+            {
+                Response.Cookies.Append(
+                    "pdf-download-complete",
+                    downloadToken,
+                    new CookieOptions
+                    {
+                        Path = "/",
+                        HttpOnly = false,
+                        IsEssential = true,
+                        SameSite = SameSiteMode.Lax,
+                        Secure = Request.IsHttps,
+                        Expires = DateTimeOffset.UtcNow.AddMinutes(1),
+                    });
+            }
+
+            var programme = await _api.GetProgrammeAsync(id, ct);
+            var downloadFileName = BuildPreviewDownloadFileName(programme, id, pdf.FileName);
+            return File(pdf.Bytes, pdf.ContentType, downloadFileName);
         }
 
         return File(pdf.Bytes, pdf.ContentType);
@@ -273,7 +324,15 @@ public class ProgrammesController : Controller
             throw;
         }
 
-        return RedirectToAction(nameof(Builder), new { id });
+        // Success path already set TempData["Published"]; fetch the programme to get its case id
+        // for the redirect. On failure the catch set TempData["Error"] and we return to Preview.
+        if (TempData.ContainsKey("Published"))
+        {
+            var programme = await _api.GetProgrammeAsync(id, ct);
+            return RedirectToAction("Index", "CaseDetail", new { id = programme?.TreatmentCaseId ?? 0 });
+        }
+
+        return RedirectToAction(nameof(Preview), new { id });
     }
 
     // Absolute route so this action lives outside the {id:long} class prefix
@@ -310,4 +369,31 @@ public class ProgrammesController : Controller
 
     private bool IsAjaxRequest()
         => string.Equals(Request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
+
+    private static string BuildPreviewDownloadFileName(ProgrammeVm? programme, ulong programmeId, string fallbackFileName)
+    {
+        if (programme is null)
+        {
+            return fallbackFileName;
+        }
+
+        var baseName = $"{programme.ProgrammeName} {programme.StartDate:yyyy-MM-dd}";
+        if (programme.EndDate is { } endDate)
+        {
+            baseName += $" to {endDate:yyyy-MM-dd}";
+        }
+
+        var invalidChars = Path.GetInvalidFileNameChars();
+        var sanitizedChars = baseName
+            .Select(ch => invalidChars.Contains(ch) ? ' ' : ch)
+            .ToArray();
+        var sanitized = MultiWhitespaceRegex.Replace(new string(sanitizedChars), " ").Trim();
+        if (string.IsNullOrWhiteSpace(sanitized))
+        {
+            sanitized = $"programme-{programmeId} {programme.StartDate:yyyy-MM-dd}";
+        }
+
+        return $"{sanitized}.pdf";
+    }
+
 }

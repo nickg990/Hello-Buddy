@@ -1,7 +1,7 @@
 @model HelloBuddy.Ui.Models.ProgrammesBuilderPageVm
 @{
     var programme = Model.Programme;
-    ViewData["Title"] = $"Builder: {programme.ProgrammeName}";
+    ViewData["Title"] = $"PDF Builder: {programme.ProgrammeName}";
 }
 
 @section Scripts {
@@ -156,24 +156,23 @@
     </script>
 }
 
-<partial name="_BackLink" model="@Url.Action("Index", "CaseDetail", new { id = programme.TreatmentCaseId })" />
-
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
-        <h1 class="mb-1">@programme.ProgrammeName</h1>
-        <p class="text-muted mb-0">Programme #@programme.ProgrammeId · @programme.CaseTitle · @programme.PetName (@programme.OwnerName)</p>
+        <h2>Exercise Programme Builder</h2>
+        <p class="text-muted mb-1">
+            <a asp-controller="Owners" asp-action="Details" asp-route-id="@programme.OwnerId">@programme.OwnerName</a>
+            <span> . </span>
+            <a asp-controller="Pets" asp-action="Details" asp-route-id="@programme.PetId">@programme.PetName</a>
+            <span> . </span>
+            <a asp-controller="CaseDetail" asp-action="Index" asp-route-id="@programme.TreatmentCaseId">@programme.CaseTitle</a>
+            <span> . </span>
+            <span>@programme.ProgrammeName</span>
+        </p>
     </div>
     <div class="d-flex gap-2 flex-wrap justify-content-end">
-        <a class="btn btn-outline-secondary" asp-action="Preview" asp-route-id="@programme.ProgrammeId">Open preview page</a>
-        <a class="btn btn-outline-secondary" asp-action="History" asp-route-id="@programme.ProgrammeId">Version history</a>
-        <form method="post" asp-action="CreateDraftFromPublished" asp-route-id="@programme.ProgrammeId" class="d-inline">
-            @Html.AntiForgeryToken()
-            <button type="submit" class="btn btn-outline-primary">New draft from published</button>
-        </form>
-        <form method="post" asp-action="Publish" asp-route-id="@programme.ProgrammeId" class="d-inline">
-            @Html.AntiForgeryToken()
-            <button type="submit" class="btn btn-success">Publish PDF</button>
-        </form>
+        <a class="btn btn-outline-secondary" asp-controller="CaseDetail" asp-action="Index" asp-route-id="@programme.TreatmentCaseId">&larr; Back to treatment case</a>
+        <a class="btn btn-outline-secondary" asp-action="Preview" asp-route-id="@programme.ProgrammeId">PDF Viewer</a>
+        <a class="btn btn-outline-secondary" asp-action="History" asp-route-id="@programme.ProgrammeId">PDF History</a>
     </div>
 </div>
 
@@ -186,3 +185,4 @@
         <partial name="_BuilderEditor" model="Model" />
     </div>
 </div>
+

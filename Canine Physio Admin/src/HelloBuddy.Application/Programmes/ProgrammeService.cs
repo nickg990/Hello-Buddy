@@ -2,7 +2,6 @@ using HelloBuddy.Admin.Pdf;
 using HelloBuddy.Contracts;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using System.Text;
 
 namespace HelloBuddy.Application.Programmes;
 
@@ -170,6 +169,51 @@ public sealed class ProgrammeService : IProgrammeService
             programmeId, fileName, pdf.Length);
 
         return new PublishResponse(uri.ToString(), fileName, pdf.Length);
+    }
+
+    public async Task<PreviewPdfDocument?> RenderVersionPdfAsync(ulong programmeId, ulong programmeVersionId, ulong practitionerId, CancellationToken ct)
+    {
+        var versionPayload = await _repository.GetPublishedVersionPayloadAsync(
+            programmeId,
+            practitionerId,
+            programmeVersionId,
+            ct);
+
+        if (versionPayload is null)
+        {
+            return null;
+        }
+
+        var renderVm = DeserializeProgrammeVm(versionPayload.PayloadJson);
+        if (renderVm is null)
+        {
+            return null;
+        }
+
+        var html = await _template.RenderAsync(renderVm, ct);
+        var pdf = await _pdfRenderer.RenderAsync(html, ct);
+        var fileName = $"programme-version-{programmeVersionId}.pdf";
+        return new PreviewPdfDocument(pdf, "application/pdf", fileName);
+    }
+
+    public Task<bool> DeleteVersionAsync(ulong programmeId, ulong programmeVersionId, ulong practitionerId, CancellationToken ct)
+        => _repository.DeleteVersionAsync(programmeId, programmeVersionId, practitionerId, ct);
+
+    private static ProgrammeVm? DeserializeProgrammeVm(string payloadJson)
+    {
+        if (string.IsNullOrWhiteSpace(payloadJson))
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<ProgrammeVm>(payloadJson);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     private async Task<ProgrammeVm> BuildRenderVmAsync(ProgrammeVm vm, CancellationToken ct)

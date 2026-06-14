@@ -7,69 +7,77 @@
 <title>@Model.ProgrammeName &mdash; @Model.PetName</title>
 <style>
 @@page { size: A4; margin: 0; }
-body { font-family: 'Segoe UI', Arial, sans-serif; color: #222; margin: 0; padding: 0; font-size: 11pt; line-height: 1.4; }
-.container { padding: 0 4mm; }
-h1 { margin: 0 0 4px 0; font-size: 20pt; }
-h2 { margin: 16px 0 4px 0; font-size: 14pt; border-bottom: 1px solid #ccc; padding-bottom: 2px; }
-.subhead { color: #666; margin-bottom: 12px; }
-.meta { display: flex; gap: 24px; margin-bottom: 12px; }
-.meta div { flex: 1; }
-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
-th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #eee; vertical-align: top; }
-th { background: #f4f4f4; font-weight: 600; font-size: 10pt; }
-.ex-title { font-weight: 600; }
-.ex-obj { color: #666; font-size: 10pt; }
-.ex-cell { display: flex; gap: 8px; align-items: flex-start; }
-.ex-media { width: 70px; height: 70px; flex: 0 0 70px; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f8f8f8; }
-.ex-media img { max-width: 100%; max-height: 100%; }
-.ex-media-link, .ex-media-empty { color: #888; font-size: 8pt; text-align: center; text-decoration: none; }
-.ex-info { flex: 1; }
-.session { break-inside: avoid; margin-bottom: 12px; }
-.footer { color: #888; font-size: 9pt; margin-top: 24px; text-align: center; }
-.col-exercise-wide { width: 40%; }
-.col-reps { width: 10%; }
-.col-sets { width: 10%; }
-.col-hold { width: 12%; }
+/* ── Body ──────────────────────────────────────────────────────────────── */
+body { font-family: Georgia, Cambria, 'Times New Roman', serif; color: #223843; margin: 0; padding: 0; font-size: 10.5pt; line-height: 1.5; }
+/* ── Header band (dark #28404F) ──────────────────────────────────────── */
+.pdf-header { background: #28404F; padding: 10mm 14mm; display: flex; align-items: center; gap: 14px; }
+/* Logo sized to match the header text block height (title 17pt + 2 sub-lines 9pt each). */
+.pdf-header-logo { width: 68px; height: 68px; flex-shrink: 0; }
+.pdf-header-body { flex: 1; }
+.pdf-header-title { color: #fff; font-size: 17pt; font-weight: 700; margin: 0 0 1px 0; line-height: 1.2; }
+.pdf-header-sub { color: #D9E7EC; font-size: 9pt; margin: 0; line-height: 1.6; }
+/* ── Content wrapper ─────────────────────────────────────────────────── */
+.content { padding: 0 12mm 10mm 12mm; }
+/* ── Summary band (#D9E7EC) ──────────────────────────────────────────── */
+.summary-band { background: #D9E7EC; border: 1px solid #B9CBD4; margin: 6mm 0 5mm 0; padding: 5mm 6mm; border-radius: 2px; }
+.summary-title { font-size: 16pt; font-weight: 700; color: #223843; margin: 0 0 3px 0; }
+.summary-meta { color: #223843; font-size: 9.5pt; margin: 2px 0; }
+.summary-muted { color: #5A6E7A; font-size: 9pt; margin: 2px 0; }
+/* ── Session ─────────────────────────────────────────────────────────── */
+/* ERR-AT-013: removed break-inside:avoid from .session so AM and PM sessions
+   flow continuously rather than forcing a whole session onto a new page.
+   break-after:avoid on the heading prevents orphan section titles at page bottom.
+   break-inside:avoid is retained on .ex-row so individual exercise rows do not split. */
+.session { margin-bottom: 6mm; }
+.session-heading { background: #D9E7EC; border: 1px solid #B9CBD4; border-radius: 2px 2px 0 0; padding: 3mm 5mm; break-after: avoid; }
+.session-heading h2 { font-size: 12pt; font-weight: 700; color: #223843; margin: 0; }
+.session-objective { font-size: 9pt; color: #5A6E7A; background: #F8FBFC; border-left: 1px solid #B9CBD4; border-right: 1px solid #B9CBD4; padding: 2mm 5mm; }
+/* ── Exercise rows ───────────────────────────────────────────────────── */
+.ex-row { background: #F8FBFC; border: 1px solid #B9CBD4; border-top: 0; padding: 4mm 5mm; break-inside: avoid; display: flex; gap: 10px; align-items: flex-start; }
+.ex-row:last-child { border-radius: 0 0 2px 2px; }
+.ex-media { width: 76px; height: 76px; flex: 0 0 76px; border: 1px solid #6392AE; border-radius: 2px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #D4E0E5; }
+.ex-media img { max-width: 100%; max-height: 100%; object-fit: cover; }
+.ex-media-link { color: #245E7C; font-size: 8pt; text-align: center; text-decoration: underline; padding: 4px; }
+.ex-media-empty { color: #5A6E7A; font-size: 8pt; text-align: center; padding: 4px; }
+.ex-info { flex: 1; min-width: 0; }
+.ex-title { font-weight: 700; font-size: 11pt; color: #223843; margin: 0 0 2px 0; }
+.ex-prescription { font-size: 9.5pt; color: #223843; margin: 0 0 2px 0; }
+.ex-obj { color: #5A6E7A; font-size: 9pt; margin: 0; }
+/* ── Footer ──────────────────────────────────────────────────────────── */
+.pdf-footer { color: #5A6E7A; font-size: 8pt; margin-top: 8mm; text-align: center; border-top: 1px solid #B9CBD4; padding-top: 3mm; }
 </style>
 </head>
 <body>
-<div class="container">
-<h1>@Model.ProgrammeName</h1>
-<div class="subhead">@Model.CaseTitle &middot; Programme #@Model.ProgrammeId &middot; @Model.Status</div>
-<div class="meta">
-<div><strong>Pet:</strong> @Model.PetName</div>
-<div><strong>Owner:</strong> @Model.OwnerName</div>
-<div><strong>Starts:</strong> @Model.StartDate.ToString("yyyy-MM-dd")@(Model.EndDate.HasValue ? " – " + Model.EndDate.Value.ToString("yyyy-MM-dd") : "")</div>
+
+<div class="pdf-header">
+  <img src="__LOGO_DATA_URI__" alt="Hello Buddy" class="pdf-header-logo" />
+  <div class="pdf-header-body">
+    <p class="pdf-header-title">Canine Physiotherapy</p>
+    <p class="pdf-header-sub">Home exercise programme</p>
+    <p class="pdf-header-sub">Prepared for @Model.PetName &middot; @Model.OwnerName</p>
+  </div>
 </div>
-@if (!string.IsNullOrWhiteSpace(Model.Notes))
-{
-<p><strong>Notes:</strong> @Model.Notes</p>
-}
+
+<div class="content">
+
+<div class="summary-band">
+  <p class="summary-title">@Model.ProgrammeName</p>
+  <p class="summary-meta">@Model.CaseTitle &middot; @Model.Status &middot; @Model.StartDate.ToString("d MMMM yyyy")@(Model.EndDate.HasValue ? " to " + Model.EndDate.Value.ToString("d MMMM yyyy") : "")</p>
+  <p class="summary-muted">Pet: @Model.PetName &middot; Owner: @Model.OwnerName</p>
+</div>
+
 @foreach (var session in Model.Sessions)
 {
 <div class="session">
-<h2>Session @session.SortOrder &mdash; @session.Period</h2>
+  <div class="session-heading"><h2>@session.Period</h2></div>
 @if (!string.IsNullOrWhiteSpace(session.Objective))
 {
-<div class="subhead">@session.Objective</div>
+  <div class="session-objective">@session.Objective</div>
 }
-<table>
-<thead>
-<tr>
-<th class="col-exercise-wide">Exercise</th>
-<th class="col-reps">Reps</th>
-<th class="col-sets">Sets</th>
-<th class="col-hold">Hold (s)</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
 @foreach (var ex in session.Exercises)
 {
-<tr>
-<td>
-<div class="ex-cell">
-<div class="ex-media">
+  <div class="ex-row">
+    <div class="ex-media">
 @if (!string.IsNullOrWhiteSpace(ex.ImageUrl) && !string.IsNullOrWhiteSpace(ex.VideoUrl))
 {
 <a href="@ex.VideoUrl"><img src="@ex.ImageUrl" alt="@ex.ExerciseTitle image" /></a>
@@ -86,27 +94,22 @@ else
 {
 <span class="ex-media-empty">No image</span>
 }
-</div>
-<div class="ex-info">
-<div class="ex-title">@ex.ExerciseTitle</div>
+    </div>
+    <div class="ex-info">
+      <p class="ex-title">@ex.ExerciseTitle</p>
+      <p class="ex-prescription">@(ex.Reps?.ToString() ?? "&mdash;") reps &middot; @(ex.Sets?.ToString() ?? "&mdash;") sets@(ex.HoldSeconds.HasValue ? " &middot; " + ex.HoldSeconds.Value + "s hold" : "")</p>
 @if (!string.IsNullOrWhiteSpace(ex.ObjectiveSummary))
 {
-<div class="ex-obj">@ex.ObjectiveSummary</div>
+      <p class="ex-obj">@ex.ObjectiveSummary</p>
+}
+    </div>
+  </div>
 }
 </div>
-</div>
-</td>
-<td>@(ex.Reps?.ToString() ?? "—")</td>
-<td>@(ex.Sets?.ToString() ?? "—")</td>
-<td>@(ex.HoldSeconds?.ToString() ?? "—")</td>
-<td>@(ex.Notes ?? "")</td>
-</tr>
 }
-</tbody>
-</table>
-</div>
-}
-<div class="footer">Generated @DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm 'UTC'") &middot; Hello Buddy Cloud Admin</div>
+
+<div class="pdf-footer">Generated @DateTime.Now.ToString("yyyy-MM-dd HH:mm") &middot; @Model.PractitionerName</div>
+
 </div>
 </body>
 </html>

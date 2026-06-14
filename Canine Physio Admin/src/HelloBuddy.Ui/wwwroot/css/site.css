@@ -8,8 +8,20 @@ html {
   }
 }
 
+/* ── Hello Buddy brand tokens (ACR025) ──────────────────────────────────────
+   Source of truth: Canine Physio App/Canine Physio App/Theming/Colors.xaml
+   ─────────────────────────────────────────────────────────────────────────── */
+:root {
+  --hb-brand-primary:       #4A7A96;
+  --hb-brand-primary-dark:  #28404F;
+  --hb-brand-primary-light: #B3CDD6;
+  --hb-brand-mist:          #D4E0E5;
+  --hb-disabled-surface:    #E0E0E0;
+  --hb-disabled-text:       #9E9E9E;
+}
+
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--hb-brand-primary);
 }
 
 html {
@@ -306,4 +318,65 @@ body {
   width: 180px;
   max-width: 60vw;
   height: auto;
+}
+
+/* ── Brand button colours (ACR025) ────────────────────────────────────────────
+   Overrides Bootstrap 5 CSS-variable defaults using the Hello Buddy brand palette.
+   All button ROLE mapping (primary / outline-secondary / outline-danger) was set
+   in ACR022 and is unchanged here; this is a colour-only reskin.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Primary action button: solid BrandPrimary, hover/active BrandPrimaryDark.
+   ERR-AT-012: literal color/background-color/border-color added alongside the
+   CSS-variable declarations so white text is guaranteed regardless of scoped-
+   bundle load order, variable resolution, or browser CSS-cache state. */
+.btn-primary {
+  --bs-btn-color:                  #fff;
+  --bs-btn-bg:                     var(--hb-brand-primary);
+  --bs-btn-border-color:           var(--hb-brand-primary);
+  --bs-btn-hover-color:            #fff;
+  --bs-btn-hover-bg:               var(--hb-brand-primary-dark);
+  --bs-btn-hover-border-color:     var(--hb-brand-primary-dark);
+  --bs-btn-focus-shadow-rgb:       74, 122, 150;
+  --bs-btn-active-color:           #fff;
+  --bs-btn-active-bg:              var(--hb-brand-primary-dark);
+  --bs-btn-active-border-color:    var(--hb-brand-primary-dark);
+  --bs-btn-active-shadow:          inset 0 3px 5px rgba(0, 0, 0, .125);
+  --bs-btn-disabled-color:         #fff;
+  --bs-btn-disabled-bg:            var(--hb-disabled-surface);
+  --bs-btn-disabled-border-color:  var(--hb-disabled-surface);
+  /* Literal fallbacks — ensure white text is always applied */
+  color:            #fff;
+  background-color: var(--hb-brand-primary);
+  border-color:     var(--hb-brand-primary);
+}
+.btn-primary:hover,
+.btn-primary:focus-visible {
+  color:            #fff;
+  background-color: var(--hb-brand-primary-dark);
+  border-color:     var(--hb-brand-primary-dark);
+}
+.btn-primary:active,
+.btn-primary.active {
+  color:            #fff;
+  background-color: var(--hb-brand-primary-dark);
+  border-color:     var(--hb-brand-primary-dark);
+}
+
+/* Secondary / cancel / back button: transparent bg, BrandPrimary border.
+   Text uses BrandPrimaryDark (#28404F) to achieve WCAG AA contrast (~9:1 on white). */
+.btn-outline-secondary {
+  --bs-btn-color:                  var(--hb-brand-primary-dark);
+  --bs-btn-border-color:           var(--hb-brand-primary);
+  --bs-btn-hover-color:            var(--hb-brand-primary-dark);
+  --bs-btn-hover-bg:               var(--hb-brand-mist);
+  --bs-btn-hover-border-color:     var(--hb-brand-primary);
+  --bs-btn-focus-shadow-rgb:       74, 122, 150;
+  --bs-btn-active-color:           var(--hb-brand-primary-dark);
+  --bs-btn-active-bg:              var(--hb-brand-mist);
+  --bs-btn-active-border-color:    var(--hb-brand-primary);
+  --bs-btn-active-shadow:          inset 0 3px 5px rgba(0, 0, 0, .125);
+  --bs-btn-disabled-color:         var(--hb-disabled-text);
+  --bs-btn-disabled-bg:            transparent;
+  --bs-btn-disabled-border-color:  var(--hb-disabled-surface);
 }

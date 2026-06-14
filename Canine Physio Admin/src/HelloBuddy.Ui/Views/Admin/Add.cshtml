@@ -1,0 +1,63 @@
+﻿@model AddPractitionerViewModel
+
+@{
+    ViewData["Title"] = "Add Practitioner";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h2 class="mb-4">Add New Practitioner</h2>
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger" role="alert">
+                    @Html.ValidationSummary(excludePropertyErrors: false)
+                </div>
+            }
+
+            <form method="post" asp-action="Add" class="needs-validation">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="FirstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="FirstName" name="FirstName" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label for="LastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="LastName" name="LastName" required />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="Email" class="form-label">Email <span class="text-danger">*</span></label>
+                    <input type="email" class="form-control" id="Email" name="Email" required />
+                </div>
+
+                <div class="mb-3">
+                    <label for="Phone" class="form-label">Phone</label>
+                    <input type="tel" class="form-control" id="Phone" name="Phone" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="Role" class="form-label">Role <span class="text-danger">*</span></label>
+                    <select class="form-select" id="Role" name="Role" required>
+                        <option value="physiotherapist">Physiotherapist</option>
+                        <option value="administrator">Administrator</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="Password" class="form-label">Initial Password <span class="text-danger">*</span></label>
+                    <input type="password" class="form-control" id="Password" name="Password" required />
+                    <small class="form-text text-muted">Share this securely with the practitioner. They will be required to change it on first login.</small>
+                </div>
+
+                <div class="mb-4">
+                    <button type="submit" class="btn btn-primary">Create Practitioner</button>
+                    <a href="@Url.Action("Practitioners", "Admin")" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+

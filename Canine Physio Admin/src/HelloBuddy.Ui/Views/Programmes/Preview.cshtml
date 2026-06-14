@@ -1,33 +1,91 @@
-@model HelloBuddy.Contracts.ProgrammeVm
+﻿@model HelloBuddy.Contracts.ProgrammeVm
 @{
-    ViewData["Title"] = $"Preview: {Model.ProgrammeName}";
+    ViewData["Title"] = $"PDF Viewer: {Model.ProgrammeName}";
     var previewPdfUrl = Url.Action("PreviewPdf", "Programmes", new { id = Model.ProgrammeId, download = false });
     var savePdfUrl = Url.Action("PreviewPdf", "Programmes", new { id = Model.ProgrammeId, download = true });
+    var isLockedForEdit = ViewData["IsLockedForEdit"] as bool? ?? false;
 }
-
-<partial name="_BackLink" model="@Url.Action("Builder", "Programmes", new { id = Model.ProgrammeId })" />
 
 <div class="d-flex justify-content-between align-items-start mb-3 gap-2 flex-wrap">
     <div>
-        <h1 class="mb-1">Preview PDF</h1>
-        <p class="text-muted mb-0">@Model.ProgrammeName · @Model.PetName (@Model.OwnerName)</p>
+        <h2>PDF Viewer</h2>
+        <p class="text-muted mb-1">
+            <a asp-controller="Owners" asp-action="Details" asp-route-id="@Model.OwnerId">@Model.OwnerName</a>
+            <span> . </span>
+            <a asp-controller="Pets" asp-action="Details" asp-route-id="@Model.PetId">@Model.PetName</a>
+            <span> . </span>
+            <a asp-controller="CaseDetail" asp-action="Index" asp-route-id="@Model.TreatmentCaseId">@Model.CaseTitle</a>
+            <span> . </span>
+            <a asp-action="Builder" asp-route-id="@Model.ProgrammeId">@Model.ProgrammeName</a>
+            <span> . </span>
+            <span>PDF Viewer</span>
+        </p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
-        <a class="btn btn-primary" href="@savePdfUrl">Save PDF</a>
+        <a class="btn btn-outline-secondary" asp-controller="CaseDetail" asp-action="Index" asp-route-id="@Model.TreatmentCaseId">&larr; Back to treatment case</a>
+        @if (!isLockedForEdit)
+        {
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#publishConfirmModal">Publish PDF</button>
+        }
+        <a class="btn btn-primary" href="@savePdfUrl" id="preview-download-button">
+            <span class="d-inline-flex align-items-center gap-2">
+                <span>Download PDF</span>
+                <span id="preview-download-spinner" class="d-none" role="status" aria-live="polite" aria-label="Preparing download">
+                    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                    <span>Preparing download...</span>
+                </span>
+            </span>
+        </a>
     </div>
 </div>
+
+<iframe class="d-none" id="preview-download-frame" title="Programme PDF download" aria-hidden="true"></iframe>
 
 <div class="card">
     <div class="card-body">
         <div class="programme-preview-frame-wrap">
             <div class="programme-preview-loading" id="preview-loading" role="status" aria-live="polite">
                 <div class="spinner-border text-primary" aria-hidden="true"></div>
-                <span class="programme-preview-loading-text">Loading PDF preview…</span>
+                <span class="programme-preview-loading-text">Loading PDF preview...</span>
             </div>
             <iframe src="@previewPdfUrl" title="Programme PDF preview" class="programme-preview-frame" id="preview-frame"></iframe>
         </div>
     </div>
 </div>
+
+@if (!isLockedForEdit)
+{
+    <div class="modal fade" id="publishConfirmModal" tabindex="-1" aria-labelledby="publishConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="publishConfirmModalLabel">Publish PDF?</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Publishing will generate and save a PDF of this programme.</p>
+                    <p class="mb-0"><strong>Important:</strong> Once published, this version is locked and cannot be edited.
+                    Use <em>PDF History</em> to create a new editable draft if you need further changes.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="publish-cancel" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form id="publish-form" method="post" asp-action="Publish" asp-route-id="@Model.ProgrammeId" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" id="publish-submit" class="btn btn-primary">
+                            <span class="d-inline-flex align-items-center gap-2">
+                                <span>Publish PDF</span>
+                                <span id="publish-spinner" class="d-none" role="status" aria-live="polite" aria-label="Publishing">
+                                    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                                    <span>Publishing...</span>
+                                </span>
+                            </span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @section Scripts {
     <script>
@@ -44,6 +102,107 @@
             // iframe's initial about:blank document, which reports "complete"
             // immediately and would hide the spinner before the PDF loads.
             window.setTimeout(hide, 15000);
+
+            var downloadButton = document.getElementById('preview-download-button');
+            var downloadSpinner = document.getElementById('preview-download-spinner');
+            var downloadFrame = document.getElementById('preview-download-frame');
+            if (!downloadButton || !downloadSpinner || !downloadFrame) {
+                return;
+            }
+
+            var completeCookieName = 'pdf-download-complete';
+            var pollHandle = null;
+            var timeoutHandle = null;
+            var isBusy = false;
+
+            var clearCompletionCookie = function () {
+                document.cookie = completeCookieName + '=; Max-Age=0; path=/; SameSite=Lax';
+            };
+
+            var getCompletionToken = function () {
+                var cookies = document.cookie ? document.cookie.split('; ') : [];
+                for (var i = 0; i < cookies.length; i++) {
+                    var entry = cookies[i];
+                    if (entry.indexOf(completeCookieName + '=') === 0) {
+                        return decodeURIComponent(entry.substring(completeCookieName.length + 1));
+                    }
+                }
+                return null;
+            };
+
+            var setBusy = function (busy) {
+                isBusy = busy;
+                downloadSpinner.classList.toggle('d-none', !busy);
+                downloadButton.classList.toggle('disabled', busy);
+                downloadButton.setAttribute('aria-disabled', busy ? 'true' : 'false');
+                if (busy) {
+                    downloadButton.setAttribute('tabindex', '-1');
+                } else {
+                    downloadButton.removeAttribute('tabindex');
+                }
+            };
+
+            var finishDownloadAttempt = function () {
+                if (pollHandle) {
+                    window.clearInterval(pollHandle);
+                    pollHandle = null;
+                }
+                if (timeoutHandle) {
+                    window.clearTimeout(timeoutHandle);
+                    timeoutHandle = null;
+                }
+                setBusy(false);
+            };
+
+            downloadButton.addEventListener('click', function (event) {
+                if (isBusy) {
+                    event.preventDefault();
+                    return;
+                }
+
+                event.preventDefault();
+                clearCompletionCookie();
+
+                var token = Date.now().toString(36) + Math.random().toString(36).slice(2);
+                var downloadUrl = new URL(downloadButton.href, window.location.href);
+                downloadUrl.searchParams.set('downloadToken', token);
+
+                setBusy(true);
+                downloadFrame.src = downloadUrl.toString();
+
+                pollHandle = window.setInterval(function () {
+                    if (getCompletionToken() === token) {
+                        clearCompletionCookie();
+                        finishDownloadAttempt();
+                    }
+                }, 300);
+
+                // Safety net: always release the button if completion isn't observable.
+                timeoutHandle = window.setTimeout(finishDownloadAttempt, 30000);
+            });
+
+            var publishForm = document.getElementById('publish-form');
+            var publishSubmit = document.getElementById('publish-submit');
+            var publishSpinner = document.getElementById('publish-spinner');
+            var publishCancel = document.getElementById('publish-cancel');
+            if (publishForm && publishSubmit && publishSpinner) {
+                var publishBusy = false;
+                publishForm.addEventListener('submit', function (event) {
+                    if (publishBusy) {
+                        event.preventDefault();
+                        return;
+                    }
+                    publishBusy = true;
+                    publishSpinner.classList.remove('d-none');
+                    publishSubmit.disabled = true;
+                    publishSubmit.setAttribute('aria-disabled', 'true');
+                    if (publishCancel) {
+                        publishCancel.disabled = true;
+                        publishCancel.setAttribute('aria-disabled', 'true');
+                    }
+                });
+            }
         })();
     </script>
 }
+

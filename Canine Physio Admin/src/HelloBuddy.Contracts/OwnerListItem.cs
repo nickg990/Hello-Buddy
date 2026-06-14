@@ -5,5 +5,4 @@ public sealed record OwnerListItem(
     string FullName,
     string Email,
     string? PhoneNumber,
-    int PetCount,
-    bool IsAnonymised);
+    int PetCount);

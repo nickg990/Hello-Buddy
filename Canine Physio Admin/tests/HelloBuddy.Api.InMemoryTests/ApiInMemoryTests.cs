@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.RegularExpressions;
 using HelloBuddy.Admin.Core.Data;
 using HelloBuddy.Admin.Core.Data.Entities;
@@ -85,7 +86,7 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
         {
             var db = scope.ServiceProvider.GetRequiredService<CaninePhysioDbContext>();
             var audit = await db.Auditlogs
-                .Where(a => a.EntityName == "owner" && a.EntityId == owner.OwnerId && a.ActionType == "gdpr-data-control")
+                .Where(a => a.EntityName == "owner" && a.EntityId == owner.OwnerId && a.ActionType == "gdpr-deletion")
                 .OrderByDescending(a => a.ActionDateTime)
                 .FirstOrDefaultAsync();
             Assert.NotNull(audit);
@@ -98,7 +99,7 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
     }
 
     [Fact]
-    public async Task OwnerDataControl_WithLinkedPet_AnonymisesAndHidesFromPetAndCaseScreens()
+    public async Task OwnerDataControl_WithLinkedPet_DeletesOwnerAndLinkedRecords()
     {
         var ownerCreate = await _client.PostAsJsonAsync("/api/owners", new SaveOwnerRequest
         {
@@ -138,18 +139,14 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
         Assert.Equal(HttpStatusCode.OK, control.StatusCode);
         var payload = await control.Content.ReadFromJsonAsync<OwnerDataControlResponse>();
         Assert.NotNull(payload);
-        Assert.Equal("anonymised", payload.Outcome);
-        Assert.NotNull(payload.Owner);
-        Assert.True(payload.Owner.IsAnonymised);
-        Assert.Equal("Anonymised", payload.Owner.FirstName);
-        Assert.StartsWith("Owner-", payload.Owner.LastName, StringComparison.Ordinal);
-        Assert.Contains("@redacted.local", payload.Owner.Email, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("deleted", payload.Outcome);
+        Assert.Null(payload.Owner);
 
         var ownerGet = await _client.GetAsync($"/api/owners/{owner.OwnerId}");
         Assert.Equal(HttpStatusCode.NotFound, ownerGet.StatusCode);
 
-        var ownerGetIncludingAnonymised = await _client.GetAsync($"/api/owners/{owner.OwnerId}?includeAnonymised=true");
-        Assert.Equal(HttpStatusCode.OK, ownerGetIncludingAnonymised.StatusCode);
+        var ownerGetAfterDeletion = await _client.GetAsync($"/api/owners/{owner.OwnerId}");
+        Assert.Equal(HttpStatusCode.NotFound, ownerGetAfterDeletion.StatusCode);
 
         var petGet = await _client.GetAsync($"/api/pets/{pet.PetId}");
         Assert.Equal(HttpStatusCode.NotFound, petGet.StatusCode);
@@ -162,18 +159,18 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
         {
             var db = scope.ServiceProvider.GetRequiredService<CaninePhysioDbContext>();
             var audit = await db.Auditlogs
-                .Where(a => a.EntityName == "owner" && a.EntityId == owner.OwnerId && a.ActionType == "gdpr-data-control")
+                .Where(a => a.EntityName == "owner" && a.EntityId == owner.OwnerId && a.ActionType == "gdpr-deletion")
                 .OrderByDescending(a => a.ActionDateTime)
                 .FirstOrDefaultAsync();
             Assert.NotNull(audit);
             Assert.Equal((ulong)1, audit.PractitionerId);
-            Assert.Contains("anonymised", audit.NewValuesJson ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("deleted", audit.NewValuesJson ?? string.Empty, StringComparison.OrdinalIgnoreCase);
 
             var retainedPet = await db.Pets.FirstOrDefaultAsync(x => x.PetId == pet.PetId);
-            Assert.NotNull(retainedPet);
+            Assert.Null(retainedPet);
 
             var retainedCase = await db.Treatmentcases.FirstOrDefaultAsync(x => x.TreatmentCaseId == treatmentCase.TreatmentCaseId);
-            Assert.NotNull(retainedCase);
+            Assert.Null(retainedCase);
         }
     }
 
@@ -213,6 +210,78 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
         using var client = new Factory().CreateClient();
         var response = await client.GetAsync("/api/owners");
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task AdminEndpoints_WithoutPractitionerHeader_ReturnUnauthorized()
+    {
+        using var client = new Factory().CreateClient();
+
+        var response = await client.GetAsync("/api/admin/practitioners");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task AdminEndpoints_NonAdminRole_ReturnForbiddenForAllRoutes()
+    {
+        using var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Practitioner-Id", "2");
+        client.DefaultRequestHeaders.Add("X-Practitioner-Role", "physiotherapist");
+
+        var requests = new List<HttpRequestMessage>
+        {
+            new(HttpMethod.Get, "/api/admin/practitioners"),
+            new(HttpMethod.Post, "/api/admin/practitioners")
+            {
+                Content = JsonContent.Create(new
+                {
+                    FirstName = "Non",
+                    LastName = "Admin",
+                    Email = "non-admin@example.test",
+                    PhoneNumber = "07123 456789",
+                    Role = "physiotherapist",
+                    InitialPassword = "not-used-in-policy-test"
+                })
+            },
+            new(HttpMethod.Put, "/api/admin/practitioners/1")
+            {
+                Content = JsonContent.Create(new
+                {
+                    FirstName = "Renamed",
+                    LastName = "User",
+                    Email = "renamed@example.test",
+                    PhoneNumber = "07123 456789"
+                })
+            },
+            new(HttpMethod.Post, "/api/admin/practitioners/1/set-password")
+            {
+                Content = JsonContent.Create(new { NewPassword = "Password12345!" })
+            },
+            new(HttpMethod.Post, "/api/admin/change-password")
+            {
+                Content = JsonContent.Create(new
+                {
+                    CurrentPassword = "Current123!",
+                    NewPassword = "New12345!"
+                })
+            },
+            new(HttpMethod.Delete, "/api/admin/practitioners/1")
+        };
+
+        foreach (var request in requests)
+        {
+            if (request.Content is not null)
+            {
+                request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json")
+                {
+                    CharSet = Encoding.UTF8.WebName
+                };
+            }
+
+            using var response = await client.SendAsync(request);
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        }
     }
 
     [Fact]
@@ -456,7 +525,7 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
     }
 
     [Fact]
-    public async Task ProgrammeDelete_WithVersionHistory_ReturnsConflict()
+    public async Task ProgrammeDelete_WithVersionHistory_ForceDeletes()
     {
         var (_, programme) = await CreateDraftProgrammeForDeleteAsync();
 
@@ -478,7 +547,10 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
         }
 
         var delete = await _client.DeleteAsync($"/api/programmes/{programme.ProgrammeId}");
-        Assert.Equal(HttpStatusCode.Conflict, delete.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
+
+        var get = await _client.GetAsync($"/api/programmes/{programme.ProgrammeId}");
+        Assert.Equal(HttpStatusCode.NotFound, get.StatusCode);
     }
 
     [Fact]
@@ -1241,8 +1313,24 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
         Assert.Contains("No image", mediaBox.Value);
     }
 
+    [Fact]
+    public async Task ProgrammePdfTemplate_HeaderContainsLogoImage_NotHbPlaceholder()
+    {
+        var template = new RazorProgrammePdfTemplate();
+        var vm = BuildProgrammeVmWithExercise(imageUrl: null, videoUrl: null);
+
+        var html = await template.RenderAsync(vm);
+
+        // HB text placeholder must be replaced by the real logo (ERR-AT-011).
+        Assert.DoesNotContain(">HB<", html);
+        // Logo must be inlined as a base64 SVG data URI so it renders in headless Chromium.
+        Assert.Contains("data:image/svg+xml;base64,", html);
+    }
+
     private static ProgrammeVm BuildProgrammeVmWithExercise(string? imageUrl, string? videoUrl)
         => new(
+            1,
+            1,
             1,
             1,
             "Buddy Hind Limb Rehab",
@@ -1252,6 +1340,7 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
             "Improving hind-limb control.",
             "Buddy Hind Limb Rehab",
             "Buddy",
+            "Amelia Carter",
             "Amelia Carter",
             [
                 new ProgrammeVm.SessionRow(
@@ -1458,6 +1547,8 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
             builder.UseSetting("ConnectionStrings:CaninePhysioDb", "Server=localhost;Database=unused;User=unused;Password=unused");
             builder.UseSetting("PdfService:Uri", "http://localhost:18080");
             builder.UseSetting("Seed:ExerciseLibrary:Enabled", "true");
+            builder.UseSetting("Seed:PractitionerLogin:Enabled", "true");
+            builder.UseSetting("Seed:PractitionerLogin:InitialPassword", "InMemoryTestsOnlyPassword123!");
             builder.UseSetting("Storage:ExerciseMediaOrphanCleanupMode", "DeleteManagedOrphans");
 
             builder.ConfigureServices(services =>

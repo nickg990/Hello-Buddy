@@ -3,20 +3,8 @@
 
 // Write your JavaScript code.
 
-// Generic back link: navigate to the previous page when history is available,
-// otherwise fall back to the link's href (ERR-AT-004).
-(function () {
-    document.addEventListener('DOMContentLoaded', function () {
-        document.querySelectorAll('[data-back-link]').forEach(function (link) {
-            link.addEventListener('click', function (event) {
-                if (window.history.length > 1) {
-                    event.preventDefault();
-                    window.history.back();
-                }
-            });
-        });
-    });
-})();
+// Back link handler removed (ERR-AT-009): history.back() replaced by explicit
+// stable hrefs on each page. The [data-back-link] attribute is no longer used.
 
 // Toast notifications: top-right fading success/error popups (Bootstrap toasts).
 // Server-rendered toasts (from TempData) are shown on load; window.showToast lets

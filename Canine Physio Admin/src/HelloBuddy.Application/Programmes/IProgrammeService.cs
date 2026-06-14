@@ -55,4 +55,10 @@ public interface IProgrammeService
 
     /// <summary>Renders the programme to PDF and stores it, returning the publish metadata; <c>null</c> when not visible.</summary>
     Task<PublishResponse?> PublishAsync(ulong programmeId, ulong practitionerId, CancellationToken ct);
+
+    /// <summary>Renders a PDF for a specific published version; <c>null</c> when not visible or version not found.</summary>
+    Task<PreviewPdfDocument?> RenderVersionPdfAsync(ulong programmeId, ulong programmeVersionId, ulong practitionerId, CancellationToken ct);
+
+    /// <summary>Deletes a single programme version record; returns <c>true</c> when deleted, <c>false</c> when not found.</summary>
+    Task<bool> DeleteVersionAsync(ulong programmeId, ulong programmeVersionId, ulong practitionerId, CancellationToken ct);
 }

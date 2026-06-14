@@ -3,14 +3,17 @@
     ViewData["Title"] = Model.Name;
 }
 
-<partial name="_BackLink" model="@Url.Action("Index")" />
-
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
-        <h1>@Model.Name</h1>
-        <p class="text-muted mb-0">Pet #@Model.PetId</p>
+        <h2>Pet Details</h2>
+        <p class="text-muted mb-1">
+            <a asp-controller="Pets" asp-action="Index">Pets</a>
+            <span> . </span>
+            <span>@Model.Name</span>
+        </p>
     </div>
     <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" asp-controller="Pets" asp-action="Index">&larr; Back to Pets</a>
         <a class="btn btn-outline-secondary" asp-action="Edit" asp-route-id="@Model.PetId">Edit pet</a>
         <a class="btn btn-primary" asp-controller="Cases" asp-action="Create" asp-route-petId="@Model.PetId">Add treatment case</a>
     </div>
@@ -75,7 +78,7 @@ else
                     <td>@treatmentCase.Status</td>
                     <td>@treatmentCase.StartDate.ToString("yyyy-MM-dd")</td>
                     <td class="text-end">
-                        <a class="btn btn-sm btn-outline-primary" asp-controller="CaseDetail" asp-action="Index" asp-route-id="@treatmentCase.TreatmentCaseId">Open</a>
+                        <a class="btn btn-sm btn-outline-secondary" asp-controller="CaseDetail" asp-action="Index" asp-route-id="@treatmentCase.TreatmentCaseId">Open</a>
                     </td>
                 </tr>
             }

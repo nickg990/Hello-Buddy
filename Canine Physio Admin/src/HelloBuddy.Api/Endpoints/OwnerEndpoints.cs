@@ -9,15 +9,15 @@ public static class OwnerEndpoints
 {
     public static IEndpointRouteBuilder MapOwnerEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/owners", async (IOwnerRepository owners, bool? includeAnonymised, CancellationToken ct) =>
+        app.MapGet("/api/owners", async (IOwnerRepository owners, CancellationToken ct) =>
         {
-            var rows = await owners.ListAsync(includeAnonymised ?? false, ct);
+            var rows = await owners.ListAsync(ct);
             return Results.Ok(rows);
         });
 
-        app.MapGet("/api/owners/{id:long}", async (long id, IOwnerRepository owners, bool? includeAnonymised, CancellationToken ct) =>
+        app.MapGet("/api/owners/{id:long}", async (long id, IOwnerRepository owners, CancellationToken ct) =>
         {
-            var owner = await owners.GetAsync((ulong)id, includeAnonymised ?? false, ct);
+            var owner = await owners.GetAsync((ulong)id, ct);
             return owner is null ? Results.NotFound() : Results.Ok(owner);
         });
 
@@ -42,7 +42,7 @@ public static class OwnerEndpoints
             }
 
             var ownerId = await owners.CreateAsync(request, ct);
-            var owner = await owners.GetAsync(ownerId, includeAnonymised: true, ct);
+            var owner = await owners.GetAsync(ownerId, ct);
             return Results.Created($"/api/owners/{ownerId}", owner);
         });
 
@@ -73,7 +73,7 @@ public static class OwnerEndpoints
                 return Results.NotFound();
             }
 
-            var owner = await owners.GetAsync((ulong)id, includeAnonymised: true, ct);
+            var owner = await owners.GetAsync((ulong)id, ct);
             return Results.Ok(owner);
         });
 
@@ -88,12 +88,8 @@ public static class OwnerEndpoints
             {
                 OwnerDataControlResult.Deleted => Results.Ok(new OwnerDataControlResponse(
                     Outcome: "deleted",
-                    Message: "Owner record was permanently deleted because no linked clinical data was present.",
+                    Message: "Owner and all associated records, including stored programme PDFs, were permanently deleted.",
                     Owner: null)),
-                OwnerDataControlResult.Anonymised => Results.Ok(new OwnerDataControlResponse(
-                    Outcome: "anonymised",
-                    Message: "Owner personal data was anonymised while linked clinical records were retained.",
-                    Owner: await owners.GetAsync((ulong)id, includeAnonymised: true, ct))),
                 _ => Results.NotFound(),
             };
         });

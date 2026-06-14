@@ -1,23 +1,14 @@
 @model IReadOnlyList<OwnerListItem>
 @{
     ViewData["Title"] = "Owners";
-    var showAnonymised = (bool?)ViewBag.ShowAnonymised ?? false;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h1>Owners</h1>
-        <p class="text-muted mb-0">Create and maintain owner contact records. Anonymised records are hidden by default.</p>
+        <p class="text-muted mb-0">Create and maintain owner contact records.</p>
     </div>
     <div class="d-flex gap-2">
-        @if (showAnonymised)
-        {
-            <a class="btn btn-outline-secondary" asp-action="Index">Hide anonymised</a>
-        }
-        else
-        {
-            <a class="btn btn-outline-secondary" asp-action="Index" asp-route-showAnonymised="true">Show anonymised</a>
-        }
         <a class="btn btn-primary" asp-action="Create">Add owner</a>
     </div>
 </div>
@@ -47,11 +38,7 @@ else
                     <td>@(owner.PhoneNumber ?? "-")</td>
                     <td>@owner.PetCount</td>
                     <td class="text-end">
-                        @if (owner.IsAnonymised)
-                        {
-                            <span class="badge text-bg-secondary me-2">Anonymised</span>
-                        }
-                        <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@owner.OwnerId" asp-route-showAnonymised="@showAnonymised">Open</a>
+                        <a class="btn btn-sm btn-outline-secondary" asp-action="Details" asp-route-id="@owner.OwnerId">Open</a>
                     </td>
                 </tr>
             }

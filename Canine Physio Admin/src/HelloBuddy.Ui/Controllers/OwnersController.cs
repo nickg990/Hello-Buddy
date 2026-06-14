@@ -16,18 +16,16 @@ public class OwnersController : Controller
     }
 
     [HttpGet("")]
-    public async Task<IActionResult> Index(bool showAnonymised, CancellationToken ct)
+    public async Task<IActionResult> Index(CancellationToken ct)
     {
-        var owners = await _api.ListOwnersAsync(showAnonymised, ct);
-        ViewBag.ShowAnonymised = showAnonymised;
+        var owners = await _api.ListOwnersAsync(ct);
         return View(owners);
     }
 
     [HttpGet("{id:long}")]
-    public async Task<IActionResult> Details(ulong id, bool showAnonymised, CancellationToken ct)
+    public async Task<IActionResult> Details(ulong id, CancellationToken ct)
     {
-        var owner = await _api.GetOwnerAsync(id, showAnonymised, ct);
-        ViewBag.ShowAnonymised = showAnonymised;
+        var owner = await _api.GetOwnerAsync(id, ct);
         return owner is null ? NotFound() : View(owner);
     }
 
@@ -62,7 +60,7 @@ public class OwnersController : Controller
     [HttpGet("{id:long}/Edit")]
     public async Task<IActionResult> Edit(ulong id, CancellationToken ct)
     {
-        var owner = await _api.GetOwnerAsync(id, includeAnonymised: true, ct);
+        var owner = await _api.GetOwnerAsync(id, ct);
         if (owner is null)
         {
             return NotFound();

@@ -11,11 +11,8 @@ a {
   color: #0077cc;
 }
 
-.btn-primary {
-  color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
-}
+/* .btn-primary colour override removed (ACR025): brand colours now defined via
+   CSS custom properties in site.css, which is the single source of truth. */
 
 .nav-pills .nav-link.active, .nav-pills .show > .nav-link {
   color: #fff;

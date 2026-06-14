@@ -5,8 +5,8 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h1>Pets</h1>
-        <p class="text-muted mb-0">Maintain patient records and move into treatment cases.</p>
+        <h2>Pets</h2>
+        <p class="text-muted mb-1">All registered pets</p>
     </div>
     <a class="btn btn-primary" asp-action="Create">Add pet</a>
 </div>
@@ -38,7 +38,7 @@ else
                     <td>@(pet.IsActive ? "Active" : "Inactive")</td>
                     <td>@pet.CaseCount</td>
                     <td class="text-end">
-                        <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@pet.PetId">Open</a>
+                        <a class="btn btn-sm btn-outline-secondary" asp-action="Details" asp-route-id="@pet.PetId">Open</a>
                     </td>
                 </tr>
             }

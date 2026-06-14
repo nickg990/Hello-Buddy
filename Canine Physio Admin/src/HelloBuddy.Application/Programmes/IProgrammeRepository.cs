@@ -55,4 +55,13 @@ public interface IProgrammeRepository
 
     /// <summary>Creates a published immutable programme version and marks it current for the supplied programme.</summary>
     Task PersistPublishedVersionAsync(ulong programmeId, ulong practitionerId, string payloadJson, CancellationToken ct);
+
+    /// <summary>Returns the latest published version payload snapshot for a visible programme.</summary>
+    Task<ProgrammeVersionPayloadVm?> GetLatestPublishedVersionPayloadAsync(ulong programmeId, ulong practitionerId, CancellationToken ct);
+
+    /// <summary>Returns a specific published version payload snapshot for a visible programme.</summary>
+    Task<ProgrammeVersionPayloadVm?> GetPublishedVersionPayloadAsync(ulong programmeId, ulong practitionerId, ulong programmeVersionId, CancellationToken ct);
+
+    /// <summary>Deletes a single programme version record and its associated email-send records; returns <c>true</c> when deleted.</summary>
+    Task<bool> DeleteVersionAsync(ulong programmeId, ulong programmeVersionId, ulong practitionerId, CancellationToken ct);
 }

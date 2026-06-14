@@ -8,6 +8,7 @@ public sealed record CaseDetailVm(
     DateOnly? EndDate,
     string? ClinicalSummary,
     ulong PetId,
+    ulong OwnerId,
     string PetName,
     string? PetBreed,
     string? PetSex,
@@ -31,5 +32,6 @@ public sealed record CaseDetailVm(
         DateOnly StartDate,
         DateOnly? EndDate,
         int SessionCount,
-        int ExerciseCount);
+        int ExerciseCount,
+        bool IsLockedForEdit);
 }

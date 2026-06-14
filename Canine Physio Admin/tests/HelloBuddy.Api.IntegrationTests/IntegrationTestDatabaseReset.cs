@@ -26,6 +26,8 @@ internal static class IntegrationTestDatabaseReset
             };
             await cmd.ExecuteNonQueryAsync(ct);
         }
+
+        await IntegrationTestSchemaUpgrade.ApplyIncrement8CompatAsync(connection, ct);
     }
 
     private static string BuildAdminConnectionString(string appConnectionString)

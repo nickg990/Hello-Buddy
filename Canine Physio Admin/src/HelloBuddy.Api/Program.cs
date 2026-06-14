@@ -5,9 +5,12 @@ using HelloBuddy.Admin.Core.Data;
 using HelloBuddy.Admin.Core.Identity;
 using HelloBuddy.Admin.Pdf;
 using HelloBuddy.Api.Endpoints;
+using HelloBuddy.Api.Security;
 using HelloBuddy.Api.Services;
 using HelloBuddy.Api.Telemetry;
+using HelloBuddy.Infrastructure.Auth;
 using HelloBuddy.Infrastructure.Records;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
@@ -47,6 +50,22 @@ builder.Services.AddHelloBuddyApplication();
 builder.Services.AddHelloBuddyInfrastructure();
 builder.Services.AddSingleton<IProgrammePdfTemplate, RazorProgrammePdfTemplate>();
 
+builder.Services
+    .AddAuthentication(ApiAuthenticationSchemes.PractitionerHeader)
+    .AddScheme<AuthenticationSchemeOptions, HeaderPractitionerAuthenticationHandler>(
+        ApiAuthenticationSchemes.PractitionerHeader,
+        static _ => { });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(ApiAuthorizationPolicies.AdminOnly, policy =>
+    {
+        policy.AddAuthenticationSchemes(ApiAuthenticationSchemes.PractitionerHeader);
+        policy.RequireAuthenticatedUser();
+        policy.RequireClaim("practitioner_role", "administrator");
+    });
+});
+
 // Practitioner identity is supplied per-request by the UI via the
 // X-Practitioner-Id header (Release 1 service-to-service identity, TD-005).
 builder.Services.AddScoped<ICurrentPractitionerAccessor, HeaderPractitionerAccessor>();
@@ -55,6 +74,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<ITelemetryInitializer>(new CloudRoleNameInitializer("hello-buddy-api"));
 builder.Services.AddApplicationInsightsTelemetry();
 builder.Services.AddHostedService<ExerciseLibrarySeedHostedService>();
+builder.Services.AddHostedService<PractitionerLoginSeedHostedService>();
 
 // -----------------------------------------------------------------
 // PDF rendering: remote PDF service via typed HttpClient.
@@ -135,6 +155,8 @@ var app = builder.Build();
 app.Logger.LogInformation("Storage mode: {StorageMode} (container: {Container})", storageMode, publishedContainer);
 
 app.UseExceptionHandler();
+app.UseAuthentication();
+app.UseAuthorization();
 
 // -----------------------------------------------------------------
 // X-Practitioner-Id gate: reject API calls without the header.
@@ -169,6 +191,7 @@ app.MapPetEndpoints();
 app.MapCaseEndpoints();
 app.MapExerciseEndpoints();
 app.MapProgrammeEndpoints();
+app.MapAdminEndpoints();
 
 // Non-production helper route: stream files from the local
 // published-programmes folder when FileSystem mode is active.

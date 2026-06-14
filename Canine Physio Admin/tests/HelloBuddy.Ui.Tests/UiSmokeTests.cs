@@ -1,12 +1,17 @@
 using System.Net;
+using System.Security.Claims;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.RegularExpressions;
 using HelloBuddy.Contracts;
 using HelloBuddy.Ui.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace HelloBuddy.Ui.Tests;
@@ -102,13 +107,16 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
     }
 
     [Fact]
-    public async Task CaseDetailPage_RendersCreateDraftProgrammeAction()
+    public async Task CaseDetailPage_RendersNewProgrammeAction()
     {
         var response = await _client.GetAsync("/Cases/1");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var html = await response.Content.ReadAsStringAsync();
-        Assert.Contains("Create draft programme", html);
+        Assert.Contains("New programme", html);
+        Assert.Contains("aria-disabled=\"true\"", html);
+        Assert.Contains("Published programmes are locked. Create a new draft from PDF History to edit.", html);
+        Assert.Contains("/Programmes/2/Builder", html);
         Assert.Contains("Delete programme", html);
     }
 
@@ -227,8 +235,12 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
         Assert.Contains("Session structure", html);
         Assert.Contains("Add exercise", html);
         Assert.Contains("Remove exercise", html);
-        Assert.Contains("Open preview page", html);
-        Assert.DoesNotContain("Live preview", html);
+        Assert.Contains("PDF Viewer", html);
+        Assert.DoesNotContain("Create duplicate", html);
+        Assert.DoesNotContain("createDuplicateModal", html);
+        Assert.DoesNotContain("Publish PDF", html);
+        Assert.DoesNotContain("publishConfirmModal", html);
+        Assert.DoesNotContain("Live PDF Viewer", html);
     }
 
     [Fact]
@@ -256,58 +268,6 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
     }
 
     [Fact]
-    public async Task PrivacyPage_RendersOwnerDropdownForRtbf()
-    {
-        var response = await _client.GetAsync("/Home/Privacy");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var html = await response.Content.ReadAsStringAsync();
-        Assert.Contains("<select class=\"form-select\" id=\"ownerId\" name=\"ownerId\" required>", html);
-        Assert.Contains("Amelia Carter", html);
-    }
-
-    [Fact]
-    public async Task PrivacyRtbfPost_WhenOwnerExists_ShowsSuccessMessage()
-    {
-        var response = await PostRightToBeForgottenAsync(ownerId: 1);
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var html = await response.Content.ReadAsStringAsync();
-        Assert.Contains("Owner personal data was anonymised while linked clinical records were retained.", html);
-    }
-
-    [Fact]
-    public async Task PrivacyRtbfPost_WhenOwnerNotFound_ShowsErrorMessage()
-    {
-        var response = await PostRightToBeForgottenAsync(ownerId: 999);
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var html = await response.Content.ReadAsStringAsync();
-        Assert.Contains("Owner was not found or is not linked to the current practitioner.", html);
-    }
-
-    private async Task<HttpResponseMessage> PostRightToBeForgottenAsync(ulong ownerId)
-    {
-        var get = await _client.GetAsync("/Home/Privacy");
-        Assert.Equal(HttpStatusCode.OK, get.StatusCode);
-
-        var html = await get.Content.ReadAsStringAsync();
-        var tokenMatch = Regex.Match(
-            html,
-            "<input[^>]*name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"",
-            RegexOptions.IgnoreCase);
-
-        Assert.True(tokenMatch.Success, "Expected antiforgery token on the privacy form.");
-
-        var form = new FormUrlEncodedContent([
-            new KeyValuePair<string, string>("ownerId", ownerId.ToString()),
-            new KeyValuePair<string, string>("__RequestVerificationToken", tokenMatch.Groups[1].Value),
-        ]);
-
-        return await _client.PostAsync("/Home/RightToBeForgotten", form);
-    }
-
-    [Fact]
     public async Task BuilderEditorPanel_RendersExpectedContent()
     {
         var response = await _client.GetAsync("/Programmes/1/Builder/EditorPanel");
@@ -325,7 +285,7 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var html = await response.Content.ReadAsStringAsync();
-        Assert.Contains("Live preview", html);
+        Assert.Contains("Live PDF Viewer", html);
         Assert.Contains("preview-programme-name", html);
     }
 
@@ -339,18 +299,62 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
         Assert.Contains("id=\"preview-loading\"", html);
         Assert.Contains("spinner-border", html);
         Assert.Contains("id=\"preview-frame\"", html);
+        Assert.Contains("id=\"preview-download-button\"", html);
+        Assert.Contains("id=\"preview-download-spinner\"", html);
+        Assert.Contains("pdf-download-complete", html);
+        Assert.Contains("Download PDF", html);
+        Assert.DoesNotContain("publishConfirmModal", html);
+        Assert.DoesNotContain("Publish PDF", html);
     }
 
     public class Factory : WebApplicationFactory<Program>
     {
+        private const string TestAuthScheme = "UiSmokeTestAuth";
+
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseSetting("Api:Uri", "https://example.test");
             builder.ConfigureServices(services =>
             {
+                services.AddAuthentication(options =>
+                    {
+                        options.DefaultAuthenticateScheme = TestAuthScheme;
+                        options.DefaultChallengeScheme = TestAuthScheme;
+                        options.DefaultScheme = TestAuthScheme;
+                    })
+                    .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthScheme, _ => { });
+
                 services.RemoveAll(typeof(IAdminApiClient));
                 services.AddSingleton<IAdminApiClient, StubAdminApiClient>();
             });
+        }
+    }
+
+    private sealed class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
+    {
+        public TestAuthHandler(
+            IOptionsMonitor<AuthenticationSchemeOptions> options,
+            ILoggerFactory logger,
+            UrlEncoder encoder)
+            : base(options, logger, encoder)
+        {
+        }
+
+        protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+        {
+            var claims = new List<Claim>
+            {
+                new("practitioner_id", "1"),
+                new(ClaimTypes.NameIdentifier, "1"),
+                new(ClaimTypes.Name, "Smoke Tester"),
+                new("practitioner_role", "administrator"),
+                new(ClaimTypes.Role, "administrator"),
+            };
+
+            var identity = new ClaimsIdentity(claims, Scheme.Name);
+            var principal = new ClaimsPrincipal(identity);
+            var ticket = new AuthenticationTicket(principal, Scheme.Name);
+            return Task.FromResult(AuthenticateResult.Success(ticket));
         }
     }
 
@@ -366,8 +370,7 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
             null,
             "Leeds",
             "LS1 1AA",
-            [new OwnerDetailVm.PetRow(1, "Buddy", "Labrador", "male", true, 1)],
-            false);
+            [new OwnerDetailVm.PetRow(1, "Buddy", "Labrador", "male", true, 1)]);
 
         private static readonly PetDetailVm Pet = new(
             1,
@@ -391,6 +394,7 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
             null,
             "Improving hind-limb control.",
             1,
+            1,
             "Buddy",
             "Labrador",
             "male",
@@ -399,7 +403,10 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
             Owner.FullName,
             Owner.Email,
             [new CaseDetailVm.NoteRow(1, new DateTime(2026, 5, 1, 10, 0, 0, DateTimeKind.Utc), "assessment", "Initial clinical assessment completed.")],
-            [new CaseDetailVm.ProgrammeRow(1, "Buddy Hind Limb Rehab draft", "planned", new DateOnly(2026, 5, 1), null, 1, 0)]);
+            [
+                new CaseDetailVm.ProgrammeRow(1, "Buddy Hind Limb Rehab published", "active", new DateOnly(2026, 5, 1), null, 1, 0, true),
+                new CaseDetailVm.ProgrammeRow(2, "Buddy Hind Limb Rehab draft", "planned", new DateOnly(2026, 6, 1), null, 1, 0, false),
+            ]);
 
         private readonly List<CaseDetailVm.NoteRow> _caseNotes =
         [
@@ -440,10 +447,10 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
                 new ExerciseDetailVm.InstructionStepVm(2, "Pause and encourage controlled step down.")
             ]);
 
-        public Task<IReadOnlyList<OwnerListItem>> ListOwnersAsync(bool includeAnonymised, CancellationToken ct)
-            => Task.FromResult<IReadOnlyList<OwnerListItem>>([new OwnerListItem(1, Owner.FullName, Owner.Email, Owner.PhoneNumber, 1, false)]);
+        public Task<IReadOnlyList<OwnerListItem>> ListOwnersAsync(CancellationToken ct)
+            => Task.FromResult<IReadOnlyList<OwnerListItem>>([new OwnerListItem(1, Owner.FullName, Owner.Email, Owner.PhoneNumber, 1)]);
 
-        public Task<OwnerDetailVm?> GetOwnerAsync(ulong id, bool includeAnonymised, CancellationToken ct)
+        public Task<OwnerDetailVm?> GetOwnerAsync(ulong id, CancellationToken ct)
             => Task.FromResult<OwnerDetailVm?>(id == 1 ? Owner : null);
 
         public Task<OwnerDetailVm> CreateOwnerAsync(SaveOwnerRequest request, CancellationToken ct)
@@ -455,9 +462,8 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
         public Task<OwnerDataControlClientResult> ApplyOwnerDataControlAsync(ulong id, CancellationToken ct)
             => Task.FromResult(id == 1
                 ? new OwnerDataControlClientResult(
-                    OwnerDataControlClientOutcome.Anonymised,
-                    "Owner personal data was anonymised while linked clinical records were retained.",
-                    Owner)
+                    OwnerDataControlClientOutcome.Deleted,
+                    "Owner and all associated records, including stored programme PDFs, were permanently deleted.")
                 : new OwnerDataControlClientResult(
                     OwnerDataControlClientOutcome.NotFound,
                     "Owner was not found or is not linked to the current practitioner."));
@@ -514,6 +520,8 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
             => Task.FromResult<ProgrammeVm?>(new ProgrammeVm(
                 2,
                 1,
+                1,
+                1,
                 "Buddy Hind Limb Rehab draft",
                 "planned",
                 new DateOnly(2026, 5, 1),
@@ -521,6 +529,7 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
                 "Improving hind-limb control.",
                 "Buddy Hind Limb Rehab",
                 "Buddy",
+                "Amelia Carter",
                 "Amelia Carter",
                 [new ProgrammeVm.SessionRow(1, "single", "Improving hind-limb control.", "planned", 1, [])]));
 
@@ -598,6 +607,8 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
             => Task.FromResult<ProgrammeVm?>(new ProgrammeVm(
                 1,
                 1,
+                1,
+                1,
                 "Buddy Hind Limb Rehab draft",
                 "planned",
                 new DateOnly(2026, 5, 1),
@@ -605,6 +616,7 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
                 "Improving hind-limb control.",
                 "Buddy Hind Limb Rehab",
                 "Buddy",
+                "Amelia Carter",
                 "Amelia Carter",
                 [new ProgrammeVm.SessionRow(
                     1,
@@ -620,6 +632,11 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
                 1,
                 "Buddy Hind Limb Rehab draft",
                 1,
+                1,
+                1,
+                "Amelia Carter",
+                "Buddy",
+                "Buddy Hind Limb Rehab",
                 [
                     new ProgrammeVersionHistoryVm.VersionRow(
                         1,
@@ -640,6 +657,8 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
                 new ProgrammeVm(
                     2,
                     1,
+                    1,
+                    1,
                     "Buddy Hind Limb Rehab revision draft",
                     "planned",
                     new DateOnly(2026, 5, 1),
@@ -647,6 +666,7 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
                     "Improving hind-limb control.",
                     "Buddy Hind Limb Rehab",
                     "Buddy",
+                    "Amelia Carter",
                     "Amelia Carter",
                     [new ProgrammeVm.SessionRow(
                         1,
@@ -661,6 +681,8 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
             => Task.FromResult(new UpdateProgrammeResult(UpdateProgrammeOutcome.Updated, new ProgrammeVm(
                 1,
                 1,
+                1,
+                1,
                 "Buddy Hind Limb Rehab draft",
                 "planned",
                 new DateOnly(2026, 5, 1),
@@ -668,6 +690,7 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
                 "Improving hind-limb control.",
                 "Buddy Hind Limb Rehab",
                 "Buddy",
+                "Amelia Carter",
                 "Amelia Carter",
                 [new ProgrammeVm.SessionRow(
                     1,
@@ -686,5 +709,11 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
 
         public Task<DownloadUrlResponse> GetDownloadUrlAsync(string fileName, CancellationToken ct)
             => Task.FromResult(new DownloadUrlResponse("https://example.test/download.pdf"));
+
+        public Task<PdfDocumentContent?> GetProgrammeVersionPdfAsync(ulong id, ulong versionId, CancellationToken ct)
+            => Task.FromResult<PdfDocumentContent?>(null);
+
+        public Task<bool> DeleteProgrammeVersionAsync(ulong id, ulong versionId, CancellationToken ct)
+            => Task.FromResult(true);
     }
 }

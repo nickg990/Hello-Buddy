@@ -1,29 +1,31 @@
-using Microsoft.Extensions.Configuration;
+using HelloBuddy.Admin.Core.Identity;
 
 namespace HelloBuddy.Ui.Services;
 
 /// <summary>
-/// Injects the X-Practitioner-Id header on every outbound API request.
-/// Header value is the seeded practitioner id from configuration; this is
-/// the Release 1 service-to-service identity (TD-005 replaces with Entra JWT).
+/// Delegate handler that injects practitioner identity headers into outbound
+/// API requests. Reads claims from the signed-in cookie and forwards them
+/// to the API (X-Practitioner-Id, X-Practitioner-Name, X-Practitioner-Role).
+/// The API HeaderPractitionerAccessor reads these headers.
 /// </summary>
 public sealed class PractitionerHeaderHandler : DelegatingHandler
 {
-    public const string HeaderName = "X-Practitioner-Id";
+    private readonly ICurrentPractitionerAccessor _accessor;
 
-    private readonly string _practitionerId;
-
-    public PractitionerHeaderHandler(IConfiguration configuration)
+    public PractitionerHeaderHandler(ICurrentPractitionerAccessor accessor)
     {
-        var id = configuration.GetValue<ulong?>("SeededPractitionerId")
-            ?? throw new InvalidOperationException("SeededPractitionerId is not configured.");
-        _practitionerId = id.ToString();
+        _accessor = accessor;
     }
 
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        if (!request.Headers.Contains(HeaderName))
-            request.Headers.Add(HeaderName, _practitionerId);
+        if (_accessor.PractitionerId > 0)
+        {
+            request.Headers.Add("X-Practitioner-Id", _accessor.PractitionerId.ToString());
+            request.Headers.Add("X-Practitioner-Name", _accessor.PractitionerName);
+            request.Headers.Add("X-Practitioner-Role", _accessor.PractitionerRole);
+        }
+
         return base.SendAsync(request, cancellationToken);
     }
 }

@@ -21,6 +21,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\HelloBuddy.Api\HelloBuddy.Api.csproj" />
     <ProjectReference Include="..\..\src\HelloBuddy.Admin.Core\HelloBuddy.Admin.Core.csproj" />
+    <ProjectReference Include="..\..\src\HelloBuddy.Application\HelloBuddy.Application.csproj" />
+    <ProjectReference Include="..\..\src\HelloBuddy.Infrastructure\HelloBuddy.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\HelloBuddy.Contracts\HelloBuddy.Contracts.csproj" />
   </ItemGroup>
 

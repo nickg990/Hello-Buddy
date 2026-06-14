@@ -1,5 +1,6 @@
 using HelloBuddy.Admin.Core.Data;
 using HelloBuddy.Admin.Core.Data.Entities;
+using HelloBuddy.Admin.Core.Identity;
 using HelloBuddy.Application.Programmes;
 using HelloBuddy.Contracts;
 using Microsoft.EntityFrameworkCore;
@@ -10,10 +11,14 @@ namespace HelloBuddy.Infrastructure.Programmes;
 public sealed class ProgrammeRepository : IProgrammeRepository
 {
     private readonly CaninePhysioDbContext _db;
+    private readonly ICurrentPractitionerAccessor _accessor;
 
-    public ProgrammeRepository(CaninePhysioDbContext db)
+    public ProgrammeRepository(
+        CaninePhysioDbContext db,
+        ICurrentPractitionerAccessor accessor)
     {
         _db = db;
+        _accessor = accessor;
     }
 
     public async Task<ProgrammeVm?> CreateDraftAsync(ulong treatmentCaseId, ulong practitionerId, CancellationToken ct)
@@ -44,6 +49,8 @@ public sealed class ProgrammeRepository : IProgrammeRepository
             Status = ProgrammeDomainConstants.StatusPlanned,
             IsCurrent = true,
             Notes = treatmentCase.ClinicalSummary,
+            CreatedByPractitionerId = _accessor.PractitionerId > 0 ? _accessor.PractitionerId : null,
+            CreatedByPractitionerName = _accessor.PractitionerId > 0 ? _accessor.PractitionerName : null,
             Sessions =
             [
                 new Session
@@ -89,6 +96,12 @@ public sealed class ProgrammeRepository : IProgrammeRepository
                 p.ProgrammeId,
                 p.ProgrammeName,
                 p.TreatmentCaseId,
+                OwnerId = p.TreatmentCase.Pet.OwnerId,
+                PetId = p.TreatmentCase.PetId,
+                OwnerFirst = p.TreatmentCase.Pet.Owner.FirstName,
+                OwnerLast = p.TreatmentCase.Pet.Owner.LastName,
+                PetName = p.TreatmentCase.Pet.Name,
+                CaseTitle = p.TreatmentCase.CaseTitle,
             })
             .FirstOrDefaultAsync(ct);
 
@@ -120,6 +133,11 @@ public sealed class ProgrammeRepository : IProgrammeRepository
             programmeMeta.ProgrammeId,
             programmeMeta.ProgrammeName,
             programmeMeta.TreatmentCaseId,
+            programmeMeta.OwnerId,
+            programmeMeta.PetId,
+            $"{programmeMeta.OwnerFirst} {programmeMeta.OwnerLast}",
+            programmeMeta.PetName,
+            programmeMeta.CaseTitle,
             versions);
     }
 
@@ -215,12 +233,13 @@ public sealed class ProgrammeRepository : IProgrammeRepository
             return DeleteProgrammeResult.NotFound;
         }
 
-        // Guardrail: a programme with version history should not be hard-deleted.
-        var hasVersionHistory = await _db.Programmeversions
-            .AnyAsync(v => v.ProgrammeId == programmeId, ct);
-        if (hasVersionHistory)
+        // Remove version history records (FK constraint).
+        var versions = await _db.Programmeversions
+            .Where(v => v.ProgrammeId == programmeId)
+            .ToListAsync(ct);
+        if (versions.Count > 0)
         {
-            return DeleteProgrammeResult.BlockedByVersionHistory;
+            _db.Programmeversions.RemoveRange(versions);
         }
 
         var sessionIds = await _db.Sessions
@@ -628,6 +647,7 @@ public sealed class ProgrammeRepository : IProgrammeRepository
             PayloadJson = payloadJson,
             PayloadSchemaVersion = "1.0.0",
             CreatedByPractitionerId = practitionerId,
+            CreatedByPractitionerName = _accessor.PractitionerId > 0 ? _accessor.PractitionerName : null,
             CreatedDate = DateTime.UtcNow,
             PublishedDate = DateTime.UtcNow,
         };
@@ -660,6 +680,8 @@ public sealed class ProgrammeRepository : IProgrammeRepository
             {
                 p.ProgrammeId,
                 p.TreatmentCaseId,
+                PetId = p.TreatmentCase.PetId,
+                OwnerId = p.TreatmentCase.Pet.OwnerId,
                 p.ProgrammeName,
                 p.Status,
                 p.StartDate,
@@ -707,6 +729,8 @@ public sealed class ProgrammeRepository : IProgrammeRepository
         return new ProgrammeVm(
             data.ProgrammeId,
             data.TreatmentCaseId,
+            data.PetId,
+            data.OwnerId,
             data.ProgrammeName,
             data.Status,
             data.StartDate,
@@ -715,6 +739,67 @@ public sealed class ProgrammeRepository : IProgrammeRepository
             data.CaseTitle,
             data.PetName,
             $"{data.OwnerFirst} {data.OwnerLast}",
+            _accessor.PractitionerName ?? string.Empty,
             sessions);
+    }
+
+    public async Task<ProgrammeVersionPayloadVm?> GetLatestPublishedVersionPayloadAsync(
+        ulong programmeId,
+        ulong practitionerId,
+        CancellationToken ct)
+    {
+        return await _db.Programmeversions
+            .Where(v => v.ProgrammeId == programmeId
+                        && v.Programme.TreatmentCase.PractitionerId == practitionerId
+                        && v.PublishedDate.HasValue)
+            .OrderByDescending(v => v.PublishedDate)
+            .ThenByDescending(v => v.VersionNumber)
+            .Select(v => new ProgrammeVersionPayloadVm(
+                v.ProgrammeVersionId,
+                v.VersionNumber,
+                v.PayloadJson))
+            .FirstOrDefaultAsync(ct);
+    }
+
+    public async Task<ProgrammeVersionPayloadVm?> GetPublishedVersionPayloadAsync(
+        ulong programmeId,
+        ulong practitionerId,
+        ulong programmeVersionId,
+        CancellationToken ct)
+    {
+        return await _db.Programmeversions
+            .Where(v => v.ProgrammeVersionId == programmeVersionId
+                        && v.ProgrammeId == programmeId
+                        && v.Programme.TreatmentCase.PractitionerId == practitionerId
+                        && v.PublishedDate.HasValue)
+            .Select(v => new ProgrammeVersionPayloadVm(
+                v.ProgrammeVersionId,
+                v.VersionNumber,
+                v.PayloadJson))
+            .FirstOrDefaultAsync(ct);
+    }
+
+    public async Task<bool> DeleteVersionAsync(ulong programmeId, ulong programmeVersionId, ulong practitionerId, CancellationToken ct)
+    {
+        var version = await _db.Programmeversions
+            .FirstOrDefaultAsync(v => v.ProgrammeVersionId == programmeVersionId
+                                      && v.ProgrammeId == programmeId
+                                      && v.Programme.TreatmentCase.PractitionerId == practitionerId, ct);
+        if (version is null)
+        {
+            return false;
+        }
+
+        // Null out FK reference on parent programme if it points to this version.
+        var programme = await _db.Programmes
+            .FirstOrDefaultAsync(p => p.ProgrammeId == programmeId && p.CurrentProgrammeVersionId == programmeVersionId, ct);
+        if (programme is not null)
+        {
+            programme.CurrentProgrammeVersionId = null;
+        }
+
+        _db.Programmeversions.Remove(version);
+        await _db.SaveChangesAsync(ct);
+        return true;
     }
 }

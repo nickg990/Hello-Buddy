@@ -16,6 +16,9 @@ public interface IFileStore
     /// </summary>
     Task<bool> DeleteIfExistsAsync(string key, CancellationToken ct = default);
 
+    /// <summary>Best-effort deletion for every artefact whose key starts with the supplied prefix.</summary>
+    Task<int> DeleteByPrefixAsync(string keyPrefix, CancellationToken ct = default);
+
     /// <summary>
     /// Opens a readable stream for an artefact key. Returns null when not found.
     /// Caller owns the returned stream lifetime.

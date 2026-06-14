@@ -2,6 +2,7 @@ using HelloBuddy.Admin.Core.Identity;
 using HelloBuddy.Admin.Pdf;
 using HelloBuddy.Application.Programmes;
 using HelloBuddy.Contracts;
+using FluentValidation;
 using System.Text.RegularExpressions;
 
 namespace HelloBuddy.Api.Endpoints;
@@ -90,8 +91,6 @@ public static class ProgrammeEndpoints
             return result switch
             {
                 DeleteProgrammeResult.Deleted => Results.NoContent(),
-                DeleteProgrammeResult.BlockedByVersionHistory =>
-                    Results.Conflict("Cannot delete this programme because it has version history."),
                 _ => Results.NotFound(),
             };
         });
@@ -243,6 +242,30 @@ public static class ProgrammeEndpoints
                 return Results.BadRequest();
             var url = await fileStore.GetReadUrlAsync(fileName, TimeSpan.FromMinutes(30), ct);
             return Results.Ok(new DownloadUrlResponse(url.ToString()));
+        });
+
+        app.MapGet("/api/programmes/{id:long}/versions/{versionId:long}/pdf", async (
+            long id,
+            long versionId,
+            IProgrammeService programmes,
+            ICurrentPractitionerAccessor practitioner,
+            CancellationToken ct) =>
+        {
+            var doc = await programmes.RenderVersionPdfAsync((ulong)id, (ulong)versionId, practitioner.PractitionerId, ct);
+            return doc is null
+                ? Results.NotFound()
+                : Results.File(doc.Bytes, doc.ContentType, doc.FileName);
+        });
+
+        app.MapDelete("/api/programmes/{id:long}/versions/{versionId:long}", async (
+            long id,
+            long versionId,
+            IProgrammeService programmes,
+            ICurrentPractitionerAccessor practitioner,
+            CancellationToken ct) =>
+        {
+            var deleted = await programmes.DeleteVersionAsync((ulong)id, (ulong)versionId, practitioner.PractitionerId, ct);
+            return deleted ? Results.NoContent() : Results.NotFound();
         });
 
         return app;

@@ -1,0 +1,76 @@
+@using HelloBuddy.Application.Auth
+@model List<PractitionerSummary>
+
+@{
+    ViewData["Title"] = "Manage Practitioners";
+}
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Practitioners</h2>
+        <a href="@Url.Action("Add", "Admin")" class="btn btn-primary">+ Add Practitioner</a>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-info">No practitioners found.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var practitioner in Model)
+                    {
+                        <tr>
+                            <td>@practitioner.FirstName @practitioner.LastName</td>
+                            <td>@practitioner.Email</td>
+                            <td>@practitioner.PhoneNumber</td>
+                            <td><span class="badge bg-info">@practitioner.Role</span></td>
+                            <td>
+                                @if (practitioner.IsActive)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Inactive</span>
+                                }
+                            </td>
+                            <td>
+                                <a href="@Url.Action("Edit", "Admin", new { id = practitioner.PractitionerId })" class="btn btn-sm btn-outline-secondary">Edit</a>
+                                <a href="@Url.Action("SetPassword", "Admin", new { id = practitioner.PractitionerId })" class="btn btn-sm btn-outline-warning">Set Password</a>
+
+                                @if (practitioner.IsActive)
+                                {
+                                    <form method="post" asp-action="Delete" asp-route-id="@practitioner.PractitionerId" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Deactivate this practitioner?')">Deactivate</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form method="post" asp-action="Activate" asp-route-id="@practitioner.PractitionerId" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-success" onclick="return confirm('Re-activate this practitioner?')">Activate</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+</div>

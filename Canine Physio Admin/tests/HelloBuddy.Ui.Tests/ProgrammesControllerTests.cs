@@ -1,6 +1,7 @@
 using System.Text.Json;
 using HelloBuddy.Contracts;
 using HelloBuddy.Ui.Controllers;
+using HelloBuddy.Ui.Models;
 using HelloBuddy.Ui.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -117,7 +118,8 @@ public sealed class ProgrammesControllerTests
 
         var result = await sut.Publish(1, CancellationToken.None);
 
-        _ = Assert.IsType<RedirectToActionResult>(result);
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(nameof(ProgrammesController.Preview), redirect.ActionName);
         var error = Assert.IsType<string>(sut.TempData["Error"]);
         Assert.Equal("Programme name is required. At least one exercise is required.", error);
     }
@@ -128,12 +130,17 @@ public sealed class ProgrammesControllerTests
         var api = Substitute.For<IAdminApiClient>();
         api.PublishProgrammeAsync(1, Arg.Any<CancellationToken>())
             .Returns(new PublishResponse("https://example.test/programme-1.pdf", "programme-1.pdf", 1234));
+        api.GetProgrammeAsync(1, Arg.Any<CancellationToken>())
+            .Returns(CreateProgrammeVm());
 
         var sut = CreateSut(api, ajaxRequest: false);
 
         var result = await sut.Publish(1, CancellationToken.None);
 
-        _ = Assert.IsType<RedirectToActionResult>(result);
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Index", redirect.ActionName);
+        Assert.Equal("CaseDetail", redirect.ControllerName);
+        Assert.Equal((ulong)1, redirect.RouteValues?["id"]);
         Assert.Equal("programme-1.pdf", sut.TempData["PublishedFile"]);
         var publishedMessage = Assert.IsType<string>(sut.TempData["Published"]);
         Assert.Contains("Published programme-1.pdf", publishedMessage);
@@ -150,6 +157,140 @@ public sealed class ProgrammesControllerTests
 
         await Assert.ThrowsAsync<HttpRequestException>(() => sut.Publish(1, CancellationToken.None));
         Assert.False(sut.TempData.ContainsKey("Error"));
+    }
+
+    [Fact]
+    public async Task PreviewPdf_DownloadWithToken_SetsCompletionCookieAndReturnsAttachment()
+    {
+        var api = Substitute.For<IAdminApiClient>();
+        api.GetProgrammePreviewPdfAsync(1, Arg.Any<CancellationToken>())
+            .Returns(new PdfDocumentContent([1, 2, 3], "application/pdf", "programme-preview-1.pdf"));
+        api.GetProgrammeAsync(1, Arg.Any<CancellationToken>())
+            .Returns(CreateProgrammeVm());
+
+        var sut = CreateSut(api, ajaxRequest: false);
+
+        var result = await sut.PreviewPdf(1, download: true, downloadToken: "tok-123", CancellationToken.None);
+
+        var file = Assert.IsType<FileContentResult>(result);
+        Assert.Equal("application/pdf", file.ContentType);
+        Assert.Equal("Buddy Hind Limb Rehab draft 2026-05-01.pdf", file.FileDownloadName);
+
+        var setCookieHeaders = sut.Response.Headers.SetCookie.ToArray();
+        var setCookieHeader = Assert.Single(setCookieHeaders);
+        Assert.Contains("pdf-download-complete=tok-123", setCookieHeader ?? string.Empty);
+    }
+
+    [Fact]
+    public async Task PreviewPdf_Download_UsesSanitizedProgrammeNameAndDateRangeAsFileName()
+    {
+        var api = Substitute.For<IAdminApiClient>();
+        api.GetProgrammePreviewPdfAsync(1, Arg.Any<CancellationToken>())
+            .Returns(new PdfDocumentContent([1, 2, 3], "application/pdf", "programme-preview-1.pdf"));
+        api.GetProgrammeAsync(1, Arg.Any<CancellationToken>())
+            .Returns(new ProgrammeVm(
+                1,
+                2,
+                1,
+                1,
+                "Buddy: Rehab / Week 1?",
+                "planned",
+                new DateOnly(2026, 6, 12),
+                new DateOnly(2026, 7, 12),
+                null,
+                "Case",
+                "Buddy",
+                "Owner Name",
+                "Test Practitioner",
+                []));
+
+        var sut = CreateSut(api, ajaxRequest: false);
+
+        var result = await sut.PreviewPdf(1, download: true, downloadToken: null, CancellationToken.None);
+
+        var file = Assert.IsType<FileContentResult>(result);
+        Assert.Equal("Buddy Rehab Week 1 2026-06-12 to 2026-07-12.pdf", file.FileDownloadName);
+    }
+
+    [Fact]
+    public async Task Preview_WhenVersionHistoryExists_SetsLockedForEditFlagTrue()
+    {
+        var api = Substitute.For<IAdminApiClient>();
+        api.GetProgrammeAsync(1, Arg.Any<CancellationToken>()).Returns(CreateProgrammeVm());
+        api.GetProgrammeVersionHistoryAsync(1, Arg.Any<CancellationToken>())
+            .Returns(new ProgrammeVersionHistoryVm(
+                1,
+                "Draft",
+                1,
+                1,
+                1,
+                "Tester",
+                "Pet",
+                "Case",
+                [
+                    new ProgrammeVersionHistoryVm.VersionRow(1, 1, "published", null, 1, "Tester", DateTime.UtcNow, DateTime.UtcNow, null, null),
+                ]));
+
+        var sut = CreateSut(api, ajaxRequest: false);
+
+        var result = await sut.Preview(1, CancellationToken.None);
+
+        _ = Assert.IsType<ViewResult>(result);
+        Assert.True(Assert.IsType<bool>(sut.ViewData["IsLockedForEdit"]));
+    }
+
+    [Fact]
+    public async Task Publish_Post_WhenApiPublishes_RedirectsToCaseDetailWithTreatmentCaseId()
+    {
+        var api = Substitute.For<IAdminApiClient>();
+        api.PublishProgrammeAsync(1, Arg.Any<CancellationToken>())
+            .Returns(new PublishResponse("https://example.test/p.pdf", "p.pdf", 999));
+        api.GetProgrammeAsync(1, Arg.Any<CancellationToken>())
+            .Returns(CreateProgrammeVm()); // TreatmentCaseId = 1 in CreateProgrammeVm
+
+        var sut = CreateSut(api, ajaxRequest: false);
+
+        var result = await sut.Publish(1, CancellationToken.None);
+
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Index", redirect.ActionName);
+        Assert.Equal("CaseDetail", redirect.ControllerName);
+        Assert.Equal((ulong)1, redirect.RouteValues?["id"]);
+    }
+
+    [Fact]
+    public async Task Publish_Post_WhenValidationFails_RedirectsToPreview()
+    {
+        var api = Substitute.For<IAdminApiClient>();
+        api.PublishProgrammeAsync(1, Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<PublishResponse>(new ApiValidationException(new Dictionary<string, string[]>
+            {
+                ["Sessions"] = ["Add at least one exercise before publishing."],
+            })));
+
+        var sut = CreateSut(api, ajaxRequest: false);
+
+        var result = await sut.Publish(1, CancellationToken.None);
+
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(nameof(ProgrammesController.Preview), redirect.ActionName);
+        Assert.NotNull(sut.TempData["Error"]);
+    }
+
+    [Fact]
+    public async Task Preview_WhenNoVersionHistory_SetsLockedForEditFlagFalse()
+    {
+        var api = Substitute.For<IAdminApiClient>();
+        api.GetProgrammeAsync(1, Arg.Any<CancellationToken>()).Returns(CreateProgrammeVm());
+        api.GetProgrammeVersionHistoryAsync(1, Arg.Any<CancellationToken>())
+            .Returns(new ProgrammeVersionHistoryVm(1, "Draft", 1, 1, 1, "Tester", "Pet", "Case", []));
+
+        var sut = CreateSut(api, ajaxRequest: false);
+
+        var result = await sut.Preview(1, CancellationToken.None);
+
+        _ = Assert.IsType<ViewResult>(result);
+        Assert.False(Assert.IsType<bool>(sut.ViewData["IsLockedForEdit"]));
     }
 
     private static ProgrammesController CreateSut(IAdminApiClient api, bool ajaxRequest)
@@ -171,6 +312,8 @@ public sealed class ProgrammesControllerTests
         => new(
             1,
             1,
+            1,
+            1,
             "Buddy Hind Limb Rehab draft",
             "planned",
             new DateOnly(2026, 5, 1),
@@ -178,6 +321,7 @@ public sealed class ProgrammesControllerTests
             "Improving hind-limb control.",
             "Buddy Hind Limb Rehab",
             "Buddy",
+            "Amelia Carter",
             "Amelia Carter",
             [
                 new ProgrammeVm.SessionRow(

@@ -1,4 +1,4 @@
-@model ExerciseDetailVm
+﻿@model ExerciseDetailVm
 @{
     ViewData["Title"] = Model.Title;
 
@@ -20,7 +20,7 @@
         <form method="post" asp-action="SetActive" asp-route-id="@Model.ExerciseId">
             @Html.AntiForgeryToken()
             <input type="hidden" name="isActive" value="@(!Model.IsActive).ToString().ToLowerInvariant()" />
-            <button type="submit" class="btn btn-outline-primary">@(Model.IsActive ? "Deactivate" : "Activate")</button>
+            <button type="submit" class="btn btn-outline-secondary">@(Model.IsActive ? "Deactivate" : "Activate")</button>
         </form>
     </div>
 </div>
@@ -243,3 +243,4 @@
         })();
     </script>
 }
+

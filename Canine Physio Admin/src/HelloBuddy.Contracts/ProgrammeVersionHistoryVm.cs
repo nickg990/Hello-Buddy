@@ -4,6 +4,11 @@ public sealed record ProgrammeVersionHistoryVm(
     ulong ProgrammeId,
     string ProgrammeName,
     ulong TreatmentCaseId,
+    ulong OwnerId,
+    ulong PetId,
+    string OwnerName,
+    string PetName,
+    string CaseTitle,
     IReadOnlyList<ProgrammeVersionHistoryVm.VersionRow> Versions)
 {
     public sealed record VersionRow(

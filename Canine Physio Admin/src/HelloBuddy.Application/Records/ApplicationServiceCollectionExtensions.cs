@@ -1,4 +1,5 @@
 using FluentValidation;
+using HelloBuddy.Application.Auth;
 using HelloBuddy.Application.Programmes;
 using HelloBuddy.Contracts;
 using Microsoft.Extensions.DependencyInjection;

@@ -115,7 +115,7 @@ owner, pet, treatment case, case note, programme (never _program_), session, exe
 
 ## 5. Data access (EF Core + MySQL)
 
-- **EF Core 8** with **Pomelo.EntityFrameworkCore.MySql**.
+- **EF Core 9** with **Pomelo.EntityFrameworkCore.MySql** (per ADR-002; supersedes the original EF Core 8 baseline alongside the move to `net9.0` in §3).
 - **Database-first**: the schema is canonical. Entities are scaffolded with `dotnet ef dbcontext scaffold` into `HelloBuddy.Infrastructure/Persistence/Generated/`, then **wrapped** by hand-written aggregates in `HelloBuddy.Domain` where richer behaviour is required.
 - **No EF Migrations in Release 1.** Schema changes go through Nick's SQL scripts in `Canine Physio Database/`. Any proposed change is raised as an ADR with the migration SQL attached.
 - **DbContext** lives in Infrastructure, exposed to Application only via narrow repository interfaces:
@@ -123,6 +123,7 @@ owner, pet, treatment case, case note, programme (never _program_), session, exe
 - Repositories return **aggregates or read-models**, never `IQueryable<T>` to upper layers.
 - **Unit of work** is the `DbContext`; commit via `IUnitOfWork.SaveChangesAsync(CancellationToken)`.
 - **All DB calls async** with a `CancellationToken` parameter.
+- **Thread the request's `CancellationToken` end to end.** Controller actions and page handlers accept a `CancellationToken` parameter (model-bound from `HttpContext.RequestAborted`) and pass it through every async call to the application/infrastructure layer. **Never pass `CancellationToken.None`** from a request-scoped path purely to satisfy a signature — that silently defeats cancellation on client disconnect.
 - **Audit fields** (`CreatedUtc`, `CreatedBy`, `ModifiedUtc`, `ModifiedBy`) are populated in a `SaveChangesInterceptor`, never by hand in services.
 - **Immutability of published programme versions** is enforced in two places: (1) repository refuses updates to a `ProgrammeVersion` whose `Status = Published`; (2) DB-level trigger/constraint where the schema provides one. Both are tested.
 - **Query performance:** prefer projection (`.Select(...)`) for list/read-model queries; never load full aggregates for display-only screens.
@@ -134,6 +135,7 @@ owner, pet, treatment case, case note, programme (never _program_), session, exe
 
 - **FluentValidation** validators live next to their command/DTO in `HelloBuddy.Application`.
 - Validation runs at the boundary (Razor Page handler or controller). Application services may assume their inputs are structurally valid.
+- **Web view models carry server-side validation.** For MVC/Razor view models, structural rules are expressed with DataAnnotations (`[Required]`, `[EmailAddress]`, `[MinLength]`, `[Compare]`, …) and the handler **must** gate on `ModelState.IsValid` before acting. Cross-field rules that exist in the UI (e.g. a confirm-password field) **must** be enforced server-side — relying on client-side validation alone is a §13 violation ("both — never just one"). DataAnnotations cover structural input; FluentValidation remains the home for business-rule validation in the Application layer.
 - **Predictable, recoverable failures** (missing video link, validation breach, not-found, conflict) → return a `Result<T>` or `OperationResult` with typed error codes. Do **not** throw.
 - **Unexpected failures** (DB down, file system failure, programmer error) → throw. A global middleware translates to RFC 7807 ProblemDetails for API responses and a friendly error page for Razor Pages.
 - **Never swallow exceptions.** Catch only to add context, then rethrow.
@@ -164,6 +166,7 @@ owner exists; pet exists; case exists; title or date range; start + end dates; �
 - Page models are **thin**: gather input, call an Application service, populate view-model, return. No EF, no business rules.
 - **DTOs/view-models are distinct from entities.** Never bind a request directly to a domain entity.
 - **Antiforgery** on every browser-originated POST handler (default in Razor Pages — do not disable).
+- **MVC controllers do NOT validate antiforgery automatically.** Razor Pages validate by convention; MVC controller actions do not. Every browser-originated controller POST/PUT/PATCH/DELETE action **must** carry `[ValidateAntiForgeryToken]`, OR the app must register `[AutoValidateAntiforgeryToken]` globally in `Program.cs`. Rendering the token in the form is not enough — the server must validate it. Match the established `OwnersController`/`CasesController` per-action pattern unless a global filter is added by ADR. A form that posts without server-side validation is a CSRF hole even though the hidden token is present.
 - **Service-to-service API/PDF endpoints are non-browser surfaces.** CSRF protections are not mandatory on these endpoints when they are protected by infrastructure controls (private network boundary, authenticated caller identity, and deny-by-default ingress).
 - Any endpoint with antiforgery disabled must include an inline note explaining why the endpoint is non-browser and what control boundary protects it.
 - **No business logic in `.cshtml`.** Conditionals are presentation only.
@@ -256,6 +259,7 @@ public sealed record ProgrammeDocumentResult(byte[] PdfBytes, string HtmlPreview
 - **Structured logging**: pass values as message properties, not interpolated strings. `_log.LogInformation("Programme {ProgrammeId} published by {PractitionerId}", id, userId);`
 - **Log levels**: `Trace`/`Debug` off in production by default; `Information` for state changes; `Warning` for recoverable issues; `Error` for unexpected failures with exception.
 - **Never log** clinical note content, owner contact details, or PDF payloads. Log identifiers only.
+- **Personal data includes names, email addresses and phone numbers — not just clinical content.** This applies to practitioners as well as owners. Log the stable identifier (`PractitionerId`, `OwnerId`) instead of the email/name, including in seeding and start-up diagnostics.
 - **Correlation ID** middleware on every request; propagated into all log scopes.
 - Configuration via `IOptions<T>` bound from `appsettings.{Environment}.json`; **never** `IConfiguration` injected into business code.
 - **Secrets**: User Secrets in dev, **Azure Key Vault** in production via Managed Identity. No connection strings, API keys or passwords in source, `appsettings.json`, or commit history.

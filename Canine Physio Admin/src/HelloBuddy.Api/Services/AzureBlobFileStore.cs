@@ -110,6 +110,27 @@ public sealed class AzureBlobFileStore : IFileStore
         return response.Value;
     }
 
+    public async Task<int> DeleteByPrefixAsync(string keyPrefix, CancellationToken ct = default)
+    {
+        await EnsureContainerExistsAsync(ct);
+        var deleted = 0;
+
+        await foreach (var blobItem in _container.GetBlobsAsync(prefix: keyPrefix, cancellationToken: ct))
+        {
+            var blob = _container.GetBlobClient(blobItem.Name);
+            var response = await blob.DeleteIfExistsAsync(cancellationToken: ct);
+            if (!response.Value)
+            {
+                continue;
+            }
+
+            deleted++;
+            _logger.LogInformation("Deleted blob {Container}/{Key}", _container.Name, blobItem.Name);
+        }
+
+        return deleted;
+    }
+
     public async Task<ArtefactReadResult?> OpenReadAsync(string key, CancellationToken ct = default)
     {
         await EnsureContainerExistsAsync(ct);

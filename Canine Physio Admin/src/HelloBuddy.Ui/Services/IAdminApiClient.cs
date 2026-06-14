@@ -17,8 +17,8 @@ public interface IAdminApiClient
     Task<CaseDetailVm.NoteRow?> AddCaseNoteAsync(ulong id, CreateCaseNoteRequest request, CancellationToken ct);
     Task<CaseDetailVm.NoteRow?> UpdateCaseNoteAsync(ulong id, ulong noteId, CreateCaseNoteRequest request, CancellationToken ct);
     Task<bool> DeleteCaseNoteAsync(ulong id, ulong noteId, CancellationToken ct);
-    Task<IReadOnlyList<OwnerListItem>> ListOwnersAsync(bool includeAnonymised, CancellationToken ct);
-    Task<OwnerDetailVm?> GetOwnerAsync(ulong id, bool includeAnonymised, CancellationToken ct);
+    Task<IReadOnlyList<OwnerListItem>> ListOwnersAsync(CancellationToken ct);
+    Task<OwnerDetailVm?> GetOwnerAsync(ulong id, CancellationToken ct);
     Task<OwnerDetailVm> CreateOwnerAsync(SaveOwnerRequest request, CancellationToken ct);
     Task<OwnerDetailVm?> UpdateOwnerAsync(ulong id, SaveOwnerRequest request, CancellationToken ct);
     Task<OwnerDataControlClientResult> ApplyOwnerDataControlAsync(ulong id, CancellationToken ct);
@@ -48,6 +48,8 @@ public interface IAdminApiClient
     Task<PdfDocumentContent?> GetProgrammePreviewPdfAsync(ulong id, CancellationToken ct);
     Task<PublishResponse> PublishProgrammeAsync(ulong id, CancellationToken ct);
     Task<DownloadUrlResponse> GetDownloadUrlAsync(string fileName, CancellationToken ct);
+    Task<PdfDocumentContent?> GetProgrammeVersionPdfAsync(ulong id, ulong versionId, CancellationToken ct);
+    Task<bool> DeleteProgrammeVersionAsync(ulong id, ulong versionId, CancellationToken ct);
 }
 
 public sealed record ExerciseImageContent(byte[] Bytes, string ContentType);
@@ -65,7 +67,6 @@ public sealed record DeleteProgrammeResult(DeleteProgrammeOutcome Outcome, strin
 public enum OwnerDataControlClientOutcome
 {
     Deleted,
-    Anonymised,
     NotFound,
 }
 

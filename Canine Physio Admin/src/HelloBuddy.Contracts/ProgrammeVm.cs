@@ -3,6 +3,8 @@ namespace HelloBuddy.Contracts;
 public sealed record ProgrammeVm(
     ulong ProgrammeId,
     ulong TreatmentCaseId,
+    ulong PetId,
+    ulong OwnerId,
     string ProgrammeName,
     string Status,
     DateOnly StartDate,
@@ -11,6 +13,7 @@ public sealed record ProgrammeVm(
     string CaseTitle,
     string PetName,
     string OwnerName,
+    string PractitionerName,
     IReadOnlyList<ProgrammeVm.SessionRow> Sessions)
 {
     public sealed record SessionRow(

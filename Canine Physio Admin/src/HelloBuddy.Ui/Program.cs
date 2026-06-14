@@ -1,9 +1,15 @@
 using Azure.Identity;
+using HelloBuddy.Admin.Core.Data;
+using HelloBuddy.Admin.Core.Identity;
+using HelloBuddy.Application.Auth;
 using HelloBuddy.Ui.Models;
 using HelloBuddy.Ui.Services;
 using HelloBuddy.Ui.Telemetry;
 using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,7 +44,32 @@ if (!string.IsNullOrWhiteSpace(dpBlobUri))
 var apiUri = builder.Configuration["Api:Uri"]
     ?? throw new InvalidOperationException("Api:Uri is not configured.");
 
+// Cookie authentication: signed-in users have claims for id/name/role.
+builder.Services
+    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.LogoutPath = "/Account/Logout";
+        options.AccessDeniedPath = "/Home/AccessDenied";
+        options.SlidingExpiration = true;
+        options.ExpireTimeSpan = TimeSpan.FromHours(1);
+    });
+
+// Authorization policies
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireClaim("practitioner_role", "administrator"));
+});
+
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<PractitionerHeaderHandler>();
+builder.Services.AddScoped<ICurrentPractitionerAccessor, UiPractitionerAccessor>();
 builder.Services.AddHttpClient<IAdminApiClient, AdminApiClient>(client =>
 {
     client.BaseAddress = new Uri(apiUri);
@@ -50,6 +81,26 @@ builder.Services.Configure<MediaSearchOptions>(builder.Configuration.GetSection(
 
 builder.Services.AddControllersWithViews();
 
+// UI auth services currently use DB-backed implementations from Infrastructure.
+// Keep opt-in to avoid forcing DbContext wiring in UI test host/bootstrap.
+var useDbBackedUiAuth = builder.Configuration.GetValue<bool>("Auth:UseDbBackedServices");
+if (useDbBackedUiAuth)
+{
+    var connectionString = builder.Configuration.GetConnectionString("CaninePhysioDb")
+        ?? throw new InvalidOperationException(
+            "Auth:UseDbBackedServices is true, but ConnectionStrings:CaninePhysioDb is not configured for the UI host.");
+
+    builder.Services.AddDbContext<CaninePhysioDbContext>(options =>
+        options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+
+    builder.Services.AddUiAuthServices();
+}
+else
+{
+    builder.Services.AddScoped<ILoginService, NoOpLoginService>();
+    builder.Services.AddScoped<IPractitionerAdminService, NoOpPractitionerAdminService>();
+}
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
@@ -60,11 +111,15 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapStaticAssets();
+// Static assets must never require authentication — MapStaticAssets() creates endpoint-based
+// routes that inherit the FallbackPolicy (RequireAuthenticatedUser). AllowAnonymous() exempts
+// CSS, JS, images and other static files so unauthenticated pages (login, error) render correctly.
+app.MapStaticAssets().AllowAnonymous();
 
-app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
+app.MapGet("/healthz", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
 
 app.MapControllerRoute(
     name: "default",

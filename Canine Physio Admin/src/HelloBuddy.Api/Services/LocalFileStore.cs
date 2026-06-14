@@ -53,6 +53,25 @@ public sealed class LocalFileStore : IFileStore
         return Task.FromResult(true);
     }
 
+    public Task<int> DeleteByPrefixAsync(string keyPrefix, CancellationToken ct = default)
+    {
+        var deleted = 0;
+        foreach (var path in Directory.EnumerateFiles(_rootPath, "*", SearchOption.AllDirectories))
+        {
+            var relativeKey = Path.GetRelativePath(_rootPath, path).Replace(Path.DirectorySeparatorChar, '/');
+            if (!relativeKey.StartsWith(keyPrefix, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            File.Delete(path);
+            deleted++;
+            _logger.LogInformation("Deleted local file store artefact at {Path}", path);
+        }
+
+        return Task.FromResult(deleted);
+    }
+
     public Task<ArtefactReadResult?> OpenReadAsync(string key, CancellationToken ct = default)
     {
         var path = Path.Combine(_rootPath, key.Replace('/', Path.DirectorySeparatorChar));

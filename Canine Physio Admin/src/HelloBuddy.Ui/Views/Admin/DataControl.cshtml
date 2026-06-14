@@ -1,0 +1,47 @@
+@model AdminOwnerDataControlViewModel
+
+@{
+    ViewData["Title"] = "GDPR Data Control";
+}
+
+<div class="container mt-5">
+    <div class="mb-4">
+        <h2>GDPR Data Control (RTBF)</h2>
+    </div>
+
+    <div class="card border-danger">
+        <div class="card-body">
+            <h3 class="h5 text-danger">Right To Be Forgotten</h3>
+            <p class="mb-2">
+                Apply owner GDPR deletion. The owner and associated records, including stored programme PDFs, are permanently deleted.
+            </p>
+            <div class="alert alert-warning" role="alert">
+                Warning: this action is irreversible.
+            </div>
+
+            <form method="post" asp-action="DataControl" onsubmit="return confirm('Apply right-to-be-forgotten data control for this owner? This action cannot be reversed.');">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+                <div class="row g-3 align-items-end">
+                    <div class="col-sm-8 col-md-6 col-lg-5">
+                        <label class="form-label" for="OwnerId">Owner</label>
+                        <select class="form-select" id="OwnerId" name="OwnerId" required>
+                            <option value="">Select owner...</option>
+                            @foreach (var owner in Model.Owners)
+                            {
+                                var isSelected = Model.OwnerId.HasValue && Model.OwnerId.Value == owner.OwnerId;
+                                <option value="@owner.OwnerId" selected="@isSelected">@owner.FullName (@owner.Email)</option>
+                            }
+                        </select>
+                        <span class="text-danger" asp-validation-for="OwnerId"></span>
+                    </div>
+
+                    <div class="col-sm-auto">
+                        <button type="submit" class="btn btn-danger">Apply RTBF</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

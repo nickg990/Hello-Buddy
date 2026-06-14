@@ -25,26 +25,51 @@
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                                     <a class="nav-link text-dark" asp-area="" asp-controller="Owners"
-                                         asp-action="Index">Owners</a>
+                        @if (User.Identity?.IsAuthenticated ?? false)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Owners" asp-action="Index">Owners</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Pets" asp-action="Index">Pets</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Exercises" asp-action="Index">Exercise library</a>
+                            </li>
+                            @if (User.HasClaim("practitioner_role", "administrator"))
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle text-dark" href="#" id="adminMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Admin
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="adminMenu">
+                                        <li><a class="dropdown-item" asp-area="" asp-controller="Admin" asp-action="Practitioners">Manage Practitioners</a></li>
+                                        <li><a class="dropdown-item" asp-area="" asp-controller="Admin" asp-action="DataControl">GDPR Data Control (RTBF)</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" asp-area="" asp-controller="Admin" asp-action="ChangePassword">Change My Password</a></li>
+                                    </ul>
                                 </li>
-                                <li class="nav-item">
-                                     <a class="nav-link text-dark" asp-area="" asp-controller="Pets"
-                                         asp-action="Index">Pets</a>
-                                </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Exercises"
-                               asp-action="Index">Exercise library</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home"
-                               asp-action="Privacy">Privacy</a>
-                        </li>
+                            }
+                        }
                     </ul>
+                    @if (User.Identity?.IsAuthenticated ?? false)
+                    {
+                        <div class="d-sm-flex align-items-center">
+                            <span class="me-3 text-dark">@User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value</span>
+                            <form method="post" asp-area="" asp-controller="Account" asp-action="Logout" class="d-inline">
+                                <button type="submit" class="btn btn-outline-danger btn-sm">Sign Out</button>
+                            </form>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-sm-flex">
+                            <a href="@Url.Action("Login", "Account")" class="btn btn-outline-secondary btn-sm">Sign In</a>
+                        </div>
+                    }
                 </div>
             </div>
         </nav>

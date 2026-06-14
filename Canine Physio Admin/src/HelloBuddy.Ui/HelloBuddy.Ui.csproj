@@ -8,7 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\HelloBuddy.Application\HelloBuddy.Application.csproj" />
+    <ProjectReference Include="..\HelloBuddy.Admin.Core\HelloBuddy.Admin.Core.csproj" />
     <ProjectReference Include="..\HelloBuddy.Contracts\HelloBuddy.Contracts.csproj" />
+    <ProjectReference Include="..\HelloBuddy.Infrastructure\HelloBuddy.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

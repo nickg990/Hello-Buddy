@@ -21,17 +21,15 @@ public sealed class AdminApiClient : IAdminApiClient
         return rows ?? new List<CaseRow>();
     }
 
-    public async Task<IReadOnlyList<OwnerListItem>> ListOwnersAsync(bool includeAnonymised, CancellationToken ct)
+    public async Task<IReadOnlyList<OwnerListItem>> ListOwnersAsync(CancellationToken ct)
     {
-        var path = includeAnonymised ? "/api/owners?includeAnonymised=true" : "/api/owners";
-        var rows = await _http.GetFromJsonAsync<List<OwnerListItem>>(path, ct);
+        var rows = await _http.GetFromJsonAsync<List<OwnerListItem>>("/api/owners", ct);
         return rows ?? new List<OwnerListItem>();
     }
 
-    public async Task<OwnerDetailVm?> GetOwnerAsync(ulong id, bool includeAnonymised, CancellationToken ct)
+    public async Task<OwnerDetailVm?> GetOwnerAsync(ulong id, CancellationToken ct)
     {
-        var path = includeAnonymised ? $"/api/owners/{id}?includeAnonymised=true" : $"/api/owners/{id}";
-        var resp = await _http.GetAsync(path, ct);
+        var resp = await _http.GetAsync($"/api/owners/{id}", ct);
         if (resp.StatusCode == HttpStatusCode.NotFound) return null;
         await EnsureSuccessOrThrowAsync(resp, ct);
         return await ReadRequiredAsync<OwnerDetailVm>(resp, ct);
@@ -65,11 +63,6 @@ public sealed class AdminApiClient : IAdminApiClient
         if (payload.Outcome.Equals("deleted", StringComparison.OrdinalIgnoreCase))
         {
             return new OwnerDataControlClientResult(OwnerDataControlClientOutcome.Deleted, payload.Message);
-        }
-
-        if (payload.Outcome.Equals("anonymised", StringComparison.OrdinalIgnoreCase))
-        {
-            return new OwnerDataControlClientResult(OwnerDataControlClientOutcome.Anonymised, payload.Message, payload.Owner);
         }
 
         return new OwnerDataControlClientResult(OwnerDataControlClientOutcome.NotFound, payload.Message);
@@ -465,6 +458,35 @@ public sealed class AdminApiClient : IAdminApiClient
         var resp = await _http.GetAsync($"/api/programmes/published/{Uri.EscapeDataString(fileName)}/download-url", ct);
         await EnsureSuccessOrThrowAsync(resp, ct);
         return await ReadRequiredAsync<DownloadUrlResponse>(resp, ct);
+    }
+
+    public async Task<PdfDocumentContent?> GetProgrammeVersionPdfAsync(ulong id, ulong versionId, CancellationToken ct)
+    {
+        var resp = await _http.GetAsync($"/api/programmes/{id}/versions/{versionId}/pdf", ct);
+        if (resp.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        await EnsureSuccessOrThrowAsync(resp, ct);
+        var bytes = await resp.Content.ReadAsByteArrayAsync(ct);
+        var contentType = resp.Content.Headers.ContentType?.MediaType ?? "application/pdf";
+        var fileName = resp.Content.Headers.ContentDisposition?.FileNameStar
+                       ?? resp.Content.Headers.ContentDisposition?.FileName
+                       ?? $"programme-version-{versionId}.pdf";
+        return new PdfDocumentContent(bytes, contentType, fileName);
+    }
+
+    public async Task<bool> DeleteProgrammeVersionAsync(ulong id, ulong versionId, CancellationToken ct)
+    {
+        var resp = await _http.DeleteAsync($"/api/programmes/{id}/versions/{versionId}", ct);
+        if (resp.StatusCode == HttpStatusCode.NotFound)
+        {
+            return false;
+        }
+
+        await EnsureSuccessOrThrowAsync(resp, ct);
+        return true;
     }
 
     private async Task<ProgrammeStatusTransitionClientResult> PostProgrammeStatusTransitionAsync(string path, CancellationToken ct)

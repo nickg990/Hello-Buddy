@@ -3,15 +3,23 @@
     ViewData["Title"] = $"Case: {Model.Case.CaseTitle}";
 }
 
-<partial name="_BackLink" model="@Url.Action("Index", "Cases")" />
-
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
-        <h1>@Model.Case.CaseTitle</h1>
-        <p class="text-muted mb-0">Case #@Model.Case.TreatmentCaseId · <strong>@Model.Case.Status</strong> ·
+        <h2>Treatment Case</h2>
+        <p class="text-muted mb-1">
+            <a asp-controller="Owners" asp-action="Details" asp-route-id="@Model.Case.OwnerId">@Model.Case.OwnerName</a>
+            <span> . </span>
+            <a asp-controller="Pets" asp-action="Details" asp-route-id="@Model.Case.PetId">@Model.Case.PetName</a>
+            <span> . </span>
+            <span>@Model.Case.CaseTitle</span>
+        </p>
+        <p class="text-muted mb-0"><strong>@Model.Case.Status</strong> ·
             @Model.Case.StartDate.ToString("yyyy-MM-dd")@(Model.Case.EndDate is { } end ? " – " + end.ToString("yyyy-MM-dd") : "")</p>
     </div>
-    <a class="btn btn-outline-secondary" asp-controller="Cases" asp-action="Edit" asp-route-id="@Model.Case.TreatmentCaseId">Edit case</a>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" asp-controller="Pets" asp-action="Details" asp-route-id="@Model.Case.PetId">&larr; Back to pet</a>
+        <a class="btn btn-outline-secondary" asp-controller="Cases" asp-action="Edit" asp-route-id="@Model.Case.TreatmentCaseId">Edit case</a>
+    </div>
 </div>
 
 <div class="row g-4 mb-4">
@@ -145,11 +153,11 @@
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
         <h2 class="h4 mb-0">Programmes</h2>
-        <p class="text-muted mb-0">Create a draft programme for this case or open an existing builder.</p>
+        <p class="text-muted mb-0">Create a programme for this case or open an existing PDF Builder.</p>
     </div>
     <form asp-action="CreateProgramme" asp-route-id="@Model.Case.TreatmentCaseId" method="post" class="d-inline">
         @Html.AntiForgeryToken()
-        <button type="submit" class="btn btn-primary">Create draft programme</button>
+        <button type="submit" class="btn btn-primary">New programme</button>
     </form>
 </div>
 
@@ -215,12 +223,23 @@ else
                                     <input type="hidden" name="currentStatus" value="@status" />
                                 </form>
                                 <button type="submit" form="@statusFormId" class="btn btn-sm btn-outline-secondary">Apply</button>
-                                <a class="btn btn-sm btn-outline-primary" asp-controller="Programmes" asp-action="Builder"
-                                   asp-route-id="@p.ProgrammeId">Builder</a>
+                                @if (p.IsLockedForEdit)
+                                {
+                                    <span class="btn btn-sm btn-outline-secondary disabled"
+                                          aria-disabled="true"
+                                          title="Published programmes are locked. Create a new draft from PDF History to edit.">
+                                        PDF Builder
+                                    </span>
+                                }
+                                else
+                                {
+                                    <a class="btn btn-sm btn-outline-secondary" asp-controller="Programmes" asp-action="Builder"
+                                       asp-route-id="@p.ProgrammeId">PDF Builder</a>
+                                }
                                 <a class="btn btn-sm btn-outline-secondary" asp-controller="Programmes" asp-action="Preview"
-                                              asp-route-id="@p.ProgrammeId">Preview</a>
+                                              asp-route-id="@p.ProgrammeId">PDF Viewer</a>
                                           <a class="btn btn-sm btn-outline-secondary" asp-controller="Programmes" asp-action="History"
-                                              asp-route-id="@p.ProgrammeId">History</a>
+                                              asp-route-id="@p.ProgrammeId">PDF History</a>
                                 <form asp-action="DeleteProgramme"
                                       asp-route-id="@Model.Case.TreatmentCaseId"
                                       asp-route-programmeId="@p.ProgrammeId"
