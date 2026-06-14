@@ -179,6 +179,15 @@ resource "azurerm_key_vault_access_policy" "api_app" {
   secret_permissions = ["Get", "List"]
 }
 
+# ----- UI: Key Vault read (DB-backed login reads ConnectionStrings--CaninePhysioDb) -----
+resource "azurerm_key_vault_access_policy" "ui_app" {
+  key_vault_id = data.azurerm_key_vault.main.id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = azurerm_user_assigned_identity.ui_app.principal_id
+
+  secret_permissions = ["Get", "List"]
+}
+
 # ---------------------------------------------------------------------------
 # Key Vault secrets (app-config-shaped names for AddAzureKeyVault)
 # ---------------------------------------------------------------------------
@@ -191,6 +200,14 @@ resource "azurerm_key_vault_secret" "connection_string" {
 resource "azurerm_key_vault_secret" "appinsights_connection_string" {
   name         = "ApplicationInsights--ConnectionString"
   value        = azurerm_application_insights.main.connection_string
+  key_vault_id = data.azurerm_key_vault.main.id
+}
+
+# Seeded login initial password — consumed by the API via AddAzureKeyVault
+# (config key Seed:PractitionerLogin:InitialPassword).
+resource "azurerm_key_vault_secret" "seed_initial_password" {
+  name         = "Seed--PractitionerLogin--InitialPassword"
+  value        = var.seed_initial_password
   key_vault_id = data.azurerm_key_vault.main.id
 }
 
@@ -359,6 +376,13 @@ resource "azurerm_container_app" "api" {
         value = data.azurerm_key_vault.main.vault_uri
       }
 
+      # Enables PractitionerLoginSeedHostedService at API startup. The initial
+      # password is read from Key Vault (Seed--PractitionerLogin--InitialPassword).
+      env {
+        name  = "Seed__PractitionerLogin__Enabled"
+        value = "true"
+      }
+
       env {
         name  = "Storage__BlobServiceUri"
         value = azurerm_storage_account.main.primary_blob_endpoint
@@ -486,6 +510,18 @@ resource "azurerm_container_app" "ui" {
       }
 
       env {
+        name  = "KeyVault__Uri"
+        value = data.azurerm_key_vault.main.vault_uri
+      }
+
+      # DB-backed login/admin services read ConnectionStrings:CaninePhysioDb
+      # from Key Vault. Without this the UI falls back to NoOp auth services.
+      env {
+        name  = "Auth__UseDbBackedServices"
+        value = "true"
+      }
+
+      env {
         name  = "SeededPractitionerId"
         value = var.seeded_practitioner_id
       }
@@ -550,6 +586,8 @@ resource "azurerm_container_app" "ui" {
   depends_on = [
     azurerm_role_assignment.ui_app_acr_pull,
     azurerm_role_assignment.ui_app_dataprotection_contributor,
+    azurerm_key_vault_access_policy.ui_app,
+    azurerm_key_vault_secret.connection_string,
   ]
 }
 

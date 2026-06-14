@@ -5,8 +5,12 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
 COPY Directory.Build.props Directory.Packages.props ./
-COPY src/HelloBuddy.Contracts/HelloBuddy.Contracts.csproj  src/HelloBuddy.Contracts/
-COPY src/HelloBuddy.Ui/HelloBuddy.Ui.csproj                src/HelloBuddy.Ui/
+COPY src/HelloBuddy.Contracts/HelloBuddy.Contracts.csproj          src/HelloBuddy.Contracts/
+COPY src/HelloBuddy.Admin.Core/HelloBuddy.Admin.Core.csproj        src/HelloBuddy.Admin.Core/
+COPY src/HelloBuddy.Admin.Pdf/HelloBuddy.Admin.Pdf.csproj          src/HelloBuddy.Admin.Pdf/
+COPY src/HelloBuddy.Application/HelloBuddy.Application.csproj      src/HelloBuddy.Application/
+COPY src/HelloBuddy.Infrastructure/HelloBuddy.Infrastructure.csproj src/HelloBuddy.Infrastructure/
+COPY src/HelloBuddy.Ui/HelloBuddy.Ui.csproj                        src/HelloBuddy.Ui/
 RUN dotnet restore src/HelloBuddy.Ui/HelloBuddy.Ui.csproj
 
 COPY src/ src/

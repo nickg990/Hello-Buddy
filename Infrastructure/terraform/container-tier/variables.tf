@@ -103,6 +103,13 @@ variable "seeded_practitioner_id" {
   default     = "1"
 }
 
+variable "seed_initial_password" {
+  description = "Initial password for the seeded practitioner/admin login accounts (created by the API PractitionerLoginSeedHostedService at startup). Stored as a Key Vault secret."
+  type        = string
+  sensitive   = true
+  default     = "Password12345!"
+}
+
 variable "media_search_provider_description" {
   description = "Description shown in the UI video search provider dropdown (e.g., Cloud storage)."
   type        = string
