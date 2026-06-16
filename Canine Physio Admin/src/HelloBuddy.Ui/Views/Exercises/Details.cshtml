@@ -8,7 +8,9 @@
     var safeVideoUrl = hasValidVideoUrl ? parsedVideoUrl!.ToString() : string.Empty;
 }
 
-<partial name="_BackLink" model="@Url.Action("Index")" />
+<div class="mb-3">
+    <a class="btn btn-outline-secondary" asp-action="Index">&larr; Back to exercise library</a>
+</div>
 
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
@@ -19,7 +21,7 @@
         <a class="btn btn-outline-secondary" asp-action="Edit" asp-route-id="@Model.ExerciseId">Edit exercise</a>
         <form method="post" asp-action="SetActive" asp-route-id="@Model.ExerciseId">
             @Html.AntiForgeryToken()
-            <input type="hidden" name="isActive" value="@(!Model.IsActive).ToString().ToLowerInvariant()" />
+            <input type="hidden" name="isActive" value="@((!Model.IsActive).ToString().ToLowerInvariant())" />
             <button type="submit" class="btn btn-outline-secondary">@(Model.IsActive ? "Deactivate" : "Activate")</button>
         </form>
     </div>
@@ -121,14 +123,6 @@
         }
     </div>
 </div>
-
-@if (!string.IsNullOrWhiteSpace(Model.LegacyInstructionsText))
-{
-    <div class="alert alert-secondary mb-0">
-        <h2 class="h6">Legacy free-text instructions</h2>
-        <p class="mb-0">@Model.LegacyInstructionsText</p>
-    </div>
-}
 
 @section Scripts {
     <script>

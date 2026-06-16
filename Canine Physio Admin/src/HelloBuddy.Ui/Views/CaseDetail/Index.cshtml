@@ -99,17 +99,20 @@
                                                 <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z" />
                                             </svg>
                                         </button>
-                                        <form asp-action="DeleteNote"
+                                        <form id="delete-note-form-@note.TreatmentCaseNoteId"
+                                              asp-action="DeleteNote"
                                               asp-route-id="@Model.Case.TreatmentCaseId"
                                               asp-route-noteId="@note.TreatmentCaseNoteId"
                                               method="post"
-                                              class="d-inline"
-                                              onsubmit="return confirm('Delete this case note? This action cannot be undone.');">
+                                              class="d-inline">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit"
+                                            <button type="button"
                                                     class="btn btn-sm btn-outline-danger"
                                                     title="Delete note"
-                                                    aria-label="Delete note">
+                                                    aria-label="Delete note"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#deleteNoteModal"
+                                                    data-confirm-form-id="delete-note-form-@note.TreatmentCaseNoteId">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                                     <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0A.5.5 0 0 1 8.5 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z" />
                                                     <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2H5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1h2.5a1 1 0 0 1 1 1ZM6 2v.5h4V2H6ZM4 4v9a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4H4Z" />
@@ -240,23 +243,27 @@ else
                                               asp-route-id="@p.ProgrammeId">PDF Viewer</a>
                                           <a class="btn btn-sm btn-outline-secondary" asp-controller="Programmes" asp-action="History"
                                               asp-route-id="@p.ProgrammeId">PDF History</a>
-                                <form asp-action="DeleteProgramme"
+                                <form id="delete-programme-form-@p.ProgrammeId"
+                                      asp-action="DeleteProgramme"
                                       asp-route-id="@Model.Case.TreatmentCaseId"
                                       asp-route-programmeId="@p.ProgrammeId"
                                       method="post"
-                                      class="d-inline"
-                                      onsubmit="return confirm('Delete this programme? This action cannot be undone.');">
+                                      class="d-none">
                                     @Html.AntiForgeryToken()
-                                    <button type="submit"
-                                            class="btn btn-sm btn-outline-danger"
-                                            aria-label="Delete programme @p.ProgrammeName"
-                                            title="Delete programme">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0A.5.5 0 0 1 8.5 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z" />
-                                            <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2H5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1h2.5a1 1 0 0 1 1 1ZM6 2v.5h4V2H6ZM4 4v9a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4H4Z" />
-                                        </svg>
-                                    </button>
                                 </form>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-danger"
+                                        aria-label="Delete programme @p.ProgrammeName"
+                                        title="Delete programme"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#deleteProgrammeModal"
+                                        data-confirm-form-id="delete-programme-form-@p.ProgrammeId"
+                                        data-programme-name="@p.ProgrammeName">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0A.5.5 0 0 1 8.5 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z" />
+                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2H5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1h2.5a1 1 0 0 1 1 1ZM6 2v.5h4V2H6ZM4 4v9a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4H4Z" />
+                                    </svg>
+                                </button>
                             </td>
                         </tr>
                     }
@@ -265,6 +272,44 @@ else
         </div>
     </div>
 }
+
+<div class="modal fade" id="deleteNoteModal" tabindex="-1" aria-labelledby="deleteNoteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteNoteModalLabel">Delete case note?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this case note?</p>
+                <p class="mb-0"><strong>This action cannot be undone.</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="delete-note-confirm-btn">Delete note</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteProgrammeModal" tabindex="-1" aria-labelledby="deleteProgrammeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteProgrammeModalLabel">Delete programme?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this programme?</p>
+                <p class="mb-0"><strong>This action cannot be undone.</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="delete-programme-confirm-btn">Delete programme</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" id="editNoteModal" tabindex="-1" aria-labelledby="editNoteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -297,6 +342,32 @@ else
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
+        (function () {
+            // Delete note confirm modal
+            var deleteNoteModal = document.getElementById('deleteNoteModal');
+            var deleteNoteConfirmBtn = document.getElementById('delete-note-confirm-btn');
+            if (deleteNoteModal && deleteNoteConfirmBtn) {
+                var pendingNoteFormId;
+                deleteNoteModal.addEventListener('show.bs.modal', function (e) {
+                    pendingNoteFormId = e.relatedTarget && e.relatedTarget.dataset.confirmFormId;
+                });
+                deleteNoteConfirmBtn.addEventListener('click', function () {
+                    if (pendingNoteFormId) document.getElementById(pendingNoteFormId).submit();
+                });
+            }
+            // Delete programme confirm modal
+            var deleteProgrammeModal = document.getElementById('deleteProgrammeModal');
+            var deleteProgrammeConfirmBtn = document.getElementById('delete-programme-confirm-btn');
+            if (deleteProgrammeModal && deleteProgrammeConfirmBtn) {
+                var pendingProgrammeFormId;
+                deleteProgrammeModal.addEventListener('show.bs.modal', function (e) {
+                    pendingProgrammeFormId = e.relatedTarget && e.relatedTarget.dataset.confirmFormId;
+                });
+                deleteProgrammeConfirmBtn.addEventListener('click', function () {
+                    if (pendingProgrammeFormId) document.getElementById(pendingProgrammeFormId).submit();
+                });
+            }
+        })();
         (function () {
             var modalEl = document.getElementById('editNoteModal');
             if (!modalEl || !window.bootstrap) {

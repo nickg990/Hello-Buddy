@@ -129,7 +129,9 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <button type="submit" class="btn btn-sm btn-outline-danger w-100" title="Remove exercise" aria-label="Remove exercise" onclick="return confirm('Remove this exercise from the draft programme?');">
+                            <button type="button" class="btn btn-sm btn-outline-danger w-100" title="Remove exercise" aria-label="Remove exercise"
+                                    data-remove-exercise-trigger
+                                    data-session-id="@session.SessionId">
                                 <span aria-hidden="true">&#128465;</span>
                             </button>
                         </div>

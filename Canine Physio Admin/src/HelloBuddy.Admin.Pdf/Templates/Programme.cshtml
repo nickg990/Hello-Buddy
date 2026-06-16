@@ -33,8 +33,9 @@ body { font-family: Georgia, Cambria, 'Times New Roman', serif; color: #223843; 
 .session-heading h2 { font-size: 12pt; font-weight: 700; color: #223843; margin: 0; }
 .session-objective { font-size: 9pt; color: #5A6E7A; background: #F8FBFC; border-left: 1px solid #B9CBD4; border-right: 1px solid #B9CBD4; padding: 2mm 5mm; }
 /* ── Exercise rows ───────────────────────────────────────────────────── */
-.ex-row { background: #F8FBFC; border: 1px solid #B9CBD4; border-top: 0; padding: 4mm 5mm; break-inside: avoid; display: flex; gap: 10px; align-items: flex-start; }
+.ex-row { background: #F8FBFC; border: 1px solid #B9CBD4; border-top: 0; padding: 4mm 5mm; break-inside: avoid; }
 .ex-row:last-child { border-radius: 0 0 2px 2px; }
+.ex-row-top { display: flex; gap: 10px; align-items: flex-start; }
 .ex-media { width: 76px; height: 76px; flex: 0 0 76px; border: 1px solid #6392AE; border-radius: 2px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #D4E0E5; }
 .ex-media img { max-width: 100%; max-height: 100%; object-fit: cover; }
 .ex-media-link { color: #245E7C; font-size: 8pt; text-align: center; text-decoration: underline; padding: 4px; }
@@ -43,6 +44,9 @@ body { font-family: Georgia, Cambria, 'Times New Roman', serif; color: #223843; 
 .ex-title { font-weight: 700; font-size: 11pt; color: #223843; margin: 0 0 2px 0; }
 .ex-prescription { font-size: 9.5pt; color: #223843; margin: 0 0 2px 0; }
 .ex-obj { color: #5A6E7A; font-size: 9pt; margin: 0; }
+/* ── Exercise instructions ────────────────────────────────────────────── */
+.ex-instructions { margin: 3mm 0 0 0; padding-left: 5mm; font-size: 9.5pt; color: #223843; line-height: 1.5; }
+.ex-instructions li { margin-bottom: 1mm; }
 /* ── Footer ──────────────────────────────────────────────────────────── */
 .pdf-footer { color: #5A6E7A; font-size: 8pt; margin-top: 8mm; text-align: center; border-top: 1px solid #B9CBD4; padding-top: 3mm; }
 </style>
@@ -77,10 +81,14 @@ body { font-family: Georgia, Cambria, 'Times New Roman', serif; color: #223843; 
 @foreach (var ex in session.Exercises)
 {
   <div class="ex-row">
-    <div class="ex-media">
+    <div class="ex-row-top">
+      <div class="ex-media">
 @if (!string.IsNullOrWhiteSpace(ex.ImageUrl) && !string.IsNullOrWhiteSpace(ex.VideoUrl))
 {
-<a href="@ex.VideoUrl"><img src="@ex.ImageUrl" alt="@ex.ExerciseTitle image" /></a>
+  @* target="_blank" hints the PDF viewer to open the video in a new tab.
+     PDF link behaviour varies by browser/viewer; this is the best-supported approach
+     available in PuppeteerSharp-generated PDFs. Some viewers may ignore the attribute. *@
+<a href="@ex.VideoUrl" target="_blank"><img src="@ex.ImageUrl" alt="@ex.ExerciseTitle image" /></a>
 }
 else if (!string.IsNullOrWhiteSpace(ex.ImageUrl))
 {
@@ -88,21 +96,32 @@ else if (!string.IsNullOrWhiteSpace(ex.ImageUrl))
 }
 else if (!string.IsNullOrWhiteSpace(ex.VideoUrl))
 {
-<a class="ex-media-link" href="@ex.VideoUrl">Video</a>
+  @* target="_blank" hints the PDF viewer to open the video in a new tab. *@
+<a class="ex-media-link" href="@ex.VideoUrl" target="_blank">Video</a>
 }
 else
 {
 <span class="ex-media-empty">No image</span>
 }
-    </div>
-    <div class="ex-info">
-      <p class="ex-title">@ex.ExerciseTitle</p>
-      <p class="ex-prescription">@(ex.Reps?.ToString() ?? "&mdash;") reps &middot; @(ex.Sets?.ToString() ?? "&mdash;") sets@(ex.HoldSeconds.HasValue ? " &middot; " + ex.HoldSeconds.Value + "s hold" : "")</p>
+      </div>
+      <div class="ex-info">
+        <p class="ex-title">@ex.ExerciseTitle</p>
+        <p class="ex-prescription">@(ex.Reps?.ToString() ?? "&mdash;") reps &middot; @(ex.Sets?.ToString() ?? "&mdash;") sets@(ex.HoldSeconds.HasValue ? " &middot; " + ex.HoldSeconds.Value + "s hold" : "")</p>
 @if (!string.IsNullOrWhiteSpace(ex.ObjectiveSummary))
 {
-      <p class="ex-obj">@ex.ObjectiveSummary</p>
+        <p class="ex-obj">@ex.ObjectiveSummary</p>
 }
+      </div>
     </div>
+@if (ex.Instructions != null && ex.Instructions.Count > 0)
+{
+    <ol class="ex-instructions">
+@foreach (var step in ex.Instructions)
+{
+        <li>@step.InstructionText</li>
+}
+    </ol>
+}
   </div>
 }
 </div>

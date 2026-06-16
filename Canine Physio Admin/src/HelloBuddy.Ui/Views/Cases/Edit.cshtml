@@ -4,6 +4,17 @@
     ViewData["Title"] = isCreate ? "Add treatment case" : "Edit treatment case";
 }
 
+<div class="mb-3">
+@if (isCreate)
+{
+    <a class="btn btn-outline-secondary" asp-action="Index">&larr; Back to cases</a>
+}
+else
+{
+    <a class="btn btn-outline-secondary" asp-controller="CaseDetail" asp-action="Index" asp-route-id="@Model.TreatmentCaseId">&larr; Back to treatment case</a>
+}
+</div>
+
 <h2>Treatment Case Details</h2>
 @if (Model.TreatmentCaseId.HasValue)
 {

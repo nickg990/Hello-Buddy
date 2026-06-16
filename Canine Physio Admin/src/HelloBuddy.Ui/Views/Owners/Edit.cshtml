@@ -4,7 +4,16 @@
     ViewData["Title"] = isCreate ? "Add owner" : "Edit owner";
 }
 
-<partial name="_BackLink" model="@Url.Action("Index")" />
+<div class="mb-3">
+@if (isCreate)
+{
+    <a class="btn btn-outline-secondary" asp-action="Index">&larr; Back to owners</a>
+}
+else
+{
+    <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.OwnerId">&larr; Back to owner</a>
+}
+</div>
 
 <h1>@ViewData["Title"]</h1>
 

@@ -702,18 +702,24 @@ public sealed class ProgrammeRepository : IProgrammeRepository
                         s.SortOrder,
                         Exercises = s.Sessionexercises
                             .OrderBy(se => se.SortOrder)
-                            .Select(se => new ProgrammeVm.SessionExerciseRow(
+                            .Select(se => new
+                            {
                                 se.SessionExerciseId,
                                 se.ExerciseId,
-                                se.Exercise.Title,
-                                se.Exercise.ObjectiveSummary,
-                                se.Exercise.ImageUrl,
-                                se.Exercise.VideoUrl,
+                                ExerciseTitle = se.Exercise.Title,
+                                ObjectiveSummary = se.Exercise.ObjectiveSummary,
+                                ImageUrl = se.Exercise.ImageUrl,
+                                VideoUrl = se.Exercise.VideoUrl,
                                 se.Reps,
                                 se.Sets,
                                 se.HoldSeconds,
                                 se.SortOrder,
-                                se.Notes))
+                                se.Notes,
+                                Instructions = se.Exercise.Exerciseinstructions
+                                    .OrderBy(i => i.StepNumber)
+                                    .Select(i => new { i.StepNumber, i.InstructionText })
+                                    .ToList()
+                            })
                             .ToList()
                     })
                     .ToList()
@@ -723,7 +729,22 @@ public sealed class ProgrammeRepository : IProgrammeRepository
         if (data is null) return null;
 
         var sessions = data.Sessions
-            .Select(s => new ProgrammeVm.SessionRow(s.SessionId, s.Period, s.Objective, s.Status, s.SortOrder, s.Exercises))
+            .Select(s => new ProgrammeVm.SessionRow(
+                s.SessionId, s.Period, s.Objective, s.Status, s.SortOrder,
+                s.Exercises.Select(se => new ProgrammeVm.SessionExerciseRow(
+                    se.SessionExerciseId,
+                    se.ExerciseId,
+                    se.ExerciseTitle,
+                    se.ObjectiveSummary,
+                    se.ImageUrl,
+                    se.VideoUrl,
+                    se.Reps,
+                    se.Sets,
+                    se.HoldSeconds,
+                    se.SortOrder,
+                    se.Notes,
+                    se.Instructions.Select(i => new ProgrammeVm.InstructionStep(i.StepNumber, i.InstructionText)).ToList()))
+                .ToList()))
             .ToList();
 
         return new ProgrammeVm(

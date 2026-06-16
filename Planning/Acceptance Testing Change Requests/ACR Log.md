@@ -1,6 +1,6 @@
 # Acceptance Testing Change Request Log
 
-Last Updated: 2026-06-14 (ACR025-ACR027 added)
+Last Updated: 2026-06-15 (ACR028 added)
 
 ## Purpose
 
@@ -47,6 +47,7 @@ ACRs capture changes raised during acceptance testing of the Canine Physio Admin
 | ACR025 | Brand Colours on Primary and Secondary Buttons | Proposed | Product / Release 1 planning | 2026-06-14 | 2026-06-14 | Raised in acceptance testing (iteration 2): re-skin `btn-primary` and `btn-outline-secondary` to the Canine Physio App brand palette (primary `#4A7A96`, hover `#28404F`, secondary outline `#4A7A96`) via `site.css` overrides; colour-only change, role mapping (ACR022) unchanged. | Approve and schedule implementation. |
 | ACR026 | PDF Visual Restyle to Owner Programme Layout Guide | Proposed | Product / Release 1 planning | 2026-06-14 | 2026-06-14 | Raised in acceptance testing (iteration 2): restyle the programme PDF (`Programme.cshtml`) to look like `Designs/PDF/owner_programme_pdf.svg` (header/summary bands, intro panel, session bands, boxed left-hand media) while keeping current content and content layout; keep click-image-to-open-video; drop exercise numbering. | Approve and schedule implementation. |
 | ACR027 | Standard Page Title (H2) with Breadcrumb Subtitle (H4) on Main Pages | Proposed | Product / Release 1 planning | 2026-06-14 | 2026-06-14 | Raised in acceptance testing (iteration 2): each main page (Owner, Pets, Pet Details, Treatment Case, Treatment Case Details edit-only, Exercise Programme Builder, PDF Viewer, PDF History) shows a fixed title as H2 and a breadcrumb-trail subtitle as H4 beneath it (items joined by `" . "`, no `#<number>` ids, every ancestor item is a clickable link to its page). CQ-1 resolved: Exercise Programme = Builder page (page title `Exercise Programme Builder`; case-page button stays `Builder`). CQ-2 resolved: subtitle = breadcrumbs. | Approve and schedule implementation. |
+| ACR028 | Remove the Legacy Free-Text Instructions Box from Edit Exercise (UI only) | Proposed | Product / Release 1 planning | 2026-06-15 | 2026-06-15 | Raised in acceptance testing: remove the read-only "Legacy free-text instructions" textarea from the Edit Exercise screen; UI-only change, legacy data must remain stored in the database (no schema/data changes). | Approve and schedule implementation. |
 
 ## Notes
 

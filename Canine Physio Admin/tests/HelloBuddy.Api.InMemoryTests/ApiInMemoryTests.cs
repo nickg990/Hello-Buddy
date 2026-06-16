@@ -1295,7 +1295,7 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
         var mediaBox = Regex.Match(html, "<div class=\"ex-media\">.*?</div>", RegexOptions.Singleline);
         Assert.True(mediaBox.Success, "Expected an ex-media placeholder box in the PDF HTML.");
         Assert.Matches(
-            "<a href=\"https://media.example.test/step-up.mp4\">\\s*<img src=\"https://media.example.test/step-up.jpg\"",
+            "<a href=\"https://media.example.test/step-up.mp4\"[^>]*>\\s*<img src=\"https://media.example.test/step-up.jpg\"",
             mediaBox.Value);
         Assert.DoesNotContain("Watch video", html);
     }
@@ -1361,7 +1361,8 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
                             3,
                             5,
                             1,
-                            "Steady pace")
+                            "Steady pace",
+                            [])
                     ])
             ]);
 

@@ -331,7 +331,7 @@ public sealed class ProgrammesControllerTests
                     "planned",
                     1,
                     [
-                        new ProgrammeVm.SessionExerciseRow(1, 1, "Step-ups (low)", "Controlled stepping", null, null, 5, 3, 5, 1, "Steady pace"),
+                        new ProgrammeVm.SessionExerciseRow(1, 1, "Step-ups (low)", "Controlled stepping", null, null, 5, 3, 5, 1, "Steady pace", []),
                     ])
             ]);
 }

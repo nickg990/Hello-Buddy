@@ -15,6 +15,7 @@
 
             const editorPanelUrl = root.dataset.editorPanelUrl;
             const feedback = document.getElementById('builder-feedback');
+            var pendingRemoveForm = null;
 
             const hasChanged = (input) => {
                 if (input.type === 'radio' || input.type === 'checkbox') {
@@ -148,10 +149,59 @@
                         }
                     });
                 });
+
+                // Wire remove-exercise buttons to the confirmation modal
+                root.querySelectorAll('[data-remove-exercise-trigger]').forEach(function (btn) {
+                    if (btn.dataset.removeBound === 'true') return;
+                    btn.dataset.removeBound = 'true';
+                    btn.addEventListener('click', function () {
+                        const sessionId = btn.dataset.sessionId;
+                        const removeSelect = document.getElementById('remove-exercise-' + sessionId);
+                        if (!removeSelect || !removeSelect.value) {
+                            renderFeedback('error', 'Please select an exercise to remove.');
+                            return;
+                        }
+                        pendingRemoveForm = btn.closest('form');
+                        var modal = window.bootstrap && window.bootstrap.Modal.getOrCreateInstance(
+                            document.getElementById('removeExerciseModal'));
+                        if (modal) modal.show();
+                    });
+                });
             };
 
             bindChangeState();
             bindAsyncForms();
+
+            // Remove exercise confirmation modal handler (wired once; pendingRemoveForm set in bindAsyncForms)
+            var removeExerciseConfirmBtn = document.getElementById('remove-exercise-confirm-btn');
+            if (removeExerciseConfirmBtn) {
+                removeExerciseConfirmBtn.addEventListener('click', async function () {
+                    var modalEl = document.getElementById('removeExerciseModal');
+                    var modal = modalEl && window.bootstrap && window.bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+                    if (!pendingRemoveForm) return;
+                    const form = pendingRemoveForm;
+                    pendingRemoveForm = null;
+                    try {
+                        const formData = new FormData(form);
+                        const response = await fetch(form.action, {
+                            method: form.method || 'POST',
+                            body: formData,
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        });
+                        if (!response.ok) throw new Error('Request failed.');
+                        const payload = await response.json();
+                        if (!payload.ok) {
+                            renderFeedback('error', payload.error || 'Unable to remove exercise.');
+                            return;
+                        }
+                        await refreshPanels();
+                        renderFeedback('success', payload.message || 'Exercise removed.');
+                    } catch (e) {
+                        renderFeedback('error', 'Unable to remove exercise. Please retry.');
+                    }
+                });
+            }
         })();
     </script>
 }
@@ -186,3 +236,20 @@
     </div>
 </div>
 
+<div class="modal fade" id="removeExerciseModal" tabindex="-1" aria-labelledby="removeExerciseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="removeExerciseModalLabel">Remove exercise?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Remove the selected exercise from this draft programme?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="remove-exercise-confirm-btn">Remove exercise</button>
+            </div>
+        </div>
+    </div>
+</div>

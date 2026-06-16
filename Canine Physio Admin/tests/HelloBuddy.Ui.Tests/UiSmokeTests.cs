@@ -624,7 +624,7 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
                     "Improving hind-limb control.",
                     "planned",
                     1,
-                    [new ProgrammeVm.SessionExerciseRow(1, 1, "Step-ups (low)", "Controlled stepping", "https://example.test/step-up.jpg", "https://example.test/step-up.mp4", 5, 3, 5, 1, "Steady pace")])]
+                    [new ProgrammeVm.SessionExerciseRow(1, 1, "Step-ups (low)", "Controlled stepping", "https://example.test/step-up.jpg", "https://example.test/step-up.mp4", 5, 3, 5, 1, "Steady pace", [])])]
             ));
 
         public Task<ProgrammeVersionHistoryVm?> GetProgrammeVersionHistoryAsync(ulong id, CancellationToken ct)
@@ -674,7 +674,7 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
                         "Improving hind-limb control.",
                         "planned",
                         1,
-                        [new ProgrammeVm.SessionExerciseRow(1, 1, "Step-ups (low)", "Controlled stepping", "https://example.test/step-up.jpg", "https://example.test/step-up.mp4", 5, 3, 5, 1, "Steady pace")])]
+                        [new ProgrammeVm.SessionExerciseRow(1, 1, "Step-ups (low)", "Controlled stepping", "https://example.test/step-up.jpg", "https://example.test/step-up.mp4", 5, 3, 5, 1, "Steady pace", [])])]
                 )));
 
         public Task<UpdateProgrammeResult> UpdateProgrammeAsync(ulong id, ProgrammeBuilderForm form, CancellationToken ct)
@@ -698,7 +698,7 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
                     "Improving hind-limb control.",
                     "planned",
                     1,
-                    [new ProgrammeVm.SessionExerciseRow(1, 1, "Step-ups (low)", "Controlled stepping", "https://example.test/step-up.jpg", "https://example.test/step-up.mp4", 5, 3, 5, 1, "Steady pace")])]
+                    [new ProgrammeVm.SessionExerciseRow(1, 1, "Step-ups (low)", "Controlled stepping", "https://example.test/step-up.jpg", "https://example.test/step-up.mp4", 5, 3, 5, 1, "Steady pace", [])])]
             )));
 
         public Task<PdfDocumentContent?> GetProgrammePreviewPdfAsync(ulong id, CancellationToken ct)

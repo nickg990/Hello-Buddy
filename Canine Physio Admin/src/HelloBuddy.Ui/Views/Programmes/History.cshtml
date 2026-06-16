@@ -67,23 +67,66 @@ else
                                 View
                             </a>
                         }
-                        <form method="post"
+                        <form id="delete-version-form-@v.ProgrammeVersionId"
+                              method="post"
                               asp-action="DeleteVersion"
                               asp-route-id="@Model.ProgrammeId"
                               asp-route-versionId="@v.ProgrammeVersionId"
-                              class="d-inline"
-                              onsubmit="return confirm('Delete this version record? This cannot be undone.')">
+                              class="d-none">
                             @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete this version">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0A.5.5 0 0 1 8.5 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z"/>
-                                    <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2H5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1h2.5a1 1 0 0 1 1 1ZM6 2v.5h4V2H6ZM4 4v9a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4H4Z"/>
-                                </svg>
-                            </button>
                         </form>
+                        <button type="button" class="btn btn-outline-danger btn-sm" title="Delete this version"
+                                data-bs-toggle="modal" data-bs-target="#deleteVersionModal"
+                                data-confirm-form-id="delete-version-form-@v.ProgrammeVersionId"
+                                data-version-number="@v.VersionNumber">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0A.5.5 0 0 1 8.5 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z"/>
+                                <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2H5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1h2.5a1 1 0 0 1 1 1ZM6 2v.5h4V2H6ZM4 4v9a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4H4Z"/>
+                            </svg>
+                        </button>
                     </div>
                 </div>
             </article>
         }
     </div>
+}
+<div class="modal fade" id="deleteVersionModal" tabindex="-1" aria-labelledby="deleteVersionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteVersionModalLabel">Delete version record?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Delete <strong id="delete-version-label"></strong>?</p>
+                <p class="mb-0"><strong>This action cannot be undone.</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="delete-version-confirm-btn">Delete version</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var modal = document.getElementById('deleteVersionModal');
+            var confirmBtn = document.getElementById('delete-version-confirm-btn');
+            if (!modal || !confirmBtn) return;
+            var pendingFormId;
+            modal.addEventListener('show.bs.modal', function (e) {
+                pendingFormId = e.relatedTarget && e.relatedTarget.dataset.confirmFormId;
+                var labelEl = document.getElementById('delete-version-label');
+                if (labelEl) {
+                    var vNum = e.relatedTarget && e.relatedTarget.dataset.versionNumber;
+                    labelEl.textContent = vNum ? 'version ' + vNum : 'this version record';
+                }
+            });
+            confirmBtn.addEventListener('click', function () {
+                if (pendingFormId) document.getElementById(pendingFormId).submit();
+            });
+        })();
+    </script>
 }

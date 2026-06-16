@@ -732,3 +732,148 @@ is an unrelated alert heading.)
 4. Full solution builds clean; UI suite green (update any smoke assertions that match the old
    `<h4>` breadcrumb markup).
 
+## ERR-AT-015: Edit Exercise saves a blank image over the current image
+
+**Date:** 2026-06-15
+**Status:** Open
+**Severity:** High (data loss — existing exercise image is destroyed on save)
+**Area:** `HelloBuddy.Ui` Exercise editor (Edit Exercise)
+**Type:** UI/binding defect causing data loss
+**Related:** Exercise media editing
+
+### Symptom
+
+When editing an existing exercise, the "Current image" panel correctly shows the saved image, but
+the "Selected image (pending save)" panel is blank ("No image selected"). If the practitioner edits
+any other field and clicks **Save exercise** *without* re-uploading the image, the save action wipes
+the exercise's image — the previously-saved image is replaced with a blank/empty value.
+
+### Steps to reproduce
+
+1. Open an exercise that already has an image: `/Exercises/{id}/Edit`.
+2. Observe "Current image" shows the image; "Selected image (pending save)" shows "No image selected".
+3. Change any unrelated field (e.g. the title or instructions) and do **not** choose a new image.
+4. Click **Save exercise**.
+5. Reopen the exercise — the image is now gone.
+
+### Expected
+
+Saving an exercise without choosing a new image (and without explicitly removing it) must **preserve**
+the existing image. The behaviour should mirror the video field, which round-trips correctly and is
+not lost on save.
+
+### Root cause
+
+The Edit form has no field that posts the current image URL back to the server:
+
+- The image is shown read-only via `Url.Action("Image", "Exercises", new { id = Model.ExerciseId })`,
+  and the "Selected image" panel is a client-side preview only (it is only populated when the user
+  picks a file). There is **no** `asp-for="Form.ImageUrl"` input in the form
+  (see [src/HelloBuddy.Ui/Views/Exercises/Edit.cshtml](Canine%20Physio%20Admin/src/HelloBuddy.Ui/Views/Exercises/Edit.cshtml#L73-L100)).
+- By contrast the video URL **is** a posted input
+  (`<input asp-for="Form.VideoUrl" ... />`, [Edit.cshtml](Canine%20Physio%20Admin/src/HelloBuddy.Ui/Views/Exercises/Edit.cshtml#L60-L67)),
+  which is exactly why the video survives a save but the image does not.
+- On POST, `vm.Form.ImageUrl` therefore binds to `null`. In
+  [ExercisesController.ApplyImageSelectionAsync](Canine%20Physio%20Admin/src/HelloBuddy.Ui/Controllers/ExercisesController.cs#L302-L321),
+  when no new file is uploaded and `RemoveImage` is false, `vm.Form.ImageUrl` is left as the bound
+  value (`null`). `UpdateExerciseAsync` then persists the null/blank image, overwriting the saved one.
+
+### Proposed fix
+
+Make the current image URL round-trip on save, mirroring how the video URL is preserved (this is the
+"set the selected image to the current image" behaviour the user described). Preferred minimal change:
+
+1. Add a hidden input to the Edit form so the current image URL is posted back:
+   `<input type="hidden" asp-for="Form.ImageUrl" />`.
+2. Confirm `ApplyImageSelectionAsync` order of precedence still holds:
+   - a newly uploaded file overrides `Form.ImageUrl` with the uploaded URL (unchanged);
+   - `RemoveImage = true` clears it (unchanged);
+   - otherwise the posted `Form.ImageUrl` is preserved (now non-null).
+3. (Optional UI polish) Populate the "Selected image (pending save)" panel with the current image on
+   load so the panel is not misleadingly blank in edit mode.
+
+### Affected files
+
+- [src/HelloBuddy.Ui/Views/Exercises/Edit.cshtml](Canine%20Physio%20Admin/src/HelloBuddy.Ui/Views/Exercises/Edit.cshtml) — add the hidden `Form.ImageUrl` input (and optional selected-image init).
+- [src/HelloBuddy.Ui/Controllers/ExercisesController.cs](Canine%20Physio%20Admin/src/HelloBuddy.Ui/Controllers/ExercisesController.cs) — verify `ApplyImageSelectionAsync` precedence (likely no change needed).
+
+### Verification steps (post-fix)
+
+1. Edit an exercise with an image, change the title only, save — image is preserved.
+2. Edit an exercise and upload a new image, save — new image replaces the old one.
+3. Edit an exercise, tick the remove-image option, save — image is cleared.
+4. Create a new exercise with an image — image is saved.
+5. Full solution builds clean; UI suite green (add a UI/integration assertion that saving without a
+   new file preserves `ImageUrl`).
+
+## ERR-AT-016: Exercise Library "Apply" always forces Active-only back on — deactivated exercises cannot be viewed
+
+**Date:** 2026-06-15
+**Status:** Open
+**Severity:** Medium (cannot view/manage deactivated exercises)
+**Area:** `HelloBuddy.Ui` Exercise Library (Index filter)
+**Type:** Filter binding defect (unchecked checkbox defaults to true)
+**Related:** Exercise Library filtering
+
+### Symptom
+
+On the Exercise Library page, unticking the **Active only** checkbox and clicking **Apply** does not
+show deactivated exercises — the filter re-applies "active only" every time, so deactivated exercises
+can never be viewed.
+
+### Steps to reproduce
+
+1. Open `/Exercises` (Exercise Library).
+2. Untick **Active only**.
+3. Click **Apply**.
+4. The list still excludes deactivated exercises, and the **Active only** checkbox reappears ticked.
+
+### Expected
+
+When **Active only** is unticked and **Apply** is clicked, the list includes deactivated (inactive)
+exercises so they can be viewed and managed.
+
+### Root cause
+
+Classic "unchecked checkbox posts nothing" problem on a GET filter form:
+
+- The checkbox is `<input type="checkbox" id="activeOnly" name="activeOnly" value="true" checked="@Model.Filter.ActiveOnly" />`
+  ([src/HelloBuddy.Ui/Views/Exercises/Index.cshtml](Canine%20Physio%20Admin/src/HelloBuddy.Ui/Views/Exercises/Index.cshtml#L38-L43)).
+  When unticked, the browser omits `activeOnly` from the query string entirely.
+- The controller action defaults the missing value to `true`:
+  `bool activeOnly = true` in
+  [ExercisesController.Index](Canine%20Physio%20Admin/src/HelloBuddy.Ui/Controllers/ExercisesController.cs#L22-L36).
+  So an absent `activeOnly` (unchecked) is read as `true`, forcing active-only back on.
+- The same default exists downstream (`ExerciseListFilter.ActiveOnly = true`,
+  `ExerciseEndpoints` `activeOnly ?? true`), which is correct as a "no filter specified" API default but
+  reinforces the UI bug.
+
+### Proposed fix
+
+Make an unticked checkbox post an explicit `false`, the standard MVC pattern. Either:
+
+- **Option A (view only, preferred):** add a hidden field immediately before the checkbox so the form
+  always posts a value:
+  `<input type="hidden" name="activeOnly" value="false" />`
+  `<input type="checkbox" name="activeOnly" value="true" ... />`
+  (Model binding takes the last value; ticked posts `false,true` → `true`, unticked posts `false`.)
+- **Option B:** change the action parameter to `bool? activeOnly` and only treat a *present* value,
+  defaulting to `true` solely on first load — but Option A is simpler and keeps existing defaults.
+
+Keep the API/`ExerciseListFilter` default of `true` (correct for unspecified API calls).
+
+### Affected files
+
+- [src/HelloBuddy.Ui/Views/Exercises/Index.cshtml](Canine%20Physio%20Admin/src/HelloBuddy.Ui/Views/Exercises/Index.cshtml) — add the hidden `activeOnly=false` companion field.
+- [src/HelloBuddy.Ui/Controllers/ExercisesController.cs](Canine%20Physio%20Admin/src/HelloBuddy.Ui/Controllers/ExercisesController.cs) — only if Option B is chosen.
+
+### Verification steps (post-fix)
+
+1. Open the Exercise Library — defaults to Active only ticked, only active exercises shown.
+2. Untick **Active only**, click **Apply** — deactivated exercises now appear and the checkbox stays
+   unticked.
+3. Re-tick **Active only**, **Apply** — list returns to active-only.
+4. Confirm other filters (search, category, has-video) still combine correctly with the active toggle.
+5. Full solution builds clean; UI suite green (add an assertion that unticked active-only returns
+   inactive exercises).
+

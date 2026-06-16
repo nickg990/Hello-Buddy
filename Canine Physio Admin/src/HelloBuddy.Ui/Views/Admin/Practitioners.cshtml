@@ -53,17 +53,23 @@
 
                                 @if (practitioner.IsActive)
                                 {
-                                    <form method="post" asp-action="Delete" asp-route-id="@practitioner.PractitionerId" class="d-inline">
+                                    <form id="deactivate-form-@practitioner.PractitionerId" method="post" asp-action="Delete" asp-route-id="@practitioner.PractitionerId" class="d-none">
                                         @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Deactivate this practitioner?')">Deactivate</button>
                                     </form>
+                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                            data-bs-toggle="modal" data-bs-target="#deactivatePractitionerModal"
+                                            data-confirm-form-id="deactivate-form-@practitioner.PractitionerId"
+                                            data-practitioner-name="@practitioner.FirstName @practitioner.LastName">Deactivate</button>
                                 }
                                 else
                                 {
-                                    <form method="post" asp-action="Activate" asp-route-id="@practitioner.PractitionerId" class="d-inline">
+                                    <form id="activate-form-@practitioner.PractitionerId" method="post" asp-action="Activate" asp-route-id="@practitioner.PractitionerId" class="d-none">
                                         @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-sm btn-outline-success" onclick="return confirm('Re-activate this practitioner?')">Activate</button>
                                     </form>
+                                    <button type="button" class="btn btn-sm btn-outline-success"
+                                            data-bs-toggle="modal" data-bs-target="#activatePractitionerModal"
+                                            data-confirm-form-id="activate-form-@practitioner.PractitionerId"
+                                            data-practitioner-name="@practitioner.FirstName @practitioner.LastName">Activate</button>
                                 }
                             </td>
                         </tr>
@@ -74,3 +80,73 @@
     }
 
 </div>
+
+<div class="modal fade" id="deactivatePractitionerModal" tabindex="-1" aria-labelledby="deactivatePractitionerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deactivatePractitionerModalLabel">Deactivate practitioner?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to deactivate <strong id="deactivate-practitioner-name"></strong>?</p>
+                <p class="mb-0">They will no longer be able to log in. You can re-activate them at any time.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="deactivate-confirm-btn">Deactivate</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="activatePractitionerModal" tabindex="-1" aria-labelledby="activatePractitionerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="activatePractitionerModalLabel">Re-activate practitioner?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Re-activate <strong id="activate-practitioner-name"></strong>? They will be able to log in again.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="activate-confirm-btn">Re-activate</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var deactivateModal = document.getElementById('deactivatePractitionerModal');
+            var deactivateConfirmBtn = document.getElementById('deactivate-confirm-btn');
+            if (deactivateModal && deactivateConfirmBtn) {
+                var pendingFormId;
+                deactivateModal.addEventListener('show.bs.modal', function (e) {
+                    pendingFormId = e.relatedTarget && e.relatedTarget.dataset.confirmFormId;
+                    var nameEl = document.getElementById('deactivate-practitioner-name');
+                    if (nameEl) nameEl.textContent = (e.relatedTarget && e.relatedTarget.dataset.practitionerName) || '';
+                });
+                deactivateConfirmBtn.addEventListener('click', function () {
+                    if (pendingFormId) document.getElementById(pendingFormId).submit();
+                });
+            }
+            var activateModal = document.getElementById('activatePractitionerModal');
+            var activateConfirmBtn = document.getElementById('activate-confirm-btn');
+            if (activateModal && activateConfirmBtn) {
+                var pendingActivateFormId;
+                activateModal.addEventListener('show.bs.modal', function (e) {
+                    pendingActivateFormId = e.relatedTarget && e.relatedTarget.dataset.confirmFormId;
+                    var nameEl = document.getElementById('activate-practitioner-name');
+                    if (nameEl) nameEl.textContent = (e.relatedTarget && e.relatedTarget.dataset.practitionerName) || '';
+                });
+                activateConfirmBtn.addEventListener('click', function () {
+                    if (pendingActivateFormId) document.getElementById(pendingActivateFormId).submit();
+                });
+            }
+        })();
+    </script>
+}

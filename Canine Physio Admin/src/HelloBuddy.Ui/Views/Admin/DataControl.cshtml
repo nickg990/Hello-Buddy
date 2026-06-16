@@ -19,7 +19,7 @@
                 Warning: this action is irreversible.
             </div>
 
-            <form method="post" asp-action="DataControl" onsubmit="return confirm('Apply right-to-be-forgotten data control for this owner? This action cannot be reversed.');">
+            <form id="rtbf-form" method="post" asp-action="DataControl">
                 @Html.AntiForgeryToken()
                 <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
 
@@ -38,10 +38,43 @@
                     </div>
 
                     <div class="col-sm-auto">
-                        <button type="submit" class="btn btn-danger">Apply RTBF</button>
+                        <button type="button" class="btn btn-danger"
+                                data-bs-toggle="modal" data-bs-target="#rtbfConfirmModal">Apply RTBF</button>
                     </div>
                 </div>
             </form>
         </div>
     </div>
 </div>
+<div class="modal fade" id="rtbfConfirmModal" tabindex="-1" aria-labelledby="rtbfConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rtbfConfirmModalLabel">Apply GDPR data control?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Apply right-to-be-forgotten data control for the selected owner?</p>
+                <p class="mb-0"><strong>Important:</strong> This will permanently delete the owner and all associated records, including stored programme PDFs. This action cannot be reversed.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="rtbf-confirm-btn">Apply RTBF</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var confirmBtn = document.getElementById('rtbf-confirm-btn');
+            var form = document.getElementById('rtbf-form');
+            if (confirmBtn && form) {
+                confirmBtn.addEventListener('click', function () {
+                    form.submit();
+                });
+            }
+        })();
+    </script>
+}

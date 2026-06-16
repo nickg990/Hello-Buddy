@@ -35,5 +35,8 @@ public sealed record ProgrammeVm(
         ushort? Sets,
         ushort? HoldSeconds,
         ushort SortOrder,
-        string? Notes);
+        string? Notes,
+        IReadOnlyList<ProgrammeVm.InstructionStep> Instructions);
+
+    public sealed record InstructionStep(ushort StepNumber, string InstructionText);
 }
