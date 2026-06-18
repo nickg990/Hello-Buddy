@@ -331,8 +331,11 @@ public sealed class ApiTestcontainerIntegrationTests
     }
 
     [Fact]
-    public async Task OwnerDataControl_WhenPractitionerNotLinked_ReturnsNotFound()
+    public async Task OwnerDataControl_ForAnyAuthenticatedPractitioner_DeletesOwner()
     {
+        // GDPR right-to-be-forgotten is an administrative erase: any authenticated
+        // practitioner may delete an existing owner, even one whose pets belong to a
+        // different practitioner. The deletion must NOT be gated on practitioner linkage.
         var ownerCreate = await _client.PostAsJsonAsync("/api/owners", new SaveOwnerRequest
         {
             FirstName = "Scoped",
@@ -357,7 +360,11 @@ public sealed class ApiTestcontainerIntegrationTests
         otherClient.DefaultRequestHeaders.Add("X-Practitioner-Id", "2");
 
         var control = await otherClient.PostAsync($"/api/owners/{owner.OwnerId}/data-control", content: null);
-        Assert.Equal(HttpStatusCode.NotFound, control.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, control.StatusCode);
+
+        var payload = await control.Content.ReadFromJsonAsync<OwnerDataControlResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal("deleted", payload.Outcome);
     }
 
     [Fact]

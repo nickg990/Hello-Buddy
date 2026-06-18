@@ -83,6 +83,22 @@ public static class PetEndpoints
             return Results.Ok(pet);
         });
 
+        app.MapDelete("/api/pets/{id:long}", async (
+            long id,
+            IPetRepository pets,
+            ICurrentPractitionerAccessor practitioner,
+            CancellationToken ct) =>
+        {
+            var result = await pets.DeleteAsync((ulong)id, practitioner.PractitionerId, ct);
+            return result switch
+            {
+                PetDeleteResult.Deleted => Results.Ok(new PetDeleteResponse(
+                    Outcome: "deleted",
+                    Message: "Pet and all associated records, including stored programme PDFs, were permanently deleted.")),
+                _ => Results.NotFound(),
+            };
+        });
+
         return app;
     }
 }

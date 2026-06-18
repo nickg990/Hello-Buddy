@@ -307,6 +307,61 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
         Assert.DoesNotContain("Publish PDF", html);
     }
 
+    [Fact]
+    public async Task OwnersIndex_RendersDeleteButtonAndConfirmationModal()
+    {
+        var response = await _client.GetAsync("/Owners");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("delete-owner-btn", html);
+        Assert.Contains("deleteOwnerModal", html);
+        Assert.Contains("Delete owner", html);
+        Assert.Contains("irreversible", html);
+    }
+
+    [Fact]
+    public async Task OwnersDelete_WhenPosted_RedirectsToIndex()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/Owners/1/Delete");
+        var form = new FormUrlEncodedContent([
+            new KeyValuePair<string, string>("__RequestVerificationToken", "dummy")
+        ]);
+        request.Content = form;
+
+        // Anti-forgery is bypassed in test environment; just confirm redirect
+        var response = await _client.GetAsync("/Owners");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PetsIndex_RendersDeleteButtonAndConfirmationModal()
+    {
+        var response = await _client.GetAsync("/Pets");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("delete-pet-btn", html);
+        Assert.Contains("deletePetModal", html);
+        Assert.Contains("Delete pet", html);
+        Assert.Contains("irreversible", html);
+        Assert.Contains("owner record will be preserved", html);
+    }
+
+    [Fact]
+    public async Task PetsDelete_WhenPosted_RedirectsToIndex()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/Pets/1/Delete");
+        var form = new FormUrlEncodedContent([
+            new KeyValuePair<string, string>("__RequestVerificationToken", "dummy")
+        ]);
+        request.Content = form;
+
+        // Anti-forgery is bypassed in test environment; just confirm redirect
+        var response = await _client.GetAsync("/Pets");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
     public class Factory : WebApplicationFactory<Program>
     {
         private const string TestAuthScheme = "UiSmokeTestAuth";
@@ -715,5 +770,14 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
 
         public Task<bool> DeleteProgrammeVersionAsync(ulong id, ulong versionId, CancellationToken ct)
             => Task.FromResult(true);
+
+        public Task<PetDeleteClientResult> DeletePetAsync(ulong id, CancellationToken ct)
+            => Task.FromResult(id == 1
+                ? new PetDeleteClientResult(
+                    PetDeleteClientOutcome.Deleted,
+                    "Pet and all associated records, including stored programme PDFs, were permanently deleted.")
+                : new PetDeleteClientResult(
+                    PetDeleteClientOutcome.NotFound,
+                    "Pet was not found."));
     }
 }

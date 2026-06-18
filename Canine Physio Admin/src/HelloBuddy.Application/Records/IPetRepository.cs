@@ -24,4 +24,11 @@ public interface IPetRepository
 
     /// <summary>Returns <c>true</c> when the pet with <paramref name="petId"/> exists.</summary>
     Task<bool> ExistsAsync(ulong petId, CancellationToken ct);
+
+    /// <summary>
+    /// Deletes a pet and all pet-related records (case notes, treatment cases, programmes, sessions,
+    /// generated content). The owner record is preserved.
+    /// Returns <see cref="PetDeleteResult.NotFound"/> if the pet does not exist.
+    /// </summary>
+    Task<PetDeleteResult> DeleteAsync(ulong petId, ulong practitionerId, CancellationToken ct);
 }

@@ -130,8 +130,34 @@ public class ProgrammesController : Controller
 
     [HttpPost("Sessions/{sessionId:long}/Exercises")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AddExercise(ulong id, ulong sessionId, [FromForm] ulong exerciseId, CancellationToken ct)
+    public async Task<IActionResult> AddExercise(ulong id, ulong sessionId, [FromForm] ulong exerciseId, ProgrammeBuilderForm form, CancellationToken ct)
     {
+        // Persist any unsaved session edits (purpose summaries, reps/sets/hold/notes/sort)
+        // before adding the exercise, so the subsequent panel refresh does not discard them.
+        if (form.ProgrammeId == id && (form.Sessions.Count > 0 || form.Exercises.Count > 0))
+        {
+            var saveResult = await _api.UpdateProgrammeAsync(id, form, ct);
+            if (saveResult.Outcome == UpdateProgrammeOutcome.NotFound)
+            {
+                return NotFound();
+            }
+
+            if (saveResult.Outcome == UpdateProgrammeOutcome.Blocked)
+            {
+                var blockedMessage = string.IsNullOrWhiteSpace(saveResult.Message)
+                    ? "Published programmes are immutable. Create a new draft to make changes."
+                    : saveResult.Message;
+
+                if (IsAjaxRequest())
+                {
+                    return Json(BuilderAjaxResponse.Failure(blockedMessage));
+                }
+
+                TempData["Error"] = blockedMessage;
+                return RedirectToAction(nameof(Builder), new { id });
+            }
+        }
+
         var result = await _api.AddSessionExerciseAsync(id, sessionId, exerciseId, ct);
         switch (result.Outcome)
         {

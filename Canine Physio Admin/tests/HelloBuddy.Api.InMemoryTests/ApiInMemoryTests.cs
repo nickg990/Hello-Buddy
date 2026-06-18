@@ -175,8 +175,11 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
     }
 
     [Fact]
-    public async Task OwnerDataControl_ForUnlinkedPractitioner_ReturnsNotFound()
+    public async Task OwnerDataControl_ForAnyAuthenticatedPractitioner_DeletesOwner()
     {
+        // GDPR right-to-be-forgotten is an administrative erase: any authenticated
+        // practitioner may delete an existing owner, even one whose pets belong to a
+        // different practitioner. The deletion must NOT be gated on practitioner linkage.
         var ownerCreate = await _client.PostAsJsonAsync("/api/owners", new SaveOwnerRequest
         {
             FirstName = "Scoped",
@@ -201,7 +204,123 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
         otherClient.DefaultRequestHeaders.Add("X-Practitioner-Id", "2");
 
         var control = await otherClient.PostAsync($"/api/owners/{owner.OwnerId}/data-control", content: null);
+        Assert.Equal(HttpStatusCode.OK, control.StatusCode);
+
+        var payload = await control.Content.ReadFromJsonAsync<OwnerDataControlResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal("deleted", payload.Outcome);
+
+        // Owner is genuinely gone.
+        var recheck = await _client.GetAsync($"/api/owners/{owner.OwnerId}");
+        Assert.Equal(HttpStatusCode.NotFound, recheck.StatusCode);
+    }
+
+    [Fact]
+    public async Task OwnerDataControl_NonExistentOwner_ReturnsNotFound()
+    {
+        var control = await _client.PostAsync("/api/owners/99999999/data-control", content: null);
         Assert.Equal(HttpStatusCode.NotFound, control.StatusCode);
+    }
+
+    [Fact]
+    public async Task PetDelete_WithNoLinkedData_DeletesPet()
+    {
+        var ownerCreate = await _client.PostAsJsonAsync("/api/owners", new SaveOwnerRequest
+        {
+            FirstName = "Keeper",
+            LastName = "Owner",
+            Email = $"keeper-owner-{Guid.NewGuid():N}@example.test"
+        });
+        Assert.Equal(HttpStatusCode.Created, ownerCreate.StatusCode);
+        var owner = await ownerCreate.Content.ReadFromJsonAsync<OwnerDetailVm>();
+        Assert.NotNull(owner);
+
+        var petCreate = await _client.PostAsJsonAsync("/api/pets", new SavePetRequest
+        {
+            OwnerId = owner.OwnerId,
+            Name = "DeleteMe",
+            Breed = "Poodle",
+            Sex = "female",
+            IsActive = true,
+        });
+        Assert.Equal(HttpStatusCode.Created, petCreate.StatusCode);
+        var pet = await petCreate.Content.ReadFromJsonAsync<PetDetailVm>();
+        Assert.NotNull(pet);
+
+        var deleteResp = await _client.DeleteAsync($"/api/pets/{pet.PetId}");
+        Assert.Equal(HttpStatusCode.OK, deleteResp.StatusCode);
+        var payload = await deleteResp.Content.ReadFromJsonAsync<PetDeleteResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal("deleted", payload.Outcome);
+
+        var petGet = await _client.GetAsync($"/api/pets/{pet.PetId}");
+        Assert.Equal(HttpStatusCode.NotFound, petGet.StatusCode);
+
+        // Owner must be preserved
+        var ownerGet = await _client.GetAsync($"/api/owners/{owner.OwnerId}");
+        Assert.Equal(HttpStatusCode.OK, ownerGet.StatusCode);
+    }
+
+    [Fact]
+    public async Task PetDelete_WithLinkedCaseAndNotes_DeletesPetAndPreservesOwner()
+    {
+        var ownerCreate = await _client.PostAsJsonAsync("/api/owners", new SaveOwnerRequest
+        {
+            FirstName = "Preserved",
+            LastName = "Owner",
+            Email = $"preserved-owner-{Guid.NewGuid():N}@example.test"
+        });
+        Assert.Equal(HttpStatusCode.Created, ownerCreate.StatusCode);
+        var owner = await ownerCreate.Content.ReadFromJsonAsync<OwnerDetailVm>();
+        Assert.NotNull(owner);
+
+        var petCreate = await _client.PostAsJsonAsync("/api/pets", new SavePetRequest
+        {
+            OwnerId = owner.OwnerId,
+            Name = "CascadePet",
+            Breed = "Spaniel",
+            Sex = "male",
+            IsActive = true,
+        });
+        Assert.Equal(HttpStatusCode.Created, petCreate.StatusCode);
+        var pet = await petCreate.Content.ReadFromJsonAsync<PetDetailVm>();
+        Assert.NotNull(pet);
+
+        var caseCreate = await _client.PostAsJsonAsync("/api/cases", new SaveTreatmentCaseRequest
+        {
+            PetId = pet.PetId,
+            CaseTitle = "Cascade Case",
+            ClinicalSummary = "Test case for cascade delete.",
+            StartDate = DateOnly.FromDateTime(DateTime.UtcNow.Date),
+            Status = "active"
+        });
+        Assert.Equal(HttpStatusCode.Created, caseCreate.StatusCode);
+        var treatmentCase = await caseCreate.Content.ReadFromJsonAsync<CaseDetailVm>();
+        Assert.NotNull(treatmentCase);
+
+        var deleteResp = await _client.DeleteAsync($"/api/pets/{pet.PetId}");
+        Assert.Equal(HttpStatusCode.OK, deleteResp.StatusCode);
+        var payload = await deleteResp.Content.ReadFromJsonAsync<PetDeleteResponse>();
+        Assert.NotNull(payload);
+        Assert.Equal("deleted", payload.Outcome);
+
+        var petGet = await _client.GetAsync($"/api/pets/{pet.PetId}");
+        Assert.Equal(HttpStatusCode.NotFound, petGet.StatusCode);
+
+        var casesList = await _client.GetFromJsonAsync<List<CaseRow>>("/api/cases");
+        Assert.NotNull(casesList);
+        Assert.DoesNotContain(casesList, x => x.TreatmentCaseId == treatmentCase.TreatmentCaseId);
+
+        // Owner must be preserved
+        var ownerGet = await _client.GetAsync($"/api/owners/{owner.OwnerId}");
+        Assert.Equal(HttpStatusCode.OK, ownerGet.StatusCode);
+    }
+
+    [Fact]
+    public async Task PetDelete_NonExistentPet_ReturnsNotFound()
+    {
+        var deleteResp = await _client.DeleteAsync("/api/pets/999999");
+        Assert.Equal(HttpStatusCode.NotFound, deleteResp.StatusCode);
     }
 
     [Fact]
@@ -606,6 +725,37 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
         var afterRemove = await _client.GetFromJsonAsync<ProgrammeVm>($"/api/programmes/{programme.ProgrammeId}");
         Assert.NotNull(afterRemove);
         Assert.Empty(Assert.Single(afterRemove.Sessions).Exercises);
+    }
+
+    [Fact]
+    public async Task Programme_AddExercise_SeedsRepsSetsHoldFromExerciseDefaults()
+    {
+        var (_, programme) = await CreateDraftProgrammeForDeleteAsync();
+        var session = Assert.Single(programme.Sessions);
+
+        var exercises = await _client.GetFromJsonAsync<List<ExerciseListItem>>("/api/exercises?activeOnly=true");
+        Assert.NotNull(exercises);
+        Assert.NotEmpty(exercises);
+        var exerciseId = exercises[0].ExerciseId;
+
+        var detail = await _client.GetFromJsonAsync<ExerciseDetailVm>($"/api/exercises/{exerciseId}");
+        Assert.NotNull(detail);
+
+        var add = await _client.PostAsJsonAsync(
+            $"/api/programmes/{programme.ProgrammeId}/sessions/{session.SessionId}/exercises",
+            new AddSessionExerciseRequest { ExerciseId = exerciseId });
+        Assert.Equal(HttpStatusCode.NoContent, add.StatusCode);
+
+        var refreshed = await _client.GetFromJsonAsync<ProgrammeVm>($"/api/programmes/{programme.ProgrammeId}");
+        Assert.NotNull(refreshed);
+        var sessionExercise = Assert.Single(Assert.Single(refreshed.Sessions).Exercises);
+
+        // The new row must inherit the library defaults (not the previous hardcoded 1/1/1).
+        // Reps/Sets fall back to 1 only when the exercise has no default; HoldSeconds is
+        // copied through verbatim, including null when hold is not applicable.
+        Assert.Equal(detail.DefaultReps ?? 1, sessionExercise.Reps);
+        Assert.Equal(detail.DefaultSets ?? 1, sessionExercise.Sets);
+        Assert.Equal(detail.DefaultHoldSeconds, sessionExercise.HoldSeconds);
     }
 
     [Fact]

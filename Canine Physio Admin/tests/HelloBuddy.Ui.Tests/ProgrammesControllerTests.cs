@@ -78,12 +78,98 @@ public sealed class ProgrammesControllerTests
 
         var sut = CreateSut(api, ajaxRequest: true);
 
-        var result = await sut.AddExercise(1, 20, 2, CancellationToken.None);
+        var result = await sut.AddExercise(1, 20, 2, new ProgrammeBuilderForm(), CancellationToken.None);
 
         var json = Assert.IsType<JsonResult>(result);
         var payload = JsonSerializer.Serialize(json.Value);
         Assert.Contains("\"ok\":false", payload);
         Assert.Contains("Exercise already added.", payload);
+    }
+
+    [Fact]
+    public async Task AddExercise_Post_PersistsSessionEditsBeforeAddingExercise()
+    {
+        var api = Substitute.For<IAdminApiClient>();
+        api.UpdateProgrammeAsync(1, Arg.Any<ProgrammeBuilderForm>(), Arg.Any<CancellationToken>())
+            .Returns(new UpdateProgrammeResult(UpdateProgrammeOutcome.Updated, CreateProgrammeVm()));
+        api.AddSessionExerciseAsync(1, 20, 2, Arg.Any<CancellationToken>())
+            .Returns(new AddSessionExerciseClientResult(AddSessionExerciseClientOutcome.Added, null));
+
+        var sut = CreateSut(api, ajaxRequest: true);
+        var form = new ProgrammeBuilderForm
+        {
+            ProgrammeId = 1,
+            Sessions =
+            {
+                new ProgrammeBuilderForm.SessionEdit { SessionId = 1, Objective = "AM purpose" },
+                new ProgrammeBuilderForm.SessionEdit { SessionId = 2, Objective = "PM purpose" },
+            },
+            Exercises =
+            {
+                new ProgrammeBuilderForm.SessionExerciseEdit { SessionExerciseId = 10, Reps = 12, Sets = 4, HoldSeconds = 6, SortOrder = 1, Notes = "Keep steady" },
+            },
+        };
+
+        var result = await sut.AddExercise(1, 20, 2, form, CancellationToken.None);
+
+        // Edits must be saved BEFORE the exercise is added so the panel refresh keeps them.
+        Received.InOrder(() =>
+        {
+            api.UpdateProgrammeAsync(1, Arg.Is<ProgrammeBuilderForm>(f =>
+                f.ProgrammeId == 1
+                && f.Sessions.Count == 2
+                && f.Sessions[0].Objective == "AM purpose"
+                && f.Sessions[1].Objective == "PM purpose"
+                && f.Exercises.Count == 1
+                && f.Exercises[0].Reps == 12
+                && f.Exercises[0].Sets == 4
+                && f.Exercises[0].HoldSeconds == 6
+                && f.Exercises[0].Notes == "Keep steady"), Arg.Any<CancellationToken>());
+            api.AddSessionExerciseAsync(1, 20, 2, Arg.Any<CancellationToken>());
+        });
+
+        var json = Assert.IsType<JsonResult>(result);
+        var payload = JsonSerializer.Serialize(json.Value);
+        Assert.Contains("\"ok\":true", payload);
+    }
+
+    [Fact]
+    public async Task AddExercise_Post_WithEmptyForm_DoesNotCallUpdateProgramme()
+    {
+        var api = Substitute.For<IAdminApiClient>();
+        api.AddSessionExerciseAsync(1, 20, 2, Arg.Any<CancellationToken>())
+            .Returns(new AddSessionExerciseClientResult(AddSessionExerciseClientOutcome.Added, null));
+
+        var sut = CreateSut(api, ajaxRequest: true);
+
+        var result = await sut.AddExercise(1, 20, 2, new ProgrammeBuilderForm { ProgrammeId = 1 }, CancellationToken.None);
+
+        await api.DidNotReceive().UpdateProgrammeAsync(Arg.Any<ulong>(), Arg.Any<ProgrammeBuilderForm>(), Arg.Any<CancellationToken>());
+        var json = Assert.IsType<JsonResult>(result);
+        Assert.Contains("\"ok\":true", JsonSerializer.Serialize(json.Value));
+    }
+
+    [Fact]
+    public async Task AddExercise_Post_WhenPreSaveBlocked_ReturnsErrorAndDoesNotAddExercise()
+    {
+        var api = Substitute.For<IAdminApiClient>();
+        api.UpdateProgrammeAsync(1, Arg.Any<ProgrammeBuilderForm>(), Arg.Any<CancellationToken>())
+            .Returns(new UpdateProgrammeResult(UpdateProgrammeOutcome.Blocked, null, "Published programmes are immutable. Create a new draft to make changes."));
+
+        var sut = CreateSut(api, ajaxRequest: true);
+        var form = new ProgrammeBuilderForm
+        {
+            ProgrammeId = 1,
+            Sessions = { new ProgrammeBuilderForm.SessionEdit { SessionId = 1, Objective = "AM purpose" } },
+        };
+
+        var result = await sut.AddExercise(1, 20, 2, form, CancellationToken.None);
+
+        await api.DidNotReceive().AddSessionExerciseAsync(Arg.Any<ulong>(), Arg.Any<ulong>(), Arg.Any<ulong>(), Arg.Any<CancellationToken>());
+        var json = Assert.IsType<JsonResult>(result);
+        var payload = JsonSerializer.Serialize(json.Value);
+        Assert.Contains("\"ok\":false", payload);
+        Assert.Contains("Published programmes are immutable.", payload);
     }
 
     [Fact]

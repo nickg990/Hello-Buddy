@@ -403,53 +403,56 @@ public sealed class OwnerRepository : IOwnerRepository
 
     public async Task<OwnerDataControlResult> ApplyDataControlAsync(ulong ownerId, ulong practitionerId, CancellationToken ct)
     {
-        var owner = await _db.Owners
-            .Include(o => o.Pets)
-                .ThenInclude(p => p.PractitionerPets)
-            .Include(o => o.Pets)
-                .ThenInclude(p => p.Treatmentcases)
-            .Include(o => o.Useraccounts)
-            .FirstOrDefaultAsync(o => o.OwnerId == ownerId, ct);
-
-        if (owner is null)
+        var ownerExists = await _db.Owners.AnyAsync(o => o.OwnerId == ownerId, ct);
+        if (!ownerExists)
         {
             return OwnerDataControlResult.NotFound;
         }
 
-        var hasNoLinkedData = owner.Pets.Count == 0 && owner.Useraccounts.Count == 0;
-        var linkedToPractitioner = hasNoLinkedData || owner.Pets.Any(p =>
-            p.PractitionerPets.Any(pp => pp.PractitionerId == practitionerId && pp.AssignedTo == null)
-            || p.Treatmentcases.Any(tc => tc.PractitionerId == practitionerId));
-
-        if (!linkedToPractitioner)
-        {
-            return OwnerDataControlResult.NotFound;
-        }
-
-        // Delete all related data in cascading order
-        await DeleteOwnerAndRelatedDataAsync(ownerId, practitionerId, ct);
+        // GDPR right-to-be-forgotten is an administrative erase: any authenticated
+        // practitioner may delete an owner and all associated records. We deliberately
+        // do NOT gate on practitioner-pet linkage here - that check produced false
+        // "not linked" rejections (e.g. for the admin account, or owners whose pets had
+        // already been partially removed) which left owners permanently undeletable.
+        var programmePdfPrefixes = await DeleteOwnerAndRelatedDataAsync(ownerId, ct);
 
         AddOwnerGdprDeletionAudit(ownerId, practitionerId);
         await _db.SaveChangesAsync(ct);
+
+        // Stored PDFs are removed only after the database delete has committed, so a
+        // database failure can never leave records intact while their blobs are gone.
+        foreach (var prefix in programmePdfPrefixes)
+        {
+            await _fileStore.DeleteByPrefixAsync(prefix, ct);
+        }
+
         return OwnerDataControlResult.Deleted;
     }
 
-    private async Task DeleteOwnerAndRelatedDataAsync(ulong ownerId, ulong practitionerId, CancellationToken ct)
+    private async Task<List<string>> DeleteOwnerAndRelatedDataAsync(ulong ownerId, CancellationToken ct)
     {
-        // Step 1: Get all programmes for this owner to delete associated PDF files
+        // Step 1: Get all programmes for this owner to delete associated PDF files.
+        // NOTE: do NOT Include(p => p.Programmeversions) here. That eager-load joins the
+        // ProgrammeVersion table (which carries the large PayloadJson column) and forces a
+        // MySQL filesort, which exhausts sort_buffer_size on small server tiers ("Out of sort
+        // memory"). We only need IDs, so load programmes alone and fetch version ids separately.
         var programmes = await _db.Programmes
             .Where(p => p.TreatmentCase.Pet.OwnerId == ownerId)
-            .Include(p => p.Programmeversions)
             .ToListAsync(ct);
 
-        // Step 2: Delete PDF files from blob storage for deleted programmes.
-        foreach (var programme in programmes)
-        {
-            await _fileStore.DeleteByPrefixAsync($"programme-{programme.ProgrammeId}-", ct);
-        }
+        // Step 2: Collect stored PDF prefixes. The blobs are deleted by the caller only
+        // after the database delete has committed, so a DB failure cannot orphan-delete PDFs.
+        var programmePdfPrefixes = programmes
+            .Select(p => $"programme-{p.ProgrammeId}-")
+            .ToList();
 
         var programmeIds = programmes.Select(p => p.ProgrammeId).ToList();
-        var versionIds = programmes.SelectMany(p => p.Programmeversions).Select(v => v.ProgrammeVersionId).ToList();
+        var versionIds = programmeIds.Count > 0
+            ? await _db.Programmeversions
+                .Where(v => programmeIds.Contains(v.ProgrammeId))
+                .Select(v => v.ProgrammeVersionId)
+                .ToListAsync(ct)
+            : new List<ulong>();
 
         if (versionIds.Count > 0)
         {
@@ -487,7 +490,10 @@ public sealed class OwnerRepository : IOwnerRepository
             programme.CurrentProgrammeVersionId = null;
         }
 
-        var programmeVersions = programmes.SelectMany(p => p.Programmeversions).ToList();
+        // Delete versions by key without materialising the large PayloadJson column.
+        var programmeVersions = versionIds
+            .Select(id => new Programmeversion { ProgrammeVersionId = id })
+            .ToList();
         _db.Programmeversions.RemoveRange(programmeVersions);
         _db.Programmes.RemoveRange(programmes);
 
@@ -558,6 +564,8 @@ public sealed class OwnerRepository : IOwnerRepository
         {
             _db.Owners.Remove(owner);
         }
+
+        return programmePdfPrefixes;
     }
 
     private void AddOwnerGdprDeletionAudit(ulong ownerId, ulong practitionerId)
@@ -582,13 +590,16 @@ public sealed class PetRepository : IPetRepository
 {
     private readonly CaninePhysioDbContext _db;
     private readonly HelloBuddy.Admin.Core.Identity.ICurrentPractitionerAccessor _accessor;
+    private readonly IFileStore _fileStore;
 
     public PetRepository(
         CaninePhysioDbContext db,
-        HelloBuddy.Admin.Core.Identity.ICurrentPractitionerAccessor accessor)
+        HelloBuddy.Admin.Core.Identity.ICurrentPractitionerAccessor accessor,
+        IFileStore fileStore)
     {
         _db = db;
         _accessor = accessor;
+        _fileStore = fileStore;
     }
 
     public async Task<IReadOnlyList<PetListItem>> ListAsync(CancellationToken ct)
@@ -728,6 +739,116 @@ public sealed class PetRepository : IPetRepository
         }
 
         return true;
+    }
+
+    public async Task<PetDeleteResult> DeleteAsync(ulong petId, ulong practitionerId, CancellationToken ct)
+    {
+        var pet = await _db.Pets
+            .Include(p => p.Registrationcodes)
+            .Include(p => p.PractitionerPets)
+            .FirstOrDefaultAsync(p => p.PetId == petId, ct);
+
+        if (pet is null)
+        {
+            return PetDeleteResult.NotFound;
+        }
+
+        // Step 1: Get all programmes for this pet to delete associated PDF files.
+        // NOTE: do NOT Include(p => p.Programmeversions); that joins the large PayloadJson
+        // column and forces a MySQL filesort which exhausts sort_buffer_size on small server
+        // tiers ("Out of sort memory"). We only need IDs, so fetch version ids separately.
+        var programmes = await _db.Programmes
+            .Where(p => p.TreatmentCase.PetId == petId)
+            .ToListAsync(ct);
+
+        // Step 2: Collect stored PDF prefixes. Blobs are deleted only after the database
+        // delete has committed (below), so a DB failure cannot orphan-delete PDFs.
+        var programmePdfPrefixes = programmes
+            .Select(p => $"programme-{p.ProgrammeId}-")
+            .ToList();
+
+        var programmeIds = programmes.Select(p => p.ProgrammeId).ToList();
+        var versionIds = programmeIds.Count > 0
+            ? await _db.Programmeversions
+                .Where(v => programmeIds.Contains(v.ProgrammeId))
+                .Select(v => v.ProgrammeVersionId)
+                .ToListAsync(ct)
+            : new List<ulong>();
+
+        if (versionIds.Count > 0)
+        {
+            var sessionSkips = await _db.Sessionskips
+                .Where(x => versionIds.Contains(x.SessionOccurrence.ProgrammeVersionId))
+                .ToListAsync(ct);
+            _db.Sessionskips.RemoveRange(sessionSkips);
+
+            var exerciseCompletions = await _db.Exercisecompletions
+                .Where(x => versionIds.Contains(x.SessionOccurrence.ProgrammeVersionId))
+                .ToListAsync(ct);
+            _db.Exercisecompletions.RemoveRange(exerciseCompletions);
+
+            var sessionOccurrences = await _db.Sessionoccurrences
+                .Where(x => versionIds.Contains(x.ProgrammeVersionId))
+                .ToListAsync(ct);
+            _db.Sessionoccurrences.RemoveRange(sessionOccurrences);
+        }
+
+        if (programmeIds.Count > 0)
+        {
+            var sessionExercises = await _db.Sessionexercises
+                .Where(x => programmeIds.Contains(x.Session.ProgrammeId))
+                .ToListAsync(ct);
+            _db.Sessionexercises.RemoveRange(sessionExercises);
+
+            var sessions = await _db.Sessions
+                .Where(x => programmeIds.Contains(x.ProgrammeId))
+                .ToListAsync(ct);
+            _db.Sessions.RemoveRange(sessions);
+        }
+
+        foreach (var programme in programmes)
+        {
+            programme.CurrentProgrammeVersionId = null;
+        }
+
+        // Delete versions by key without materialising the large PayloadJson column.
+        var programmeVersions = versionIds
+            .Select(id => new Programmeversion { ProgrammeVersionId = id })
+            .ToList();
+        _db.Programmeversions.RemoveRange(programmeVersions);
+        _db.Programmes.RemoveRange(programmes);
+
+        // Step 3: Delete treatment case notes and treatment cases
+        var treatmentCases = await _db.Treatmentcases
+            .Where(tc => tc.PetId == petId)
+            .Include(tc => tc.Treatmentcasenotes)
+            .ToListAsync(ct);
+
+        foreach (var tc in treatmentCases)
+        {
+            _db.Treatmentcasenotes.RemoveRange(tc.Treatmentcasenotes);
+        }
+
+        _db.Treatmentcases.RemoveRange(treatmentCases);
+
+        // Step 4: Delete RegistrationCode records
+        _db.Registrationcodes.RemoveRange(pet.Registrationcodes);
+
+        // Step 5: Delete PractitionerPet records
+        _db.PractitionerPets.RemoveRange(pet.PractitionerPets);
+
+        // Step 6: Delete Pet
+        _db.Pets.Remove(pet);
+
+        await _db.SaveChangesAsync(ct);
+
+        // Stored PDFs are removed only after the database delete has committed.
+        foreach (var prefix in programmePdfPrefixes)
+        {
+            await _fileStore.DeleteByPrefixAsync(prefix, ct);
+        }
+
+        return PetDeleteResult.Deleted;
     }
 }
 

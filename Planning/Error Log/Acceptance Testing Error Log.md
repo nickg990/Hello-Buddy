@@ -877,3 +877,94 @@ Keep the API/`ExerciseListFilter` default of `true` (correct for unspecified API
 5. Full solution builds clean; UI suite green (add an assertion that unticked active-only returns
    inactive exercises).
 
+## ERR-AT-017: Adding an exercise in the Programme Builder wipes unsaved session edits
+
+**Date:** 2026-06-18
+**Status:** Fixed
+**Severity:** High (core workflow defect — data loss)
+**Area:** `HelloBuddy.Ui` Programme Builder (session editing + Add exercise)
+**Type:** UI behaviour defect (unsaved form state discarded on partial submit + refresh)
+**Related:** ACR003 (Builder Session Purpose Summary), AC-011 (Add exercise to session)
+
+### Symptom
+
+When creating or editing an exercise programme, clicking either **Add** (the AM "Add exercise"
+button or the PM one) causes other unsaved session content to be lost after the panel refreshes.
+Reps, sets, hold, notes and the session purpose summary that had been typed but not yet saved are
+reverted to their last-persisted values.
+
+### Steps to reproduce
+
+1. Open a draft programme in the Builder (`/Programmes/{id}/Builder`) with AM/PM sessions.
+2. Type a **Session purpose summary** and edit **reps/sets/notes** on existing exercises, but do
+   **not** click **Save session edits**.
+3. Click **Add** under either the AM or PM "Add exercise" control.
+4. The new exercise is added, but the unsaved purpose/reps/sets/notes are gone.
+
+### Root cause
+
+The Builder splits editing into independent HTML forms:
+
+- A single hidden form `session-edits-form` (posts to the `Builder` PUT action) carries every
+  session purpose summary and every exercise's reps/sets/hold/notes/sort. Those inputs are attached
+  to it via the `form="session-edits-form"` attribute and are only persisted by the **Save session
+  edits** button.
+- Each session has its **own** "Add exercise" form that posts only `exerciseId` to the `AddExercise`
+  action.
+
+In [src/HelloBuddy.Ui/Views/Programmes/Builder.cshtml](Canine%20Physio%20Admin/src/HelloBuddy.Ui/Views/Programmes/Builder.cshtml),
+the async submit handler posts just the submitted form and then calls `refreshPanels()`, which
+re-fetches the editor partial from the **server (DB state)**. Because the unsaved
+`session-edits-form` fields were never submitted, the refresh overwrites them with the
+last-persisted values — i.e. the edits are discarded. Both the AM and PM Add buttons behave the same
+way.
+
+### Fix
+
+Treat each **Add** action as a "Save session edits" first, so current state is persisted as part of
+the same action (no extra button, fully behind the scenes):
+
+- **Client** — [Builder.cshtml](Canine%20Physio%20Admin/src/HelloBuddy.Ui/Views/Programmes/Builder.cshtml):
+  the generic async submit handler now, when the submitted form carries
+  `data-include-session-edits="true"`, folds all `[form="session-edits-form"]` field values
+  (SessionId/Objective + Exercises[*] reps/sets/hold/notes/sort + ProgrammeId) into the posted
+  `FormData` before sending.
+- **Markup** — [_BuilderEditor.cshtml](Canine%20Physio%20Admin/src/HelloBuddy.Ui/Views/Programmes/_BuilderEditor.cshtml):
+  both AM and PM "Add exercise" forms are tagged `data-include-session-edits="true"`.
+- **Server** — [ProgrammesController.AddExercise](Canine%20Physio%20Admin/src/HelloBuddy.Ui/Controllers/ProgrammesController.cs):
+  the action now also binds `ProgrammeBuilderForm`. When the form contains edits for the matching
+  programme, it calls `UpdateProgrammeAsync` to persist them **before** `AddSessionExerciseAsync`,
+  honouring NotFound/Blocked outcomes (published programmes stay immutable). The subsequent refresh
+  then reflects both the saved edits and the new exercise.
+
+Safe because the save path tolerates an empty objective; the mandatory purpose-summary rule is only
+enforced at publish, so pre-saving partial edits is never blocked.
+
+### Affected files
+
+- [src/HelloBuddy.Ui/Controllers/ProgrammesController.cs](Canine%20Physio%20Admin/src/HelloBuddy.Ui/Controllers/ProgrammesController.cs) — `AddExercise` pre-saves session edits.
+- [src/HelloBuddy.Ui/Views/Programmes/_BuilderEditor.cshtml](Canine%20Physio%20Admin/src/HelloBuddy.Ui/Views/Programmes/_BuilderEditor.cshtml) — Add forms carry `data-include-session-edits`.
+- [src/HelloBuddy.Ui/Views/Programmes/Builder.cshtml](Canine%20Physio%20Admin/src/HelloBuddy.Ui/Views/Programmes/Builder.cshtml) — submit handler merges session-edit fields.
+- [tests/HelloBuddy.Ui.Tests/ProgrammesControllerTests.cs](Canine%20Physio%20Admin/tests/HelloBuddy.Ui.Tests/ProgrammesControllerTests.cs) — new/updated tests.
+
+### Tests
+
+- `AddExercise_Post_PersistsSessionEditsBeforeAddingExercise` — asserts (via `Received.InOrder`) that
+  `UpdateProgrammeAsync` is called with the AM + PM purposes and reps/sets/hold/notes **before**
+  `AddSessionExerciseAsync`.
+- `AddExercise_Post_WithEmptyForm_DoesNotCallUpdateProgramme` — no redundant save when there are no edits.
+- `AddExercise_Post_WhenPreSaveBlocked_ReturnsErrorAndDoesNotAddExercise` — published programmes stay immutable.
+- `AddExercise_Post_AjaxDuplicate_ReturnsJsonErrorPayload` — updated for the new method signature.
+
+### Verification
+
+- `dotnet test tests/HelloBuddy.Ui.Tests` — **48 passed, 0 failed** (2026-06-18).
+
+### Follow-up fix (2026-06-18)
+
+Initial fix surfaced a runtime error on Add ("Unable to update programme builder. Please retry.").
+Cause: the client merge loop copied the `session-edits-form` hidden `__RequestVerificationToken`
+into the Add form's `FormData`, which already carries its own token — duplicate antiforgery tokens
+fail validation. Fixed in
+[Builder.cshtml](Canine%20Physio%20Admin/src/HelloBuddy.Ui/Views/Programmes/Builder.cshtml) by
+skipping `__RequestVerificationToken` when folding in the session-edit hidden fields.

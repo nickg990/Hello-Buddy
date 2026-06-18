@@ -97,6 +97,24 @@ public sealed class AdminApiClient : IAdminApiClient
         return await ReadRequiredAsync<PetDetailVm>(resp, ct);
     }
 
+    public async Task<PetDeleteClientResult> DeletePetAsync(ulong id, CancellationToken ct)
+    {
+        var resp = await _http.DeleteAsync($"/api/pets/{id}", ct);
+        if (resp.StatusCode == HttpStatusCode.NotFound)
+        {
+            return new PetDeleteClientResult(PetDeleteClientOutcome.NotFound, "Pet was not found.");
+        }
+
+        await EnsureSuccessOrThrowAsync(resp, ct);
+        var payload = await ReadRequiredAsync<PetDeleteResponse>(resp, ct);
+        if (payload.Outcome.Equals("deleted", StringComparison.OrdinalIgnoreCase))
+        {
+            return new PetDeleteClientResult(PetDeleteClientOutcome.Deleted, payload.Message);
+        }
+
+        return new PetDeleteClientResult(PetDeleteClientOutcome.NotFound, payload.Message);
+    }
+
     public async Task<IReadOnlyList<ExerciseListItem>> ListExercisesAsync(ExerciseListFilter filter, CancellationToken ct)
     {
         var query = new List<string>();

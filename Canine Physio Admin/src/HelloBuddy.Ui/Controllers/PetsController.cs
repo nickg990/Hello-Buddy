@@ -133,6 +133,19 @@ public class PetsController : Controller
             .ToList();
     }
 
+    [HttpPost("{id:long}/Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(ulong id, CancellationToken ct)
+    {
+        var result = await _api.DeletePetAsync(id, ct);
+        if (result.Outcome == PetDeleteClientOutcome.Deleted)
+        {
+            TempData["Saved"] = "Pet and all associated records were permanently deleted.";
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
     private void ApplyApiValidation(ApiValidationException ex)
     {
         foreach (var entry in ex.Errors)

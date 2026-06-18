@@ -26,6 +26,7 @@ public interface IAdminApiClient
     Task<PetDetailVm?> GetPetAsync(ulong id, CancellationToken ct);
     Task<PetDetailVm> CreatePetAsync(SavePetRequest request, CancellationToken ct);
     Task<PetDetailVm?> UpdatePetAsync(ulong id, SavePetRequest request, CancellationToken ct);
+    Task<PetDeleteClientResult> DeletePetAsync(ulong id, CancellationToken ct);
     Task<IReadOnlyList<ExerciseListItem>> ListExercisesAsync(ExerciseListFilter filter, CancellationToken ct);
     Task<ExerciseDetailVm?> GetExerciseAsync(ulong id, CancellationToken ct);
     Task<ExerciseImageContent?> GetExerciseImageAsync(ulong id, CancellationToken ct);
@@ -71,6 +72,14 @@ public enum OwnerDataControlClientOutcome
 }
 
 public sealed record OwnerDataControlClientResult(OwnerDataControlClientOutcome Outcome, string Message, OwnerDetailVm? Owner = null);
+
+public enum PetDeleteClientOutcome
+{
+    Deleted,
+    NotFound,
+}
+
+public sealed record PetDeleteClientResult(PetDeleteClientOutcome Outcome, string Message);
 
 public enum ProgrammeStatusTransitionClientOutcome
 {

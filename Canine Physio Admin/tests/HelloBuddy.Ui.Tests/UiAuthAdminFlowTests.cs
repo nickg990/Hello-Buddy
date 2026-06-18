@@ -388,6 +388,11 @@ public sealed class UiAuthAdminFlowTests : IClassFixture<UiAuthAdminFlowTests.Fa
 
         public Task<bool> DeleteProgrammeVersionAsync(ulong id, ulong versionId, CancellationToken ct)
             => throw new NotImplementedException();
+
+        public Task<PetDeleteClientResult> DeletePetAsync(ulong id, CancellationToken ct)
+            => Task.FromResult(new PetDeleteClientResult(
+                PetDeleteClientOutcome.Deleted,
+                "Pet and all associated records, including stored programme PDFs, were permanently deleted."));
     }
 
     public sealed class StubLoginService : ILoginService

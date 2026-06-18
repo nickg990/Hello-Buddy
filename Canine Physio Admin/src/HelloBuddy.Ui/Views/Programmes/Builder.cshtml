@@ -119,6 +119,33 @@
 
                         try {
                             const formData = new FormData(form);
+
+                            // For "Add exercise" submissions, fold in the current (unsaved)
+                            // session edits so they are persisted as part of the same action
+                            // and not discarded by the subsequent panel refresh.
+                            if (form.dataset.includeSessionEdits === 'true') {
+                                const sessionEditsForm = document.getElementById('session-edits-form');
+                                const editControls = document.querySelectorAll('[form="session-edits-form"]');
+                                if (sessionEditsForm) {
+                                    sessionEditsForm.querySelectorAll('input[type="hidden"]').forEach(function (input) {
+                                        // Skip the antiforgery token: the Add form already carries
+                                        // its own; a duplicate token fails antiforgery validation.
+                                        if (input.name && input.name !== '__RequestVerificationToken') {
+                                            formData.append(input.name, input.value ?? '');
+                                        }
+                                    });
+                                }
+                                editControls.forEach(function (input) {
+                                    if (!input.name) {
+                                        return;
+                                    }
+                                    if ((input.type === 'radio' || input.type === 'checkbox') && !input.checked) {
+                                        return;
+                                    }
+                                    formData.append(input.name, input.value ?? '');
+                                });
+                            }
+
                             const response = await fetch(form.action, {
                                 method: form.method || 'POST',
                                 body: formData,

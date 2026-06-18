@@ -98,7 +98,7 @@
         <div class="card-body border-bottom bg-light-subtle">
             <div class="row g-2">
                 <div class="col-md-8">
-                    <form method="post" asp-action="AddExercise" asp-route-id="@programme.ProgrammeId" asp-route-sessionId="@session.SessionId" class="row g-2 align-items-end" data-async-builder="true">
+                    <form method="post" asp-action="AddExercise" asp-route-id="@programme.ProgrammeId" asp-route-sessionId="@session.SessionId" class="row g-2 align-items-end" data-async-builder="true" data-include-session-edits="true">
                         @Html.AntiForgeryToken()
                         <div class="col-md-9">
                             <label class="form-label mb-1" for="add-exercise-@session.SessionId">Add exercise</label>

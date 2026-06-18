@@ -350,9 +350,11 @@ public sealed class ProgrammeRepository : IProgrammeRepository
             return AddSessionExerciseResult.NotFound;
         }
 
-        var exerciseExists = await _db.Exercises
-            .AnyAsync(e => e.ExerciseId == exerciseId && e.IsActive == true, ct);
-        if (!exerciseExists)
+        var exercise = await _db.Exercises
+            .Where(e => e.ExerciseId == exerciseId && e.IsActive == true)
+            .Select(e => new { e.DefaultReps, e.DefaultSets, e.DefaultHoldSeconds })
+            .FirstOrDefaultAsync(ct);
+        if (exercise is null)
         {
             return AddSessionExerciseResult.NotFound;
         }
@@ -367,13 +369,18 @@ public sealed class ProgrammeRepository : IProgrammeRepository
             ? 1
             : session.Sessionexercises.Max(se => se.SortOrder) + 1;
 
+        // Seed the prescription from the exercise library defaults. These remain
+        // adjustable in the builder; whatever the practitioner saves on this
+        // Sessionexercise row is what the PDF renders (the PDF never reads the
+        // exercise defaults). Reps/Sets fall back to 1 when no default is set
+        // (publish requires them > 0); HoldSeconds stays null when not applicable.
         session.Sessionexercises.Add(new Sessionexercise
         {
             ExerciseId = exerciseId,
             SortOrder = (ushort)nextSort,
-            Reps = 1,
-            Sets = 1,
-            HoldSeconds = 1,
+            Reps = exercise.DefaultReps ?? 1,
+            Sets = exercise.DefaultSets ?? 1,
+            HoldSeconds = exercise.DefaultHoldSeconds,
             Notes = null,
         });
 
