@@ -1,0 +1,245 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1480" height="940" viewBox="0 0 1480 940" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <!-- Drop shadow for page cards -->
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#223843" flood-opacity="0.18"/>
+    </filter>
+    <!-- Arrow head -->
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#28404F"/>
+    </marker>
+    <marker id="arrowMuted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6392AE"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas background -->
+  <rect x="0" y="0" width="1480" height="940" fill="#F4F8FA"/>
+
+  <!-- Header band -->
+  <rect x="0" y="0" width="1480" height="78" fill="#28404F"/>
+  <circle cx="46" cy="39" r="22" fill="#6392AE"/>
+  <text x="46" y="46" text-anchor="middle" font-size="20" font-weight="700" fill="#FFFFFF">HB</text>
+  <text x="84" y="34" font-size="22" font-weight="700" fill="#FFFFFF">Hello Buddy Cloud Admin</text>
+  <text x="84" y="58" font-size="14" fill="#D9E7EC">End-to-end practitioner workflow &#8212; page journey from owner onboarding to published programme PDF</text>
+
+  <!-- ============ STAGE BANNERS ============ -->
+  <!-- Stage 1: Onboarding -->
+  <rect x="30" y="104" width="1420" height="34" rx="4" fill="#D9E7EC" stroke="#B9CBD4"/>
+  <rect x="30" y="104" width="6" height="34" fill="#6392AE"/>
+  <text x="48" y="126" font-size="15" font-weight="700" fill="#223843">1 &#183; Set up the patient record</text>
+  <text x="360" y="126" font-size="13" fill="#5A6E7A">Capture who the dog and owner are, and why they need treatment</text>
+
+  <!-- Stage 1 cards -->
+  <!-- Dashboard -->
+  <g filter="url(#cardShadow)">
+    <rect x="48" y="156" width="180" height="86" rx="8" fill="#FFFFFF" stroke="#6392AE" stroke-width="1.5"/>
+  </g>
+  <rect x="48" y="156" width="180" height="26" rx="8" fill="#28404F"/>
+  <rect x="48" y="170" width="180" height="12" fill="#28404F"/>
+  <text x="138" y="174" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">Dashboard</text>
+  <text x="138" y="206" text-anchor="middle" font-size="12" fill="#223843">Practitioner starts here</text>
+  <text x="138" y="226" text-anchor="middle" font-size="11" fill="#5A6E7A">Quick actions &#183; open work</text>
+
+  <!-- Owner -->
+  <g filter="url(#cardShadow)">
+    <rect x="288" y="156" width="180" height="86" rx="8" fill="#FFFFFF" stroke="#6392AE" stroke-width="1.5"/>
+  </g>
+  <rect x="288" y="156" width="180" height="26" rx="8" fill="#28404F"/>
+  <rect x="288" y="170" width="180" height="12" fill="#28404F"/>
+  <text x="378" y="174" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">Owner</text>
+  <text x="378" y="206" text-anchor="middle" font-size="12" fill="#223843">Create / open owner</text>
+  <text x="378" y="226" text-anchor="middle" font-size="11" fill="#5A6E7A">Contact details</text>
+
+  <!-- Pet -->
+  <g filter="url(#cardShadow)">
+    <rect x="528" y="156" width="180" height="86" rx="8" fill="#FFFFFF" stroke="#6392AE" stroke-width="1.5"/>
+  </g>
+  <rect x="528" y="156" width="180" height="26" rx="8" fill="#28404F"/>
+  <rect x="528" y="170" width="180" height="12" fill="#28404F"/>
+  <text x="618" y="174" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">Pet</text>
+  <text x="618" y="206" text-anchor="middle" font-size="12" fill="#223843">Add pet to owner</text>
+  <text x="618" y="226" text-anchor="middle" font-size="11" fill="#5A6E7A">Breed, age, profile</text>
+
+  <!-- Treatment Case -->
+  <g filter="url(#cardShadow)">
+    <rect x="768" y="156" width="180" height="86" rx="8" fill="#FFFFFF" stroke="#6392AE" stroke-width="1.5"/>
+  </g>
+  <rect x="768" y="156" width="180" height="26" rx="8" fill="#28404F"/>
+  <rect x="768" y="170" width="180" height="12" fill="#28404F"/>
+  <text x="858" y="174" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">Treatment Case</text>
+  <text x="858" y="206" text-anchor="middle" font-size="12" fill="#223843">Open a case</text>
+  <text x="858" y="226" text-anchor="middle" font-size="11" fill="#5A6E7A">Condition &#183; goals</text>
+
+  <!-- Case Notes -->
+  <g filter="url(#cardShadow)">
+    <rect x="1008" y="156" width="180" height="86" rx="8" fill="#FFFFFF" stroke="#6392AE" stroke-width="1.5"/>
+  </g>
+  <rect x="1008" y="156" width="180" height="26" rx="8" fill="#28404F"/>
+  <rect x="1008" y="170" width="180" height="12" fill="#28404F"/>
+  <text x="1098" y="174" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">Case Notes</text>
+  <text x="1098" y="206" text-anchor="middle" font-size="12" fill="#223843">Record assessment</text>
+  <text x="1098" y="226" text-anchor="middle" font-size="11" fill="#5A6E7A">Timeline of notes</text>
+
+  <!-- Stage 1 arrows -->
+  <line x1="228" y1="199" x2="284" y2="199" stroke="#28404F" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="468" y1="199" x2="524" y2="199" stroke="#28404F" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="708" y1="199" x2="764" y2="199" stroke="#28404F" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="948" y1="199" x2="1004" y2="199" stroke="#28404F" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Flow down to stage 2 -->
+  <path d="M 1098 242 L 1098 268 L 138 268 L 138 300" fill="none" stroke="#28404F" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Stage 2: Build programme -->
+  <rect x="30" y="312" width="1420" height="34" rx="4" fill="#D9E7EC" stroke="#B9CBD4"/>
+  <rect x="30" y="312" width="6" height="34" fill="#6392AE"/>
+  <text x="48" y="334" font-size="15" font-weight="700" fill="#223843">2 &#183; Build the home exercise programme</text>
+  <text x="430" y="334" font-size="13" fill="#5A6E7A">Assemble sessions and exercises tailored to the dog</text>
+
+  <!-- Exercise Library (supporting) -->
+  <g filter="url(#cardShadow)">
+    <rect x="48" y="364" width="200" height="96" rx="8" fill="#F8FBFC" stroke="#6392AE" stroke-width="1.5" stroke-dasharray="5 4"/>
+  </g>
+  <rect x="48" y="364" width="200" height="26" rx="8" fill="#6392AE"/>
+  <rect x="48" y="378" width="200" height="12" fill="#6392AE"/>
+  <text x="148" y="382" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">Exercise Library</text>
+  <text x="148" y="412" text-anchor="middle" font-size="12" fill="#223843">Reusable exercises</text>
+  <text x="148" y="432" text-anchor="middle" font-size="11" fill="#5A6E7A">Default reps / sets / hold</text>
+  <text x="148" y="450" text-anchor="middle" font-size="11" fill="#5A6E7A">Image &#183; video link</text>
+
+  <!-- Programme Builder (big card) -->
+  <g filter="url(#cardShadow)">
+    <rect x="300" y="364" width="500" height="200" rx="8" fill="#FFFFFF" stroke="#28404F" stroke-width="1.5"/>
+  </g>
+  <rect x="300" y="364" width="500" height="28" rx="8" fill="#28404F"/>
+  <rect x="300" y="380" width="500" height="12" fill="#28404F"/>
+  <text x="550" y="383" text-anchor="middle" font-size="14" font-weight="700" fill="#FFFFFF">Programme Builder</text>
+
+  <!-- builder inner steps -->
+  <rect x="320" y="406" width="220" height="44" rx="6" fill="#D9E7EC" stroke="#B9CBD4"/>
+  <text x="430" y="424" text-anchor="middle" font-size="12" font-weight="600" fill="#223843">Programme details &amp; dates</text>
+  <text x="430" y="440" text-anchor="middle" font-size="11" fill="#5A6E7A">Single or AM/PM sessions</text>
+
+  <rect x="560" y="406" width="220" height="44" rx="6" fill="#D9E7EC" stroke="#B9CBD4"/>
+  <text x="670" y="424" text-anchor="middle" font-size="12" font-weight="600" fill="#223843">Session editor</text>
+  <text x="670" y="440" text-anchor="middle" font-size="11" fill="#5A6E7A">Purpose per session</text>
+
+  <rect x="320" y="462" width="220" height="48" rx="6" fill="#D9E7EC" stroke="#B9CBD4"/>
+  <text x="430" y="480" text-anchor="middle" font-size="12" font-weight="600" fill="#223843">Add exercise</text>
+  <text x="430" y="496" text-anchor="middle" font-size="11" fill="#5A6E7A">Pulls library defaults &#183; adjustable</text>
+
+  <rect x="560" y="462" width="220" height="48" rx="6" fill="#D9E7EC" stroke="#B9CBD4"/>
+  <text x="670" y="480" text-anchor="middle" font-size="12" font-weight="600" fill="#223843">Reps &#183; Sets &#183; Hold &#183; Reorder</text>
+  <text x="670" y="496" text-anchor="middle" font-size="11" fill="#5A6E7A">Fine-tune the prescription</text>
+
+  <rect x="320" y="522" width="460" height="30" rx="6" fill="#6392AE"/>
+  <text x="550" y="542" text-anchor="middle" font-size="12" font-weight="700" fill="#FFFFFF">Save draft</text>
+
+  <!-- arrow library -> builder -->
+  <line x1="248" y1="430" x2="296" y2="430" stroke="#6392AE" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrowMuted)"/>
+  <text x="272" y="420" text-anchor="middle" font-size="10" fill="#6392AE">draws on</text>
+
+  <!-- arrow builder -> stage 3 (PDF preview) -->
+  <line x1="800" y1="464" x2="864" y2="464" stroke="#28404F" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Stage 3 column header (right side) -->
+  <rect x="852" y="364" width="580" height="34" rx="4" fill="#D9E7EC" stroke="#B9CBD4"/>
+  <rect x="852" y="364" width="6" height="34" fill="#6392AE"/>
+  <text x="870" y="386" font-size="15" font-weight="700" fill="#223843">3 &#183; Preview, publish &amp; share</text>
+
+  <!-- PDF Preview -->
+  <g filter="url(#cardShadow)">
+    <rect x="868" y="410" width="172" height="100" rx="8" fill="#FFFFFF" stroke="#6392AE" stroke-width="1.5"/>
+  </g>
+  <rect x="868" y="410" width="172" height="26" rx="8" fill="#28404F"/>
+  <rect x="868" y="424" width="172" height="12" fill="#28404F"/>
+  <text x="954" y="428" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">PDF Preview</text>
+  <text x="954" y="460" text-anchor="middle" font-size="12" fill="#223843">Check the document</text>
+  <text x="954" y="478" text-anchor="middle" font-size="11" fill="#5A6E7A">Exactly what the</text>
+  <text x="954" y="494" text-anchor="middle" font-size="11" fill="#5A6E7A">owner will receive</text>
+
+  <!-- Publish -->
+  <g filter="url(#cardShadow)">
+    <rect x="1080" y="410" width="172" height="100" rx="8" fill="#FFFFFF" stroke="#6392AE" stroke-width="1.5"/>
+  </g>
+  <rect x="1080" y="410" width="172" height="26" rx="8" fill="#28404F"/>
+  <rect x="1080" y="424" width="172" height="12" fill="#28404F"/>
+  <text x="1166" y="428" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">Publish Programme</text>
+  <text x="1166" y="460" text-anchor="middle" font-size="12" fill="#223843">Generate final PDF</text>
+  <text x="1166" y="478" text-anchor="middle" font-size="11" fill="#5A6E7A">Stored securely &#183;</text>
+  <text x="1166" y="494" text-anchor="middle" font-size="11" fill="#5A6E7A">creates a version</text>
+
+  <!-- Published PDF -->
+  <g filter="url(#cardShadow)">
+    <rect x="1292" y="410" width="140" height="100" rx="8" fill="#F8FBFC" stroke="#245E7C" stroke-width="1.5"/>
+  </g>
+  <rect x="1292" y="410" width="140" height="26" rx="8" fill="#245E7C"/>
+  <rect x="1292" y="424" width="140" height="12" fill="#245E7C"/>
+  <text x="1362" y="428" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">Published PDF</text>
+  <text x="1362" y="460" text-anchor="middle" font-size="12" fill="#223843">Share with owner</text>
+  <text x="1362" y="480" text-anchor="middle" font-size="11" fill="#5A6E7A">Download link</text>
+  <text x="1362" y="496" text-anchor="middle" font-size="11" fill="#5A6E7A">Version history</text>
+
+  <!-- arrows preview->publish->published -->
+  <line x1="1040" y1="460" x2="1076" y2="460" stroke="#28404F" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="1252" y1="460" x2="1288" y2="460" stroke="#28404F" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- revise loop: publish back to builder -->
+  <path d="M 1080 500 C 980 560, 700 600, 550 564" fill="none" stroke="#6392AE" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#arrowMuted)"/>
+  <text x="820" y="600" text-anchor="middle" font-size="11" fill="#6392AE">New version: revise &amp; re-publish (previous PDF retained)</text>
+
+  <!-- ============ Stage 4: Governance ============ -->
+  <rect x="30" y="648" width="1420" height="34" rx="4" fill="#D9E7EC" stroke="#B9CBD4"/>
+  <rect x="30" y="648" width="6" height="34" fill="#6392AE"/>
+  <text x="48" y="670" font-size="15" font-weight="700" fill="#223843">Ongoing &#183; Data governance (GDPR)</text>
+  <text x="430" y="670" font-size="13" fill="#5A6E7A">Available at any time from the Owners and Pets pages</text>
+
+  <!-- Delete Pet -->
+  <g filter="url(#cardShadow)">
+    <rect x="48" y="700" width="300" height="92" rx="8" fill="#FFFFFF" stroke="#B9544B" stroke-width="1.5"/>
+  </g>
+  <rect x="48" y="700" width="300" height="26" rx="8" fill="#8C3B34"/>
+  <rect x="48" y="714" width="300" height="12" fill="#8C3B34"/>
+  <text x="198" y="718" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">Delete Pet</text>
+  <text x="198" y="748" text-anchor="middle" font-size="12" fill="#223843">Removes the pet and its cases,</text>
+  <text x="198" y="766" text-anchor="middle" font-size="12" fill="#223843">programmes &amp; PDFs</text>
+  <text x="198" y="784" text-anchor="middle" font-size="11" fill="#5A6E7A">Owner record is kept</text>
+
+  <!-- Delete Owner -->
+  <g filter="url(#cardShadow)">
+    <rect x="372" y="700" width="320" height="92" rx="8" fill="#FFFFFF" stroke="#B9544B" stroke-width="1.5"/>
+  </g>
+  <rect x="372" y="700" width="320" height="26" rx="8" fill="#8C3B34"/>
+  <rect x="372" y="714" width="320" height="12" fill="#8C3B34"/>
+  <text x="532" y="718" text-anchor="middle" font-size="13" font-weight="700" fill="#FFFFFF">Delete Owner (Right to be Forgotten)</text>
+  <text x="532" y="748" text-anchor="middle" font-size="12" fill="#223843">Erases the owner, all pets, cases,</text>
+  <text x="532" y="766" text-anchor="middle" font-size="12" fill="#223843">programmes, PDFs &amp; accounts</text>
+  <text x="532" y="784" text-anchor="middle" font-size="11" fill="#5A6E7A">Confirmation required &#183; audit logged</text>
+
+  <!-- Confirmation note -->
+  <g filter="url(#cardShadow)">
+    <rect x="716" y="700" width="716" height="92" rx="8" fill="#FFF7E6" stroke="#D9A441" stroke-width="1.5"/>
+  </g>
+  <text x="740" y="730" font-size="13" font-weight="700" fill="#8A6D1E">Both deletions are permanent and irreversible</text>
+  <text x="740" y="754" font-size="12" fill="#5A4A1E">A confirmation pop-up appears before anything is removed &#8212; cancelling makes no changes.</text>
+  <text x="740" y="774" font-size="12" fill="#5A4A1E">Every deletion is written to the audit log for compliance.</text>
+
+  <!-- Legend -->
+  <rect x="48" y="824" width="1384" height="86" rx="8" fill="#FFFFFF" stroke="#B9CBD4"/>
+  <text x="68" y="850" font-size="13" font-weight="700" fill="#223843">How to read this diagram</text>
+
+  <rect x="68" y="864" width="26" height="18" rx="4" fill="#FFFFFF" stroke="#6392AE" stroke-width="1.5"/>
+  <text x="104" y="878" font-size="12" fill="#223843">A page in the admin app</text>
+
+  <rect x="300" y="864" width="26" height="18" rx="4" fill="#F8FBFC" stroke="#6392AE" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="336" y="878" font-size="12" fill="#223843">Supporting / reusable area</text>
+
+  <line x1="560" y1="873" x2="600" y2="873" stroke="#28404F" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="610" y="878" font-size="12" fill="#223843">Main path (do this next)</text>
+
+  <line x1="820" y1="873" x2="860" y2="873" stroke="#6392AE" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrowMuted)"/>
+  <text x="870" y="878" font-size="12" fill="#223843">Optional loop / relationship</text>
+
+  <rect x="1110" y="864" width="26" height="18" rx="4" fill="#FFFFFF" stroke="#B9544B" stroke-width="1.5"/>
+  <text x="1146" y="878" font-size="12" fill="#223843">Destructive action (confirm first)</text>
+</svg>
