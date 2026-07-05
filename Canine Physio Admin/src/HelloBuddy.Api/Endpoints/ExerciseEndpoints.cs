@@ -86,6 +86,18 @@ public static class ExerciseEndpoints
             return Results.Ok(categories);
         });
 
+        app.MapGet("/api/exercises/{id:long}/audit", async (long id, IExerciseRepository exercises, CancellationToken ct) =>
+        {
+            var exercise = await exercises.GetAsync((ulong)id, ct);
+            if (exercise is null)
+            {
+                return Results.NotFound();
+            }
+
+            var history = await exercises.GetAuditHistoryAsync((ulong)id, ct);
+            return Results.Ok(history);
+        });
+
         app.MapPost("/api/exercises/media", async (
             IFormFile? file,
             IConfiguration config,

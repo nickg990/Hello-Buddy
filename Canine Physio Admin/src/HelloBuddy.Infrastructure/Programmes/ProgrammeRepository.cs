@@ -24,7 +24,7 @@ public sealed class ProgrammeRepository : IProgrammeRepository
     public async Task<ProgrammeVm?> CreateDraftAsync(ulong treatmentCaseId, ulong practitionerId, CancellationToken ct)
     {
         var treatmentCase = await _db.Treatmentcases
-            .Where(tc => tc.TreatmentCaseId == treatmentCaseId && tc.PractitionerId == practitionerId)
+            .Where(tc => tc.TreatmentCaseId == treatmentCaseId)
             .Select(tc => new
             {
                 tc.TreatmentCaseId,
@@ -72,7 +72,7 @@ public sealed class ProgrammeRepository : IProgrammeRepository
     public async Task<bool> OwnsAsync(ulong programmeId, ulong practitionerId, CancellationToken ct)
     {
         return await _db.Programmes
-            .AnyAsync(p => p.ProgrammeId == programmeId && p.TreatmentCase.PractitionerId == practitionerId, ct);
+            .AnyAsync(p => p.ProgrammeId == programmeId, ct);
     }
 
     public async Task<bool> IsLockedForEditAsync(ulong programmeId, ulong practitionerId, CancellationToken ct)
@@ -90,7 +90,7 @@ public sealed class ProgrammeRepository : IProgrammeRepository
     public async Task<ProgrammeVersionHistoryVm?> GetVersionHistoryAsync(ulong programmeId, ulong practitionerId, CancellationToken ct)
     {
         var programmeMeta = await _db.Programmes
-            .Where(p => p.ProgrammeId == programmeId && p.TreatmentCase.PractitionerId == practitionerId)
+            .Where(p => p.ProgrammeId == programmeId)
             .Select(p => new
             {
                 p.ProgrammeId,
@@ -147,7 +147,7 @@ public sealed class ProgrammeRepository : IProgrammeRepository
             .Include(p => p.Sessions)
                 .ThenInclude(s => s.Sessionexercises)
             .Include(p => p.Programmeversions)
-            .FirstOrDefaultAsync(p => p.ProgrammeId == programmeId && p.TreatmentCase.PractitionerId == practitionerId, ct);
+            .FirstOrDefaultAsync(p => p.ProgrammeId == programmeId, ct);
 
         if (source is null)
         {
@@ -273,7 +273,7 @@ public sealed class ProgrammeRepository : IProgrammeRepository
         var programme = await _db.Programmes
             .Include(p => p.Sessions)
             .ThenInclude(s => s.Sessionexercises)
-            .FirstOrDefaultAsync(p => p.ProgrammeId == programmeId && p.TreatmentCase.PractitionerId == practitionerId, ct);
+            .FirstOrDefaultAsync(p => p.ProgrammeId == programmeId, ct);
 
         if (programme is null)
         {
@@ -342,8 +342,7 @@ public sealed class ProgrammeRepository : IProgrammeRepository
         var session = await _db.Sessions
             .Include(s => s.Sessionexercises)
             .FirstOrDefaultAsync(s => s.SessionId == sessionId
-                                      && s.ProgrammeId == programmeId
-                                      && s.Programme.TreatmentCase.PractitionerId == practitionerId, ct);
+                                      && s.ProgrammeId == programmeId, ct);
 
         if (session is null)
         {
@@ -398,8 +397,7 @@ public sealed class ProgrammeRepository : IProgrammeRepository
         var entity = await _db.Sessionexercises
             .FirstOrDefaultAsync(se => se.SessionExerciseId == sessionExerciseId
                                        && se.SessionId == sessionId
-                                       && se.Session.ProgrammeId == programmeId
-                                       && se.Session.Programme.TreatmentCase.PractitionerId == practitionerId, ct);
+                                       && se.Session.ProgrammeId == programmeId, ct);
 
         if (entity is null)
         {
@@ -422,7 +420,7 @@ public sealed class ProgrammeRepository : IProgrammeRepository
         try
         {
             var programme = await _db.Programmes
-                .FirstOrDefaultAsync(p => p.ProgrammeId == programmeId && p.TreatmentCase.PractitionerId == practitionerId, ct);
+                .FirstOrDefaultAsync(p => p.ProgrammeId == programmeId, ct);
             if (programme is null)
             {
                 return ProgrammeStatusTransitionResult.NotFound;
@@ -475,7 +473,7 @@ public sealed class ProgrammeRepository : IProgrammeRepository
     public async Task<ProgrammeStatusTransitionResult> CompleteAsync(ulong programmeId, ulong practitionerId, CancellationToken ct)
     {
         var programme = await _db.Programmes
-            .FirstOrDefaultAsync(p => p.ProgrammeId == programmeId && p.TreatmentCase.PractitionerId == practitionerId, ct);
+            .FirstOrDefaultAsync(p => p.ProgrammeId == programmeId, ct);
         if (programme is null)
         {
             return ProgrammeStatusTransitionResult.NotFound;
@@ -507,8 +505,7 @@ public sealed class ProgrammeRepository : IProgrammeRepository
         var ids = edits.Select(e => e.SessionExerciseId).ToList();
         var editedEntities = await _db.Sessionexercises
             .Where(se => ids.Contains(se.SessionExerciseId)
-                         && se.Session.ProgrammeId == programmeId
-                         && se.Session.Programme.TreatmentCase.PractitionerId == practitionerId)
+                         && se.Session.ProgrammeId == programmeId)
             .ToListAsync(ct);
 
         var touchedSessionIds = editedEntities
@@ -518,8 +515,7 @@ public sealed class ProgrammeRepository : IProgrammeRepository
 
         var sessionEntities = await _db.Sessionexercises
             .Where(se => touchedSessionIds.Contains(se.SessionId)
-                         && se.Session.ProgrammeId == programmeId
-                         && se.Session.Programme.TreatmentCase.PractitionerId == practitionerId)
+                         && se.Session.ProgrammeId == programmeId)
             .ToListAsync(ct);
 
         var editsById = edits.ToDictionary(e => e.SessionExerciseId);
@@ -598,8 +594,7 @@ public sealed class ProgrammeRepository : IProgrammeRepository
         var ids = edits.Select(e => e.SessionId).ToList();
         var sessions = await _db.Sessions
             .Where(s => ids.Contains(s.SessionId)
-                        && s.ProgrammeId == programmeId
-                        && s.Programme.TreatmentCase.PractitionerId == practitionerId)
+                        && s.ProgrammeId == programmeId)
             .ToListAsync(ct);
 
         var editsById = edits.ToDictionary(e => e.SessionId);
@@ -630,7 +625,7 @@ public sealed class ProgrammeRepository : IProgrammeRepository
         {
         var programme = await _db.Programmes
             .Include(p => p.CurrentProgrammeVersion)
-            .FirstOrDefaultAsync(p => p.ProgrammeId == programmeId && p.TreatmentCase.PractitionerId == practitionerId, ct)
+            .FirstOrDefaultAsync(p => p.ProgrammeId == programmeId, ct)
             ?? throw new InvalidOperationException("Programme not found for publish version persistence.");
 
         if (programme.CurrentProgrammeVersion is not null
@@ -682,7 +677,7 @@ public sealed class ProgrammeRepository : IProgrammeRepository
     public async Task<ProgrammeVm?> GetVmAsync(ulong programmeId, ulong practitionerId, CancellationToken ct)
     {
         var data = await _db.Programmes
-            .Where(p => p.ProgrammeId == programmeId && p.TreatmentCase.PractitionerId == practitionerId)
+            .Where(p => p.ProgrammeId == programmeId)
             .Select(p => new
             {
                 p.ProgrammeId,
@@ -778,7 +773,6 @@ public sealed class ProgrammeRepository : IProgrammeRepository
     {
         return await _db.Programmeversions
             .Where(v => v.ProgrammeId == programmeId
-                        && v.Programme.TreatmentCase.PractitionerId == practitionerId
                         && v.PublishedDate.HasValue)
             .OrderByDescending(v => v.PublishedDate)
             .ThenByDescending(v => v.VersionNumber)
@@ -798,7 +792,6 @@ public sealed class ProgrammeRepository : IProgrammeRepository
         return await _db.Programmeversions
             .Where(v => v.ProgrammeVersionId == programmeVersionId
                         && v.ProgrammeId == programmeId
-                        && v.Programme.TreatmentCase.PractitionerId == practitionerId
                         && v.PublishedDate.HasValue)
             .Select(v => new ProgrammeVersionPayloadVm(
                 v.ProgrammeVersionId,
@@ -811,8 +804,7 @@ public sealed class ProgrammeRepository : IProgrammeRepository
     {
         var version = await _db.Programmeversions
             .FirstOrDefaultAsync(v => v.ProgrammeVersionId == programmeVersionId
-                                      && v.ProgrammeId == programmeId
-                                      && v.Programme.TreatmentCase.PractitionerId == practitionerId, ct);
+                                      && v.ProgrammeId == programmeId, ct);
         if (version is null)
         {
             return false;

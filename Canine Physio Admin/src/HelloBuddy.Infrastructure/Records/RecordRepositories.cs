@@ -1,6 +1,7 @@
 using HelloBuddy.Admin.Core.Data;
 using HelloBuddy.Admin.Core.Data.Entities;
 using HelloBuddy.Admin.Pdf;
+using HelloBuddy.Application.Admin;
 using HelloBuddy.Application.Auth;
 using HelloBuddy.Application.Programmes;
 using HelloBuddy.Application.Records;
@@ -25,7 +26,50 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IProgrammeRepository, ProgrammeRepository>();
         services.AddScoped<ILoginService, LoginService>();
         services.AddScoped<IPractitionerAdminService, PractitionerAdminService>();
+        services.AddScoped<IAppSettingRepository, AppSettingRepository>();
         return services;
+    }
+}
+
+public sealed class AppSettingRepository : IAppSettingRepository
+{
+    private readonly CaninePhysioDbContext _db;
+
+    public AppSettingRepository(CaninePhysioDbContext db)
+    {
+        _db = db;
+    }
+
+    public async Task<string?> GetAsync(string key, CancellationToken ct)
+    {
+        var entity = await _db.Appsettings.FindAsync([key], ct);
+        return entity?.SettingValue;
+    }
+
+    public async Task UpsertAsync(string key, string? value, ulong? practitionerId, CancellationToken ct)
+    {
+        var entity = await _db.Appsettings.FindAsync([key], ct);
+        if (entity is null)
+        {
+            entity = new Appsetting { SettingKey = key };
+            _db.Appsettings.Add(entity);
+        }
+
+        entity.SettingValue = value;
+        entity.UpdatedByPractitionerId = practitionerId;
+
+        await _db.SaveChangesAsync(ct);
+
+        _db.Auditlogs.Add(new Auditlog
+        {
+            EntityName = "AppSetting",
+            EntityId = 0,
+            ActionType = "Update",
+            PractitionerId = practitionerId,
+            ActionDateTime = DateTime.UtcNow,
+            NewValuesJson = System.Text.Json.JsonSerializer.Serialize(new { Key = key, Value = value }),
+        });
+        await _db.SaveChangesAsync(ct);
     }
 }
 
@@ -190,6 +234,11 @@ public sealed class ExerciseRepository : IExerciseRepository
         await _db.SaveChangesAsync(ct);
 
         ApplyInstructionRows(entity.ExerciseId, request.Instructions);
+
+        var categoryName = await GetCategoryNameAsync(entity.ExerciseCategoryId, ct);
+        var newSnapshot = BuildSnapshot(entity, categoryName, request.Instructions);
+        AddExerciseAudit(entity.ExerciseId, "Create", oldSnapshot: null, newSnapshot);
+
         await _db.SaveChangesAsync(ct);
         return entity.ExerciseId;
     }
@@ -201,6 +250,13 @@ public sealed class ExerciseRepository : IExerciseRepository
         {
             return false;
         }
+
+        var oldCategoryName = await GetCategoryNameAsync(entity.ExerciseCategoryId, ct);
+        var existingSteps = await _db.Exerciseinstructions
+            .Where(x => x.ExerciseId == exerciseId)
+            .OrderBy(x => x.StepNumber)
+            .ToListAsync(ct);
+        var oldSnapshot = BuildSnapshot(entity, oldCategoryName, existingSteps.Select(x => x.InstructionText).ToList());
 
         entity.ExerciseCategoryId = request.ExerciseCategoryId;
         entity.Title = request.Title.Trim();
@@ -217,13 +273,15 @@ public sealed class ExerciseRepository : IExerciseRepository
             entity.UpdatedByPractitionerName = _accessor.PractitionerName;
         }
 
-        var existingSteps = await _db.Exerciseinstructions
-            .Where(x => x.ExerciseId == exerciseId)
-            .ToListAsync(ct);
         _db.Exerciseinstructions.RemoveRange(existingSteps);
         await _db.SaveChangesAsync(ct);
 
         ApplyInstructionRows(exerciseId, request.Instructions);
+
+        var newCategoryName = await GetCategoryNameAsync(entity.ExerciseCategoryId, ct);
+        var newSnapshot = BuildSnapshot(entity, newCategoryName, request.Instructions);
+        AddExerciseAudit(exerciseId, "Update", oldSnapshot, newSnapshot);
+
         await _db.SaveChangesAsync(ct);
         return true;
     }
@@ -236,10 +294,160 @@ public sealed class ExerciseRepository : IExerciseRepository
             return false;
         }
 
+        var categoryName = await GetCategoryNameAsync(entity.ExerciseCategoryId, ct);
+        var instructions = await _db.Exerciseinstructions
+            .Where(x => x.ExerciseId == exerciseId)
+            .OrderBy(x => x.StepNumber)
+            .Select(x => x.InstructionText)
+            .ToListAsync(ct);
+        var oldSnapshot = BuildSnapshot(entity, categoryName, instructions);
+
         entity.IsActive = isActive;
+        var newSnapshot = oldSnapshot with { IsActive = isActive };
+        AddExerciseAudit(exerciseId, isActive ? "Activate" : "Deactivate", oldSnapshot, newSnapshot);
+
         await _db.SaveChangesAsync(ct);
         return true;
     }
+
+    public async Task<IReadOnlyList<ExerciseAuditEntryVm>> GetAuditHistoryAsync(ulong exerciseId, CancellationToken ct)
+    {
+        var rows = await _db.Auditlogs
+            .Where(a => a.EntityName == ExerciseAuditEntityName && a.EntityId == exerciseId)
+            .OrderByDescending(a => a.ActionDateTime)
+            .ToListAsync(ct);
+
+        var result = new List<ExerciseAuditEntryVm>(rows.Count);
+        foreach (var row in rows)
+        {
+            var oldPayload = row.OldValuesJson is null
+                ? null
+                : JsonSerializer.Deserialize<ExerciseAuditPayload>(row.OldValuesJson);
+            var newPayload = row.NewValuesJson is null
+                ? null
+                : JsonSerializer.Deserialize<ExerciseAuditPayload>(row.NewValuesJson);
+
+            result.Add(new ExerciseAuditEntryVm(
+                row.AuditLogId,
+                newPayload?.AuthorName,
+                row.ActionDateTime,
+                row.ActionType,
+                BuildChanges(oldPayload?.Snapshot, newPayload?.Snapshot)));
+        }
+
+        return result;
+    }
+
+    private const string ExerciseAuditEntityName = "Exercise";
+
+    private static ExerciseAuditSnapshot BuildSnapshot(Exercise entity, string? categoryName, IReadOnlyList<string> instructions)
+    {
+        return new ExerciseAuditSnapshot(
+            entity.Title,
+            entity.ExerciseCategoryId,
+            categoryName,
+            entity.ObjectiveSummary,
+            entity.VideoUrl,
+            entity.ImageUrl,
+            entity.DefaultReps,
+            entity.DefaultSets,
+            entity.DefaultHoldSeconds,
+            entity.IsActive,
+            instructions);
+    }
+
+    private static ExerciseAuditSnapshot BuildSnapshot(Exercise entity, string? categoryName, IReadOnlyList<SaveExerciseRequest.InstructionStepInput> instructions)
+    {
+        return BuildSnapshot(
+            entity,
+            categoryName,
+            instructions.OrderBy(x => x.StepNumber).Select(x => x.InstructionText).ToList());
+    }
+
+    private Task<string?> GetCategoryNameAsync(ulong? exerciseCategoryId, CancellationToken ct)
+    {
+        if (!exerciseCategoryId.HasValue)
+        {
+            return Task.FromResult<string?>(null);
+        }
+
+        return _db.Exercisecategories
+            .Where(x => x.ExerciseCategoryId == exerciseCategoryId.Value)
+            .Select(x => (string?)x.CategoryName)
+            .FirstOrDefaultAsync(ct);
+    }
+
+    private void AddExerciseAudit(ulong exerciseId, string actionType, ExerciseAuditSnapshot? oldSnapshot, ExerciseAuditSnapshot newSnapshot)
+    {
+        var practitionerId = _accessor.PractitionerId > 0 ? _accessor.PractitionerId : (ulong?)null;
+        var authorName = practitionerId.HasValue ? _accessor.PractitionerName : null;
+
+        _db.Auditlogs.Add(new Auditlog
+        {
+            PractitionerId = practitionerId,
+            EntityName = ExerciseAuditEntityName,
+            EntityId = exerciseId,
+            ActionType = actionType,
+            OldValuesJson = oldSnapshot is null
+                ? null
+                : JsonSerializer.Serialize(new ExerciseAuditPayload(authorName, oldSnapshot)),
+            NewValuesJson = JsonSerializer.Serialize(new ExerciseAuditPayload(authorName, newSnapshot)),
+            ActionDateTime = DateTime.UtcNow,
+        });
+    }
+
+    private static IReadOnlyList<ExerciseAuditEntryVm.FieldChangeVm> BuildChanges(
+        ExerciseAuditSnapshot? oldSnapshot,
+        ExerciseAuditSnapshot? newSnapshot)
+    {
+        if (newSnapshot is null)
+        {
+            return [];
+        }
+
+        static string? Fmt<T>(T? value) where T : struct => value.HasValue ? value.Value.ToString() : null;
+
+        var changes = new List<ExerciseAuditEntryVm.FieldChangeVm>();
+
+        void AddIfChanged(string fieldName, string? oldValue, string? newValue)
+        {
+            if (!string.Equals(oldValue, newValue, StringComparison.Ordinal))
+            {
+                changes.Add(new ExerciseAuditEntryVm.FieldChangeVm(fieldName, oldValue, newValue));
+            }
+        }
+
+        AddIfChanged("Title", oldSnapshot?.Title, newSnapshot.Title);
+        AddIfChanged("Category", oldSnapshot?.CategoryName, newSnapshot.CategoryName);
+        AddIfChanged("Objective summary", oldSnapshot?.ObjectiveSummary, newSnapshot.ObjectiveSummary);
+        AddIfChanged("Video URL", oldSnapshot?.VideoUrl, newSnapshot.VideoUrl);
+        AddIfChanged("Image URL", oldSnapshot?.ImageUrl, newSnapshot.ImageUrl);
+        AddIfChanged("Default reps", Fmt(oldSnapshot?.DefaultReps), Fmt(newSnapshot.DefaultReps));
+        AddIfChanged("Default sets", Fmt(oldSnapshot?.DefaultSets), Fmt(newSnapshot.DefaultSets));
+        AddIfChanged("Default hold seconds", Fmt(oldSnapshot?.DefaultHoldSeconds), Fmt(newSnapshot.DefaultHoldSeconds));
+        AddIfChanged("Active", Fmt(oldSnapshot?.IsActive), Fmt(newSnapshot.IsActive));
+
+        var oldInstructionsText = oldSnapshot is null ? null : string.Join(" | ", oldSnapshot.Instructions);
+        var newInstructionsText = string.Join(" | ", newSnapshot.Instructions);
+        AddIfChanged("Instructions", oldInstructionsText, newInstructionsText);
+
+        return changes;
+    }
+
+    private sealed record ExerciseAuditSnapshot(
+        string? Title,
+        ulong? ExerciseCategoryId,
+        string? CategoryName,
+        string? ObjectiveSummary,
+        string? VideoUrl,
+        string? ImageUrl,
+        ushort? DefaultReps,
+        ushort? DefaultSets,
+        ushort? DefaultHoldSeconds,
+        bool? IsActive,
+        IReadOnlyList<string> Instructions);
+
+    private sealed record ExerciseAuditPayload(string? AuthorName, ExerciseAuditSnapshot Snapshot);
 
     private void ApplyInstructionRows(ulong exerciseId, IReadOnlyList<SaveExerciseRequest.InstructionStepInput> instructions)
     {
@@ -635,13 +843,13 @@ public sealed class PetRepository : IPetRepository
                 p.Owner.FirstName + " " + p.Owner.LastName,
                 p.Owner.Email,
                 p.Treatmentcases
-                    .Where(tc => tc.PractitionerId == practitionerId)
                     .OrderByDescending(tc => tc.StartDate)
                     .Select(tc => new PetDetailVm.CaseRow(
                         tc.TreatmentCaseId,
                         tc.CaseTitle,
                         tc.Status,
-                        tc.StartDate))
+                        tc.StartDate,
+                        tc.Practitioner.FirstName + " " + tc.Practitioner.LastName))
                     .ToList()))
             .FirstOrDefaultAsync(ct);
     }
@@ -868,8 +1076,6 @@ public sealed class TreatmentCaseRepository : ITreatmentCaseRepository
     public async Task<IReadOnlyList<CaseRow>> ListAsync(ulong practitionerId, CancellationToken ct)
     {
         return await _db.Treatmentcases
-            .Where(tc => tc.PractitionerId == practitionerId
-            )
             .OrderByDescending(tc => tc.StartDate)
             .Select(tc => new CaseRow(
                 tc.TreatmentCaseId,
@@ -877,15 +1083,15 @@ public sealed class TreatmentCaseRepository : ITreatmentCaseRepository
                 tc.Status,
                 tc.StartDate,
                 tc.Pet.Name,
-                tc.Pet.Owner.FirstName + " " + tc.Pet.Owner.LastName))
+                tc.Pet.Owner.FirstName + " " + tc.Pet.Owner.LastName,
+                tc.Practitioner.FirstName + " " + tc.Practitioner.LastName))
             .ToListAsync(ct);
     }
 
     public async Task<CaseDetailVm?> GetAsync(ulong treatmentCaseId, ulong practitionerId, CancellationToken ct)
     {
         var tc = await _db.Treatmentcases
-            .Where(x => x.TreatmentCaseId == treatmentCaseId
-                && x.PractitionerId == practitionerId)
+            .Where(x => x.TreatmentCaseId == treatmentCaseId)
             .Select(x => new
             {
                 x.TreatmentCaseId,
@@ -904,6 +1110,7 @@ public sealed class TreatmentCaseRepository : ITreatmentCaseRepository
                 OwnerFirst = x.Pet.Owner.FirstName,
                 OwnerLast = x.Pet.Owner.LastName,
                 OwnerEmail = x.Pet.Owner.Email,
+                PractitionerName = x.Practitioner.FirstName + " " + x.Practitioner.LastName,
                 Notes = x.Treatmentcasenotes
                     .OrderByDescending(n => n.CreatedDate)
                     .Select(n => new CaseDetailVm.NoteRow(
@@ -948,6 +1155,7 @@ public sealed class TreatmentCaseRepository : ITreatmentCaseRepository
             tc.Age,
             $"{tc.OwnerFirst} {tc.OwnerLast}",
             tc.OwnerEmail,
+            tc.PractitionerName,
             tc.Notes,
             tc.Programmes);
     }
@@ -975,8 +1183,7 @@ public sealed class TreatmentCaseRepository : ITreatmentCaseRepository
     public async Task<bool> UpdateAsync(ulong treatmentCaseId, SaveTreatmentCaseRequest request, ulong practitionerId, CancellationToken ct)
     {
         var entity = await _db.Treatmentcases
-            .FirstOrDefaultAsync(tc => tc.TreatmentCaseId == treatmentCaseId
-                && tc.PractitionerId == practitionerId,
+            .FirstOrDefaultAsync(tc => tc.TreatmentCaseId == treatmentCaseId,
                 ct);
         if (entity is null)
         {
@@ -1002,9 +1209,7 @@ public sealed class TreatmentCaseRepository : ITreatmentCaseRepository
     public async Task<CaseDetailVm.NoteRow?> AddNoteAsync(ulong treatmentCaseId, CreateCaseNoteRequest request, ulong practitionerId, CancellationToken ct)
     {
         var treatmentCaseExists = await _db.Treatmentcases.AnyAsync(
-            tc => tc.TreatmentCaseId == treatmentCaseId
-                && tc.PractitionerId == practitionerId
-,
+            tc => tc.TreatmentCaseId == treatmentCaseId,
             ct);
         if (!treatmentCaseExists)
         {
@@ -1036,8 +1241,7 @@ public sealed class TreatmentCaseRepository : ITreatmentCaseRepository
         var entity = await _db.Treatmentcasenotes
             .FirstOrDefaultAsync(
                 n => n.TreatmentCaseNoteId == noteId
-                    && n.TreatmentCaseId == treatmentCaseId
-                    && n.TreatmentCase.PractitionerId == practitionerId,
+                    && n.TreatmentCaseId == treatmentCaseId,
                 ct);
         if (entity is null)
         {
@@ -1061,8 +1265,7 @@ public sealed class TreatmentCaseRepository : ITreatmentCaseRepository
         var entity = await _db.Treatmentcasenotes
             .FirstOrDefaultAsync(
                 n => n.TreatmentCaseNoteId == noteId
-                    && n.TreatmentCaseId == treatmentCaseId
-                    && n.TreatmentCase.PractitionerId == practitionerId,
+                    && n.TreatmentCaseId == treatmentCaseId,
                 ct);
         if (entity is null)
         {

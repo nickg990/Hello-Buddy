@@ -49,7 +49,9 @@ function Get-ResetScripts {
         (Join-Path $dir "Canine Physio DB Day 1 Initialise v2.4.sql"),
         (Join-Path $dir "Canine Physio DB Scripts - Increment 8 - Login and Attribution.sql"),
         (Join-Path $dir "Canine Physio DB MSc Assessment Seed v1.sql"),
-        (Join-Path $dir "Canine Physio DB Scripts - Increment 9 Rollback - Remove Programme Email Send Audit.sql")
+        (Join-Path $dir "Canine Physio DB Scripts - Increment 9 Rollback - Remove Programme Email Send Audit.sql"),
+        (Join-Path $dir "Canine Physio DB Scripts - Release 2 - Exercise Audit.sql"),
+        (Join-Path $dir "Canine Physio DB Scripts - Release 2 - App Settings.sql")
     )
 
     foreach ($path in $scripts) {

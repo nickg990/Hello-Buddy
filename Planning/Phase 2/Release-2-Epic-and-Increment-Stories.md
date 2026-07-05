@@ -46,7 +46,7 @@ Extend the stabilised Release 1 admin system with change-auditability for the ex
 | R2-S1 | Exercise library audit trail + Audit history viewer | Increment 10 |
 | R2-S2 | Exercise content loader (descriptions → library) | Increment 11 |
 | R2-S3 | Configurable Google Drive video-selection source (Settings page) | Increment 11 |
-| R2-S5 | Global PDF disclaimer footer (admin-only Settings page) | Increment 11 |
+| R2-S5 | Global PDF disclaimer footer (embedded, code-managed) | Increment 11 |
 | R2-S6 | Video still-image (thumbnail) generator script | Increment 11 |
 | R2-S4 | Disposable Azure test environment package | Increment 12 |
 
@@ -149,7 +149,7 @@ Constraints: descriptions/steps must round-trip so the existing Details view ren
 #### a) User story and brief for Sonnet
 
 **User story**
-As an administrator, I want to configure the Google Drive video-library URL from the admin Settings page (rather than it being hardcoded in config), so that the video-selection popup always opens the correct shared library and the link can be changed without a redeploy.
+As an administrator, I want to configure the Google Drive video-library URL from a new admin Settings page (rather than it being hardcoded in config), so that the video-selection popup always opens the correct shared library and the link can be changed without a redeploy.
 
 **Brief for Sonnet**
 
@@ -163,6 +163,8 @@ Implement:
 3. **Seed the setting's initial value** to the new folder: `https://drive.google.com/drive/folders/1FQXInuGCPdFP5ywFaNnO39Be0ffeZMGm` (also update the appsettings default + controller fallback to this value so an unconfigured environment still points at the right folder).
 4. Verify the popup's provider dropdown opens the configured URL in a new tab; changing it on Settings updates the popup.
 5. Tests: setting persists/reloads; popup uses the stored value; fallback used when unset; non-admin denied access to the setting (mirrors R2-S5).
+
+**Amendment (2026-07-05):** The Google Drive URL input on the Settings page must render **blank** (empty value) when no setting has been saved to the DB yet — do not pre-populate with the appsettings fallback. The field must carry `placeholder="Please paste in video URL"` so the admin sees greyed-out prompt text. The fallback URL still applies silently at runtime for the popup; it is intentionally not surfaced in the UI field so an admin is prompted to set the correct value explicitly.
 
 Constraints: change only the Drive provider source; do not alter YouTube/Vimeo/other providers or the URL-validation logic. Validate the URL is a well-formed `https://drive.google.com/...` link before saving. Reuse R2-S5's settings table/page/API — do not create a parallel settings mechanism.
 
@@ -216,38 +218,40 @@ Constraints: do not commit downloaded videos or generated images into the repo b
 
 ---
 
-### Story R2-S5: Global PDF disclaimer footer (admin-only Settings page)
+### Story R2-S5: Global PDF disclaimer footer (embedded, code-managed)
 
 #### a) User story and brief for Sonnet
 
 **User story**
-As an administrator, I want to manage a single global disclaimer from an admin-only Settings page so that it appears as small grey centre-aligned print at the bottom of every programme PDF, consistently shown to owners without per-programme effort.
+As a practitioner, I want every programme PDF to include a standard disclaimer so that owners receive appropriate terms of service and safety information with every exercise programme.
+
+**Scope note (updated 2026-07-04):** The original brief called for an admin-only Settings page + database table to allow runtime editing of the disclaimer. Scope was simplified: the disclaimer wording is embedded as a private constant in `ProgrammeService`. Future wording changes require a code deployment. The Settings page / admin API / database table are deferred; if runtime editability is needed it can be added later without any other code changes (just swap the constant for a DB lookup).
 
 **Brief for Sonnet**
 
 Current state (verified):
-- The programme PDF is produced from a single Razor template, `Templates/Programme.cshtml`, compiled by [Canine Physio Admin/src/HelloBuddy.Admin.Pdf/RazorProgrammePdfTemplate.cs](../../Canine%20Physio%20Admin/src/HelloBuddy.Admin.Pdf/RazorProgrammePdfTemplate.cs) and bound to `ProgrammeVm` ([Canine Physio Admin/src/HelloBuddy.Contracts/ProgrammeVm.cs](../../Canine%20Physio%20Admin/src/HelloBuddy.Contracts/ProgrammeVm.cs)). This **same template** renders both the **preview PDF** (`GET /Programmes/PreviewPdf` → `IProgrammeService` preview render) and the **published PDF**, so a footer added here shows on both.
-- The **builder live preview pane** is a separate HTML partial, `_BuilderPreviewPane` (`GET /Programmes/Builder/PreviewPanel` in [Canine Physio Admin/src/HelloBuddy.Ui/Controllers/ProgrammesController.cs](../../Canine%20Physio%20Admin/src/HelloBuddy.Ui/Controllers/ProgrammesController.cs)) — the disclaimer must **NOT** render here.
-- There is **no settings/config table** in the schema today. The disclaimer is **global**, not per-exercise.
-- **Admin gating already exists:** UI [Program.cs](../../Canine%20Physio%20Admin/src/HelloBuddy.Ui/Program.cs) defines the `"AdminOnly"` policy (`RequireClaim("practitioner_role", "administrator")`); [AdminController.cs](../../Canine%20Physio%20Admin/src/HelloBuddy.Ui/Controllers/AdminController.cs) is `[Authorize(Policy = "AdminOnly")]` and already hosts the RTBF (owner data-control) actions. The API mirrors this with its own `AdminOnly` policy. The disclaimer is administrator-managed configuration — it belongs in this admin-gated area, **same as RTBF**, not on the exercise library page.
-- The proposed/canonical disclaimer text is in `Hello Buddy/Content/Hello_Buddy_Terms_of_Service_Disclaimer.txt` (use as the seeded initial value). **Wording tweak required for the PDF:** the source text is written for the **app** ("By using the Hello Buddy Canine Physiotherapy app...", "within this app"). Since this disclaimer is for the **programme PDF** (read on paper/screen, not the app), reword the seeded text to a PDF/programme context — e.g. replace app-centric phrasing with "this programme"/"this exercise programme" and drop "within this app" — while preserving the legal/safety meaning. Keep the app-worded version intact for the mobile app's own terms; seed only the PDF-appropriate variant here.
+- The programme PDF is produced from a single Razor template, `Templates/Programme.cshtml`, compiled by [Canine Physio Admin/src/HelloBuddy.Admin.Pdf/RazorProgrammePdfTemplate.cs](../../Canine%20Physio%20Admin/src/HelloBuddy.Admin.Pdf/RazorProgrammePdfTemplate.cs) and bound to `ProgrammeVm` ([Canine Physio Admin/src/HelloBuddy.Contracts/ProgrammeVm.cs](../../Canine%20Physio%20Admin/src/HelloBuddy.Contracts/ProgrammeVm.cs)). This **same template** renders both the **preview PDF** and the **published PDF**.
+- The **builder live preview pane** is a separate HTML partial, `_BuilderPreviewPane` — the disclaimer must **NOT** render there (it is unaffected as it does not use `Programme.cshtml`).
+- Disclaimer source text: `Hello Buddy/Content/Hello_Buddy_Terms_of_Service_Disclaimer.txt`, reworded for a programme/paper context ("this exercise programme" instead of "this app").
 
-Implement:
-1. **Database (idempotent update script)** under `Canine Physio Database/Build and Initialise/` (e.g. `Canine Physio DB Scripts - Release 2 - Global Disclaimer.sql`, safe for production): create a small **single-row global settings** table, e.g. `GlobalDisclaimer` (`GlobalDisclaimerId` PK, `DisclaimerText` TEXT, attribution `UpdatedByPractitionerId/Name`, `UpdatedDate`) — or a generic `AppSetting(SettingKey, SettingValue,...)` if you prefer a reusable shape; pick the lower-risk option and note it in an ADR. Seed the row from the disclaimer .txt. **Do not** add a column to `Exercise` (the disclaimer is global, not per-exercise).
-2. **Admin-only Settings page:** add a **Settings** page in the admin area, gated by the existing `"AdminOnly"` authorization policy (same gating as RTBF). Add a `GET`/`POST` Settings action to the existing `[Authorize(Policy = "AdminOnly")]` `AdminController` (or a sibling admin-gated controller) with a single **freeform multi-line text box** ("Programme PDF disclaimer") and Save. Add a navigation entry to the Settings page that is visible to administrators only (consistent with how the Admin menu is shown). Persist via a new **admin-gated** API endpoint, e.g. `GET/PUT /api/admin/global-disclaimer` (API `AdminOnly` policy), through the Application/Infrastructure layers (constructor DI, async + `CancellationToken`). Write an `Auditlog` entry on change (consistent with R2-S1).
-3. **Render in the PDF template:** add the disclaimer to `ProgrammeVm` (e.g. `string? DisclaimerText`), populate it in the publish/preview render path (the service that builds the render VM — `ProgrammeService.BuildRenderVmAsync`), and render it in `Programme.cshtml` as a **footer**: **small, grey, centre-aligned** small-print at the bottom of the PDF. Ensure it appears on **preview and published** output; confirm it does **not** appear in `_BuilderPreviewPane`.
-4. **Tests:** in-memory/integration test that the disclaimer text flows into the rendered programme HTML/PDF; a test (or assertion) that the builder preview partial does **not** contain it; a UI test that the Settings page saves and reloads; **an authorization test that a non-administrator practitioner is denied access to the Settings page and the admin disclaimer endpoint (403/redirect), mirroring RTBF gating.**
+Implemented:
+1. Added `public string? DisclaimerText { get; init; }` to `ProgrammeVm` (non-positional `init` property — fully backward-compatible with all existing positional constructors).
+2. Added `private const string PdfDisclaimerText` to `ProgrammeService` with the PDF-reworded disclaimer text.
+3. `BuildRenderVmAsync` sets `DisclaimerText = PdfDisclaimerText` — covers **preview and publish** render paths.
+4. `RenderVersionPdfAsync` injects `DisclaimerText = PdfDisclaimerText` after deserialization — so historical version re-renders also include the disclaimer.
+5. `Programme.cshtml` footer updated: disclaimer renders below the practitioner name/date line, same 8pt grey colour and centre-alignment as the existing footer, with `margin-top: 4mm` separating them. Guarded by `@if (!string.IsNullOrWhiteSpace(...))` so null is safe.
+6. In-memory test asserts the serialised publish payload contains the disclaimer text.
 
-Constraints: single global record (no per-exercise duplication); **administrator-only access** enforced on both the UI page and the API endpoint (reuse the existing `AdminOnly` policies, do not invent a new mechanism); follow standards (domain language, async + `CancellationToken`, `TreatWarningsAsErrors`); reuse `Auditlog`; keep the footer styling inline/scoped so it doesn't disturb existing PDF layout.
+No database script, no Settings page, no admin API required for this simplified scope.
 
 #### b) Estimate (AI implementation + human testing, incl. 20% contingency)
 
 | Phase | Base | With 20% contingency |
 |-------|------|----------------------|
-| AI implementation (settings table + script + admin-gated API + admin Settings page + nav + VM + template footer + tests) | ~25 min | ~30 min |
-| Human testing (admin edits text; preview + published PDF show grey centred footer; builder does NOT; non-admin denied) | 1.0 h | 1.2 h |
-| Azure deploy (API+UI image rebuild + revision) — hands-on + rollout wait | ~25 min | ~30 min |
-| **Total** | **~2.0 h** | **~2.4 h** |
+| AI implementation (VM property + service constant + template footer + test) | ~10 min | ~12 min |
+| Human testing (preview + published PDF show grey centred footer; builder does NOT) | ~20 min | ~24 min |
+| Azure deploy (API image rebuild + revision) — hands-on + rollout wait | ~15 min | ~18 min |
+| **Total** | **~45 min** | **~54 min** |
 
 *Note:* R2-S5 can share the Increment 11 UI/API image build with R2-S2/R2-S3, collapsing into one Azure deploy/wait cycle.
 
@@ -312,6 +316,6 @@ Constraints: this is a build-from-scratch, single-run activity producing a self-
 - Authored exercise descriptions load from a reviewed `.md` into the library with correct descriptions and auto-numbered (one-per-line) steps; re-running does not duplicate; no images loaded.
 - The exercise edit video popup opens the Google Drive folder configured on the admin Settings page (seeded to `1FQXInuGCPdFP5ywFaNnO39Be0ffeZMGm`), changeable without redeploy.
 - A tooling script generates a still-image thumbnail for each Drive video via ffmpeg (output JPGs for review; no upload in Phase 2).
-- A single global disclaimer, edited from one freeform text box in the exercise library, renders as **small grey centre-aligned** small-print at the bottom of every programme PDF on **preview and published output**, and does **not** appear in the builder preview pane.
+- A standard disclaimer (embedded in code from the terms-of-service source text, reworded for a programme/paper context) renders as **small grey centre-aligned** small-print at the bottom of every programme PDF on **preview and published output**, and does **not** appear in the builder preview pane.
 - A single run builds a complete `test`-prefixed Azure environment (including DB schema + seed, excluding scheduling); teardown is a single resource-group delete.
 - Each story is verified locally first, then re-tested in Azure.

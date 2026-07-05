@@ -206,6 +206,12 @@ public sealed class AdminApiClient : IAdminApiClient
         return rows ?? new List<ExerciseCategoryListItem>();
     }
 
+    public async Task<IReadOnlyList<ExerciseAuditEntryVm>> GetExerciseAuditHistoryAsync(ulong id, CancellationToken ct)
+    {
+        var rows = await _http.GetFromJsonAsync<List<ExerciseAuditEntryVm>>($"/api/exercises/{id}/audit", ct);
+        return rows ?? new List<ExerciseAuditEntryVm>();
+    }
+
     public async Task<ProgrammeVm?> CreateDraftProgrammeAsync(ulong caseId, CancellationToken ct)
     {
         var resp = await _http.PostAsync($"/api/cases/{caseId}/programmes", content: null, ct);
@@ -506,6 +512,23 @@ public sealed class AdminApiClient : IAdminApiClient
         await EnsureSuccessOrThrowAsync(resp, ct);
         return true;
     }
+
+    public async Task<string?> GetAppSettingAsync(string key, CancellationToken ct)
+    {
+        var resp = await _http.GetAsync($"/api/admin/settings/{Uri.EscapeDataString(key)}", ct);
+        if (resp.StatusCode == HttpStatusCode.NotFound) return null;
+        await EnsureSuccessOrThrowAsync(resp, ct);
+        var result = await resp.Content.ReadFromJsonAsync<AppSettingResponse>(cancellationToken: ct);
+        return result?.Value;
+    }
+
+    public async Task SaveAppSettingAsync(string key, string? value, CancellationToken ct)
+    {
+        var resp = await _http.PutAsJsonAsync($"/api/admin/settings/{Uri.EscapeDataString(key)}", new HelloBuddy.Contracts.UpdateAppSettingRequest(value), ct);
+        await EnsureSuccessOrThrowAsync(resp, ct);
+    }
+
+    private sealed record AppSettingResponse(string Key, string? Value);
 
     private async Task<ProgrammeStatusTransitionClientResult> PostProgrammeStatusTransitionAsync(string path, CancellationToken ct)
     {

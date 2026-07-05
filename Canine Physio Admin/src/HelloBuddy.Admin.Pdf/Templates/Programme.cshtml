@@ -49,6 +49,7 @@ body { font-family: Georgia, Cambria, 'Times New Roman', serif; color: #223843; 
 .ex-instructions li { margin-bottom: 1mm; }
 /* ── Footer ──────────────────────────────────────────────────────────── */
 .pdf-footer { color: #5A6E7A; font-size: 8pt; margin-top: 8mm; text-align: center; border-top: 1px solid #B9CBD4; padding-top: 3mm; }
+.pdf-disclaimer { max-width: 189mm; margin: 4mm auto 0 auto; text-align: justify; line-height: 1.5; }
 </style>
 </head>
 <body>
@@ -127,7 +128,13 @@ else
 </div>
 }
 
-<div class="pdf-footer">Generated @DateTime.Now.ToString("yyyy-MM-dd HH:mm") &middot; @Model.PractitionerName</div>
+<div class="pdf-footer">
+  Generated @DateTime.Now.ToString("yyyy-MM-dd HH:mm") &middot; @Model.PractitionerName
+  @if (!string.IsNullOrWhiteSpace(Model.DisclaimerText))
+  {
+  <div class="pdf-disclaimer">@Model.DisclaimerText</div>
+  }
+</div>
 
 </div>
 </body>

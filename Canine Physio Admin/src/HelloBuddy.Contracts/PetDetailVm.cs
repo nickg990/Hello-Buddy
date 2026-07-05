@@ -18,5 +18,6 @@ public sealed record PetDetailVm(
         ulong TreatmentCaseId,
         string CaseTitle,
         string Status,
-        DateOnly StartDate);
+        DateOnly StartDate,
+        string PractitionerName);
 }

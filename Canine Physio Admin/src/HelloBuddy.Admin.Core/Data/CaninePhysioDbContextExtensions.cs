@@ -8,6 +8,21 @@ public partial class CaninePhysioDbContext
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder)
     {
         // -------------------------------------------------------------------
+        // AppSetting — admin-managed key/value settings (Release 2 R2-S3)
+        // -------------------------------------------------------------------
+        modelBuilder.Entity<Appsetting>(entity =>
+        {
+            entity.HasKey(e => e.SettingKey).HasName("PRIMARY");
+            entity.ToTable("appsetting");
+            entity.Property(e => e.SettingKey).HasMaxLength(255);
+            entity.Property(e => e.SettingValue).HasColumnType("text");
+            entity.Property(e => e.UpdatedDate)
+                .ValueGeneratedOnAddOrUpdate()
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("datetime");
+        });
+
+        // -------------------------------------------------------------------
         // PractitionerLogin — credentials table (Increment 8)
         // -------------------------------------------------------------------
         modelBuilder.Entity<Practitionerlogin>(entity =>

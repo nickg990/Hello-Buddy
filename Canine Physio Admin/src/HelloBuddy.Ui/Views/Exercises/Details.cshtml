@@ -1,8 +1,9 @@
-﻿@model ExerciseDetailVm
+﻿@using HelloBuddy.Ui.Models
+@model ExerciseDetailPageVm
 @{
-    ViewData["Title"] = Model.Title;
+    ViewData["Title"] = Model.Exercise.Title;
 
-    var videoUrl = Model.VideoUrl?.Trim();
+    var videoUrl = Model.Exercise.VideoUrl?.Trim();
     var hasValidVideoUrl = Uri.TryCreate(videoUrl, UriKind.Absolute, out var parsedVideoUrl)
         && (parsedVideoUrl.Scheme == Uri.UriSchemeHttp || parsedVideoUrl.Scheme == Uri.UriSchemeHttps);
     var safeVideoUrl = hasValidVideoUrl ? parsedVideoUrl!.ToString() : string.Empty;
@@ -14,15 +15,16 @@
 
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
-        <h1>@Model.Title</h1>
-        <p class="text-muted mb-0">Exercise key: @Model.ExerciseKey</p>
+        <h1>@Model.Exercise.Title</h1>
+        <p class="text-muted mb-0">Exercise key: @Model.Exercise.ExerciseKey</p>
     </div>
     <div class="d-flex gap-2">
-        <a class="btn btn-outline-secondary" asp-action="Edit" asp-route-id="@Model.ExerciseId">Edit exercise</a>
-        <form method="post" asp-action="SetActive" asp-route-id="@Model.ExerciseId">
+        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#auditHistoryModal">Audit history</button>
+        <a class="btn btn-outline-secondary" asp-action="Edit" asp-route-id="@Model.Exercise.ExerciseId">Edit exercise</a>
+        <form method="post" asp-action="SetActive" asp-route-id="@Model.Exercise.ExerciseId">
             @Html.AntiForgeryToken()
-            <input type="hidden" name="isActive" value="@((!Model.IsActive).ToString().ToLowerInvariant())" />
-            <button type="submit" class="btn btn-outline-secondary">@(Model.IsActive ? "Deactivate" : "Activate")</button>
+            <input type="hidden" name="isActive" value="@((!Model.Exercise.IsActive).ToString().ToLowerInvariant())" />
+            <button type="submit" class="btn btn-outline-secondary">@(Model.Exercise.IsActive ? "Deactivate" : "Activate")</button>
         </form>
     </div>
 </div>
@@ -34,13 +36,13 @@
                 <h2 class="h4">Exercise details</h2>
                 <dl class="row mb-0">
                     <dt class="col-sm-4">Category</dt>
-                    <dd class="col-sm-8">@(Model.CategoryName ?? "-")</dd>
+                    <dd class="col-sm-8">@(Model.Exercise.CategoryName ?? "-")</dd>
                     <dt class="col-sm-4">Status</dt>
-                    <dd class="col-sm-8">@(Model.IsActive ? "Active" : "Inactive")</dd>
+                    <dd class="col-sm-8">@(Model.Exercise.IsActive ? "Active" : "Inactive")</dd>
                     <dt class="col-sm-4">Summary</dt>
-                    <dd class="col-sm-8">@(Model.ObjectiveSummary ?? "-")</dd>
+                    <dd class="col-sm-8">@(Model.Exercise.ObjectiveSummary ?? "-")</dd>
                     <dt class="col-sm-4">Updated</dt>
-                    <dd class="col-sm-8">@Model.UpdatedDate.ToString("dd MMM yyyy HH:mm")</dd>
+                    <dd class="col-sm-8">@Model.Exercise.UpdatedDate.ToString("dd MMM yyyy HH:mm")</dd>
                 </dl>
             </div>
         </div>
@@ -51,11 +53,11 @@
                 <h2 class="h4">Prescription defaults</h2>
                 <dl class="row mb-3">
                     <dt class="col-sm-4">Reps</dt>
-                    <dd class="col-sm-8">@(Model.DefaultReps?.ToString() ?? "-")</dd>
+                    <dd class="col-sm-8">@(Model.Exercise.DefaultReps?.ToString() ?? "-")</dd>
                     <dt class="col-sm-4">Sets</dt>
-                    <dd class="col-sm-8">@(Model.DefaultSets?.ToString() ?? "-")</dd>
+                    <dd class="col-sm-8">@(Model.Exercise.DefaultSets?.ToString() ?? "-")</dd>
                     <dt class="col-sm-4">Hold seconds</dt>
-                    <dd class="col-sm-8">@(Model.DefaultHoldSeconds?.ToString() ?? "-")</dd>
+                    <dd class="col-sm-8">@(Model.Exercise.DefaultHoldSeconds?.ToString() ?? "-")</dd>
                 </dl>
 
                 <h2 class="h4">Media</h2>
@@ -63,10 +65,10 @@
                     <div>
                         <label class="form-label">Image</label>
                         <div class="exercise-media-panel exercise-media-panel--tile border rounded p-2 d-flex align-items-center justify-content-center bg-light overflow-hidden">
-                            @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+                            @if (!string.IsNullOrWhiteSpace(Model.Exercise.ImageUrl))
                             {
-                                <a asp-action="Image" asp-route-id="@Model.ExerciseId" target="_blank" rel="noopener noreferrer" title="Open image in new tab" class="d-inline-flex">
-                                    <img src="@Url.Action("Image", "Exercises", new { id = Model.ExerciseId })" alt="@Model.Title image" class="exercise-media-item exercise-media-item--contain" />
+                                <a href="@Model.Exercise.ImageUrl" target="_blank" rel="noopener noreferrer" title="Open image in new tab" class="d-inline-flex">
+                                    <img src="@Model.Exercise.ImageUrl" alt="@Model.Exercise.Title image" class="exercise-media-item exercise-media-item--contain" />
                                 </a>
                             }
                             else
@@ -108,19 +110,76 @@
 <div class="card mb-4">
     <div class="card-body">
         <h2 class="h4">Ordered instructions</h2>
-        @if (Model.Instructions.Count == 0)
+        @if (Model.Exercise.Instructions.Count == 0)
         {
             <p class="text-muted mb-0">No instructions saved.</p>
         }
         else
         {
             <ol class="mb-0">
-                @foreach (var step in Model.Instructions.OrderBy(x => x.StepNumber))
+                @foreach (var step in Model.Exercise.Instructions.OrderBy(x => x.StepNumber))
                 {
                     <li>@step.InstructionText</li>
                 }
             </ol>
         }
+    </div>
+</div>
+
+<div class="modal fade" id="auditHistoryModal" tabindex="-1" aria-labelledby="auditHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="auditHistoryModalLabel">Audit history</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @if (Model.AuditHistory.Count == 0)
+                {
+                    <p class="text-muted mb-0">No audit history recorded for this exercise yet.</p>
+                }
+                else
+                {
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>Author</th>
+                                <th>Date</th>
+                                <th>Content changed</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var entry in Model.AuditHistory)
+                            {
+                                <tr>
+                                    <td>@(entry.Author ?? "-")</td>
+                                    <td>@entry.ActionDateTime.ToString("dd MMM yyyy HH:mm")</td>
+                                    <td>
+                                        <div class="small text-muted mb-1">@entry.ActionType</div>
+                                        @if (entry.Changes.Count == 0)
+                                        {
+                                            <span class="text-muted">No field changes recorded.</span>
+                                        }
+                                        else
+                                        {
+                                            <ul class="mb-0 ps-3">
+                                                @foreach (var change in entry.Changes)
+                                                {
+                                                    <li><strong>@change.FieldName</strong>: @(change.OldValue ?? "-") &rarr; @(change.NewValue ?? "-")</li>
+                                                }
+                                            </ul>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
     </div>
 </div>
 

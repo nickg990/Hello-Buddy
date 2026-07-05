@@ -16,6 +16,8 @@ public sealed record ProgrammeVm(
     string PractitionerName,
     IReadOnlyList<ProgrammeVm.SessionRow> Sessions)
 {
+    /// <summary>Disclaimer text rendered in the PDF footer. Null means no disclaimer is shown.</summary>
+    public string? DisclaimerText { get; init; }
     public sealed record SessionRow(
         ulong SessionId,
         string Period,

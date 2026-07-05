@@ -7,6 +7,26 @@ namespace HelloBuddy.Application.Programmes;
 
 public sealed class ProgrammeService : IProgrammeService
 {
+    /// <summary>
+    /// Disclaimer text embedded in the programme PDF footer (reworded from the app terms for a paper/programme context).
+    /// Wording changes require a code deployment.
+    /// </summary>
+    private const string PdfDisclaimerText =
+        "Please follow this exercise programme responsibly and in accordance with the instructions provided by your " +
+        "treating canine physiotherapist. This exercise programme has been individually prescribed by your " +
+        "physiotherapist for the named pet only. The exercises, progression and treatment period are based on that " +
+        "pet\u2019s specific condition, clinical assessment and rehabilitation goals. They must not be used for any " +
+        "other animal or continued beyond the prescribed programme without approval from your physiotherapist. " +
+        "This programme is designed to support an existing course of veterinary physiotherapy treatment and is not " +
+        "intended to replace professional veterinary or physiotherapy advice, diagnosis or treatment. If your " +
+        "pet\u2019s condition changes, symptoms worsen, or you have any concerns regarding your pet\u2019s health " +
+        "or ability to perform an exercise safely, discontinue the exercise and seek advice from your " +
+        "physiotherapist or veterinary surgeon before continuing. You are responsible for ensuring that exercises " +
+        "are performed safely, only within your pet\u2019s capabilities and in accordance with the guidance " +
+        "provided. Treatment outcomes vary between animals and no guarantee is made regarding recovery times or " +
+        "clinical results. By following this exercise programme, you acknowledge that you understand these " +
+        "conditions and agree to continue the prescribed rehabilitation as directed by your physiotherapist.";
+
     private readonly IProgrammeRepository _repository;
     private readonly IProgrammePdfTemplate _template;
     private readonly IPdfRenderer _pdfRenderer;
@@ -190,6 +210,7 @@ public sealed class ProgrammeService : IProgrammeService
             return null;
         }
 
+        renderVm = renderVm with { DisclaimerText = PdfDisclaimerText };
         var html = await _template.RenderAsync(renderVm, ct);
         var pdf = await _pdfRenderer.RenderAsync(html, ct);
         var fileName = $"programme-version-{programmeVersionId}.pdf";
@@ -233,7 +254,7 @@ public sealed class ProgrammeService : IProgrammeService
             sessions.Add(session with { Exercises = exercises });
         }
 
-        return vm with { Sessions = sessions };
+        return vm with { Sessions = sessions, DisclaimerText = PdfDisclaimerText };
     }
 
     private async Task<string?> ResolveRenderableImageUrlAsync(

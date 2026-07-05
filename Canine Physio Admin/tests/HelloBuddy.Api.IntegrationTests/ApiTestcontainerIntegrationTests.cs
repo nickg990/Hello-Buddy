@@ -368,7 +368,7 @@ public sealed class ApiTestcontainerIntegrationTests
     }
 
     [Fact]
-    public async Task ProgrammeBuilderUpdate_WhenPractitionerDoesNotOwnProgramme_ReturnsNotFound()
+    public async Task ProgrammeBuilderUpdate_WhenPractitionerDoesNotOwnProgramme_Succeeds()
     {
         var ownerCreate = await _client.PostAsJsonAsync("/api/owners", new SaveOwnerRequest
         {
@@ -445,7 +445,14 @@ public sealed class ApiTestcontainerIntegrationTests
                 ]
             });
 
-        Assert.Equal(HttpStatusCode.NotFound, update.StatusCode);
+        // Cases are not practitioner-specific: another practitioner can take over
+        // and edit the programme (e.g. covering for a colleague who is off sick).
+        Assert.Equal(HttpStatusCode.OK, update.StatusCode);
+
+        var afterUpdate = await _client.GetFromJsonAsync<ProgrammeVm>($"/api/programmes/{programme.ProgrammeId}");
+        Assert.NotNull(afterUpdate);
+        var updatedRow = Assert.Single(Assert.Single(afterUpdate.Sessions).Exercises);
+        Assert.Equal((ushort?)99, updatedRow.Reps);
     }
 
     private sealed class TestcontainerFactory : WebApplicationFactory<Program>

@@ -341,6 +341,9 @@ public sealed class UiAuthAdminFlowTests : IClassFixture<UiAuthAdminFlowTests.Fa
         public Task<IReadOnlyList<ExerciseCategoryListItem>> ListExerciseCategoriesAsync(CancellationToken ct)
             => Task.FromResult<IReadOnlyList<ExerciseCategoryListItem>>([]);
 
+        public Task<IReadOnlyList<ExerciseAuditEntryVm>> GetExerciseAuditHistoryAsync(ulong id, CancellationToken ct)
+            => Task.FromResult<IReadOnlyList<ExerciseAuditEntryVm>>([]);
+
         public Task<ProgrammeVm?> CreateDraftProgrammeAsync(ulong caseId, CancellationToken ct)
             => Task.FromResult<ProgrammeVm?>(null);
 
@@ -388,6 +391,12 @@ public sealed class UiAuthAdminFlowTests : IClassFixture<UiAuthAdminFlowTests.Fa
 
         public Task<bool> DeleteProgrammeVersionAsync(ulong id, ulong versionId, CancellationToken ct)
             => throw new NotImplementedException();
+
+        public Task<string?> GetAppSettingAsync(string key, CancellationToken ct)
+            => Task.FromResult<string?>(null);
+
+        public Task SaveAppSettingAsync(string key, string? value, CancellationToken ct)
+            => Task.CompletedTask;
 
         public Task<PetDeleteClientResult> DeletePetAsync(ulong id, CancellationToken ct)
             => Task.FromResult(new PetDeleteClientResult(

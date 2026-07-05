@@ -1,0 +1,71 @@
+@using HelloBuddy.Ui.Models
+@model SettingsPageVm
+@{
+    ViewData["Title"] = "Settings";
+}
+
+<h2>Settings</h2>
+<p class="text-muted">Admin-only configuration. Changes take effect immediately without a redeploy.</p>
+
+@if (TempData["Saved"] is string saved)
+{
+    <div class="alert alert-success">@saved</div>
+}
+
+<form method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3 class="h5 mb-3">Video library</h3>
+            <div class="mb-3">
+                <label for="GoogleDriveUrl" class="form-label">Google Drive video library URL</label>
+                <input type="url"
+                       id="GoogleDriveUrl"
+                       name="GoogleDriveUrl"
+                       value="@Model.GoogleDriveUrl"
+                       class="form-control @(ViewData.ModelState["GoogleDriveUrl"]?.Errors.Count > 0 ? "is-invalid" : "")"
+                       placeholder="Please paste in video URL" />
+                @if (ViewData.ModelState["GoogleDriveUrl"]?.Errors.Count > 0)
+                {
+                    <div class="invalid-feedback">
+                        @ViewData.ModelState["GoogleDriveUrl"]!.Errors[0].ErrorMessage
+                    </div>
+                }
+                <div class="form-text">
+                    The Google Drive folder URL shown in the exercise video-search popup.
+                    Leave blank to use the built-in default.
+                    Must be a <code>https://drive.google.com/...</code> link.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h3 class="h5 mb-3">File storage</h3>
+            <div class="mb-3">
+                <label for="ImageLibraryUrl" class="form-label">Image library URL</label>
+                <input type="url"
+                       id="ImageLibraryUrl"
+                       name="ImageLibraryUrl"
+                       value="@Model.ImageLibraryUrl"
+                       class="form-control @(ViewData.ModelState["ImageLibraryUrl"]?.Errors.Count > 0 ? "is-invalid" : "")"
+                       placeholder="https://..." />
+                @if (ViewData.ModelState["ImageLibraryUrl"]?.Errors.Count > 0)
+                {
+                    <div class="invalid-feedback">
+                        @ViewData.ModelState["ImageLibraryUrl"]!.Errors[0].ErrorMessage
+                    </div>
+                }
+                <div class="form-text">
+                    The base URL of the image library (blob storage or Google Drive) where exercise images are stored.
+                    Must be a valid <code>http(s)://</code> URL. Leave blank to use the built-in default.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save settings</button>
+    <a asp-action="Practitioners" class="btn btn-outline-secondary ms-2">Cancel</a>
+</form>

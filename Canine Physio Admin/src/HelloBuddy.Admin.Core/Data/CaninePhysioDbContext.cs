@@ -14,6 +14,8 @@ public partial class CaninePhysioDbContext : DbContext
 
     public virtual DbSet<Appcontentblock> Appcontentblocks { get; set; }
 
+    public virtual DbSet<Appsetting> Appsettings { get; set; }
+
     public virtual DbSet<Auditlog> Auditlogs { get; set; }
 
     public virtual DbSet<Exercise> Exercises { get; set; }

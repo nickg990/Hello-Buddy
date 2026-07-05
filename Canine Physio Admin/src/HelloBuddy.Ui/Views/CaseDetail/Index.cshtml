@@ -14,7 +14,7 @@
             <span>@Model.Case.CaseTitle</span>
         </p>
         <p class="text-muted mb-0"><strong>@Model.Case.Status</strong> ·
-            @Model.Case.StartDate.ToString("yyyy-MM-dd")@(Model.Case.EndDate is { } end ? " – " + end.ToString("yyyy-MM-dd") : "")</p>
+            @Model.Case.StartDate.ToString("yyyy-MM-dd")@(Model.Case.EndDate is { } end ? " – " + end.ToString("yyyy-MM-dd") : "") · @Model.Case.PractitionerName</p>
     </div>
     <div class="d-flex gap-2">
         <a class="btn btn-outline-secondary" asp-controller="Pets" asp-action="Details" asp-route-id="@Model.Case.PetId">&larr; Back to pet</a>

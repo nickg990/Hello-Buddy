@@ -16,6 +16,7 @@ public sealed record CaseDetailVm(
     byte? PetAge,
     string OwnerName,
     string OwnerEmail,
+    string PractitionerName,
     IReadOnlyList<CaseDetailVm.NoteRow> Notes,
     IReadOnlyList<CaseDetailVm.ProgrammeRow> Programmes)
 {

@@ -6,4 +6,5 @@ public sealed record CaseRow(
     string Status,
     DateOnly StartDate,
     string PetName,
-    string OwnerName);
+    string OwnerName,
+    string PractitionerName);

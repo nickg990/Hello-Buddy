@@ -1,7 +1,9 @@
 using HelloBuddy.Admin.Core.Identity;
 using HelloBuddy.Api.Security;
+using HelloBuddy.Application.Admin;
 using HelloBuddy.Application.Auth;
 using HelloBuddy.Application.Records;
+using HelloBuddy.Contracts;
 
 namespace HelloBuddy.Api.Endpoints;
 
@@ -129,6 +131,64 @@ public static class AdminEndpoints
         }).RequireAuthorization(ApiAuthorizationPolicies.AdminOnly)
           .DisableAntiforgery();
 
+        // ---- App settings (admin-only) ------------------------------------
+        app.MapGet("/api/admin/settings/{key}", async (
+            string key,
+            IAppSettingRepository settings,
+            CancellationToken ct) =>
+        {
+            var value = await settings.GetAsync(key, ct);
+            return Results.Ok(new { Key = key, Value = value });
+        }).RequireAuthorization(ApiAuthorizationPolicies.AdminOnly)
+          .DisableAntiforgery();
+
+        app.MapPut("/api/admin/settings/{key}", async (
+            string key,
+            UpdateAppSettingRequest request,
+            IAppSettingRepository settings,
+            ICurrentPractitionerAccessor accessor,
+            CancellationToken ct) =>
+        {
+            if (!IsValidSettingValue(key, request.Value))
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]>
+                {
+                    ["Value"] = [GetSettingValidationMessage(key)]
+                });
+            }
+
+            await settings.UpsertAsync(key, request.Value?.Trim(), accessor.PractitionerId, ct);
+            return Results.Ok(new { Key = key, Value = request.Value?.Trim() });
+        }).RequireAuthorization(ApiAuthorizationPolicies.AdminOnly)
+          .DisableAntiforgery();
+
         return app;
     }
+
+    private static bool IsValidSettingValue(string key, string? value)
+    {
+        if (key == "VideoLibrary.GoogleDriveUrl")
+        {
+            if (string.IsNullOrWhiteSpace(value)) return true; // allow clearing
+            return Uri.TryCreate(value.Trim(), UriKind.Absolute, out var uri)
+                   && uri.Scheme == Uri.UriSchemeHttps
+                   && uri.Host.Equals("drive.google.com", StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (key == "FileStorage.ImageLibraryUrl")
+        {
+            if (string.IsNullOrWhiteSpace(value)) return true; // allow clearing
+            return Uri.TryCreate(value.Trim(), UriKind.Absolute, out var uri)
+                   && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp);
+        }
+
+        return true;
+    }
+
+    private static string GetSettingValidationMessage(string key) => key switch
+    {
+        "VideoLibrary.GoogleDriveUrl" => "Must be a valid https://drive.google.com/... URL.",
+        "FileStorage.ImageLibraryUrl" => "Must be a valid http(s):// URL.",
+        _ => "Invalid value for this setting.",
+    };
 }

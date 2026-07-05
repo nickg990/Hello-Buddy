@@ -307,6 +307,55 @@ public sealed class AdminController : Controller
         };
     }
 
+    [HttpGet]
+    public async Task<IActionResult> Settings(CancellationToken ct)
+    {
+        var driveUrl = await _api.GetAppSettingAsync("VideoLibrary.GoogleDriveUrl", ct);
+        var imageUrl = await _api.GetAppSettingAsync("FileStorage.ImageLibraryUrl", ct);
+        return View(new SettingsPageVm
+        {
+            GoogleDriveUrl = driveUrl ?? string.Empty,
+            ImageLibraryUrl = imageUrl ?? string.Empty,
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Settings([FromForm] SettingsPageVm model, CancellationToken ct)
+    {
+        if (!string.IsNullOrWhiteSpace(model.GoogleDriveUrl))
+        {
+            if (!Uri.TryCreate(model.GoogleDriveUrl.Trim(), UriKind.Absolute, out var uri)
+                || uri.Scheme != Uri.UriSchemeHttps
+                || !uri.Host.Equals("drive.google.com", StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError(nameof(model.GoogleDriveUrl),
+                    "Must be a valid https://drive.google.com/... URL.");
+                return View(model);
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(model.ImageLibraryUrl))
+        {
+            if (!Uri.TryCreate(model.ImageLibraryUrl.Trim(), UriKind.Absolute, out var imageUri)
+                || (imageUri.Scheme != Uri.UriSchemeHttps && imageUri.Scheme != Uri.UriSchemeHttp))
+            {
+                ModelState.AddModelError(nameof(model.ImageLibraryUrl),
+                    "Must be a valid http(s):// URL.");
+                return View(model);
+            }
+        }
+
+        await _api.SaveAppSettingAsync("VideoLibrary.GoogleDriveUrl",
+            string.IsNullOrWhiteSpace(model.GoogleDriveUrl) ? null : model.GoogleDriveUrl.Trim(),
+            ct);
+        await _api.SaveAppSettingAsync("FileStorage.ImageLibraryUrl",
+            string.IsNullOrWhiteSpace(model.ImageLibraryUrl) ? null : model.ImageLibraryUrl.Trim(),
+            ct);
+        TempData["Saved"] = "Settings saved.";
+        return RedirectToAction(nameof(Settings));
+    }
+
     private ulong GetCurrentPractitionerId()
     {
         var idClaim = User.FindFirst("practitioner_id")?.Value;

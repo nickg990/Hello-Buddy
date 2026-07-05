@@ -21,7 +21,7 @@ else
 
 <h1>@ViewData["Title"]</h1>
 
-<form method="post" enctype="multipart/form-data">
+<form method="post">
     @Html.AntiForgeryToken()
     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
@@ -50,17 +50,20 @@ else
 
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <input type="hidden" asp-for="Form.ImageUrl" />
-                        <label asp-for="UploadImage" class="form-label">Upload image</label>
-                        <input asp-for="UploadImage" id="UploadImage" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
-                        <span asp-validation-for="UploadImage" class="text-danger"></span>
-                        <div class="form-text">Supported formats: JPG, PNG, WEBP. Left click selected image to open; right click selected image to deselect.</div>
+                        <label asp-for="Form.ImageUrl" class="form-label">Image URL</label>
+                        <div class="input-group">
+                            <input asp-for="Form.ImageUrl" id="Form_ImageUrl" class="form-control exercise-url-input" placeholder="No image selected" autocomplete="off" />
+                            <button id="open-image-search" type="button" class="btn btn-outline-secondary">Search image</button>
+                        </div>
+                        <span asp-validation-for="Form.ImageUrl" class="text-danger"></span>
+                        <div class="form-text">Paste the image URL from blob storage or the shared image library (https://...). Left click selected image to open; right click selected image to deselect.</div>
                     </div>
 
                     <div class="col-md-6">
                         <label asp-for="Form.VideoUrl" class="form-label">Video URL</label>
+                        <input type="hidden" asp-for="Form.VideoUrl" id="Form_VideoUrl_Hidden" />
                         <div class="input-group">
-                            <input asp-for="Form.VideoUrl" id="Form_VideoUrl" class="form-control" placeholder="https://..." />
+                            <input type="text" id="Form_VideoUrl" class="form-control exercise-url-input" placeholder="No video selected" autocomplete="off" />
                             <button id="open-video-search" type="button" class="btn btn-outline-secondary">Search video</button>
                         </div>
                         <span asp-validation-for="Form.VideoUrl" class="text-danger"></span>
@@ -76,8 +79,8 @@ else
                             <div class="exercise-media-panel exercise-media-panel--tile border rounded p-2 d-flex align-items-center justify-content-center bg-light overflow-hidden">
                                 @if (!string.IsNullOrWhiteSpace(Model.Form.ImageUrl))
                                 {
-                                    <a asp-action="Image" asp-route-id="@Model.ExerciseId" target="_blank" rel="noopener noreferrer" title="Open full-size image in new tab" class="d-inline-flex">
-                                        <img src="@Url.Action("Image", "Exercises", new { id = Model.ExerciseId })" alt="Current exercise image" class="exercise-media-item exercise-media-item--contain" />
+                                    <a href="@Model.Form.ImageUrl" target="_blank" rel="noopener noreferrer" title="Open full-size image in new tab" class="d-inline-flex">
+                                        <img src="@Model.Form.ImageUrl" alt="Current exercise image" class="exercise-media-item exercise-media-item--contain" />
                                     </a>
                                 }
                                 else
@@ -222,8 +225,47 @@ else
     <div class="mt-3">
         <label for="video-selected-url" class="form-label">Selected video URL</label>
         <div class="input-group">
-            <input id="video-selected-url" class="form-control" placeholder="https://..." />
+            <input id="video-selected-url" class="form-control exercise-url-input" placeholder="No video selected" />
             <button id="apply-video-selected-url" type="button" class="btn btn-outline-secondary">Use URL</button>
+        </div>
+    </div>
+</div>
+
+<div id="image-search-backdrop" class="exercise-video-search-backdrop d-none position-fixed top-0 start-0 w-100 h-100"></div>
+<div id="image-search-popup" class="exercise-video-search-popup d-none position-fixed bg-white border rounded shadow p-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h3 class="h6 m-0">Search for image URL</h3>
+        <button id="close-image-search" type="button" class="btn btn-sm btn-outline-secondary">Close</button>
+    </div>
+    <div class="row g-2 align-items-end">
+        <div class="col-md-5">
+            <label for="image-search-term" class="form-label">Search term</label>
+            <input id="image-search-term" class="form-control" placeholder="e.g. canine physio step up exercise" />
+        </div>
+        <div class="col-md-4">
+            <label for="image-search-provider" class="form-label">Provider</label>
+            <select id="image-search-provider" class="form-select">
+                @if (!string.IsNullOrWhiteSpace(Model.ImageLibraryUrl))
+                {
+                    <option value="@Model.ImageLibraryUrl">Image library</option>
+                }
+                else
+                {
+                    <option value="">No image library configured (set it in Settings)</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button id="run-image-search" type="button" class="btn btn-primary w-100">Open library</button>
+        </div>
+    </div>
+    <div class="form-text mt-2">Opens the shared image library in a new tab. Copy the URL of the chosen image and paste it below.</div>
+    <div id="image-search-error" class="alert alert-warning d-none mt-2 mb-0 py-2 px-3 small" role="alert"></div>
+    <div class="mt-3">
+        <label for="image-selected-url" class="form-label">Selected image URL</label>
+        <div class="input-group">
+            <input id="image-selected-url" class="form-control exercise-url-input" placeholder="No image selected" />
+            <button id="apply-image-selected-url" type="button" class="btn btn-outline-secondary">Use URL</button>
         </div>
     </div>
 </div>
@@ -236,12 +278,13 @@ else
     <partial name="_ValidationScriptsPartial" />
     <script>
         (function () {
-            const imageInput = document.getElementById('UploadImage');
+            const imageInput = document.getElementById('Form_ImageUrl');
             const selectedImageEmpty = document.getElementById('selected-image-empty');
             const selectedImageLink = document.getElementById('selected-image-link');
             const selectedImagePreview = document.getElementById('selected-image-preview');
 
             const videoInput = document.getElementById('Form_VideoUrl');
+            const hiddenVideoInput = document.getElementById('Form_VideoUrl_Hidden');
             const selectedVideoEmpty = document.getElementById('selected-video-empty');
             const selectedVideoLink = document.getElementById('selected-video-link');
             const selectedVideoText = document.getElementById('selected-video-text');
@@ -267,28 +310,41 @@ else
             const videoSearchTerm = document.getElementById('video-search-term');
             const videoSelectedUrl = document.getElementById('video-selected-url');
 
-            if (!imageInput || !selectedImageEmpty || !selectedImageLink || !selectedImagePreview || !videoInput || !selectedVideoEmpty || !selectedVideoLink || !selectedVideoText || !selectedVideoThumb || !selectedVideoPlayer || !selectedVideoFallback || !contextMenu || !contextMenuDeselect || !videoSearchBackdrop || !videoSearchPopup || !openVideoSearch || !closeVideoSearch || !runVideoSearch || !applyVideoSelectedUrl || !videoSearchProvider || !videoSearchTerm || !videoSelectedUrl) {
+            const imageSearchBackdrop = document.getElementById('image-search-backdrop');
+            const imageSearchPopup = document.getElementById('image-search-popup');
+            const openImageSearch = document.getElementById('open-image-search');
+            const closeImageSearch = document.getElementById('close-image-search');
+            const runImageSearch = document.getElementById('run-image-search');
+            const applyImageSelectedUrl = document.getElementById('apply-image-selected-url');
+            const imageSearchProvider = document.getElementById('image-search-provider');
+            const imageSearchTerm = document.getElementById('image-search-term');
+            const imageSelectedUrl = document.getElementById('image-selected-url');
+            const imageSearchError = document.getElementById('image-search-error');
+
+            if (!imageInput || !selectedImageEmpty || !selectedImageLink || !selectedImagePreview || !videoInput || !hiddenVideoInput || !selectedVideoEmpty || !selectedVideoLink || !selectedVideoText || !selectedVideoThumb || !selectedVideoPlayer || !selectedVideoFallback || !contextMenu || !contextMenuDeselect || !videoSearchBackdrop || !videoSearchPopup || !openVideoSearch || !closeVideoSearch || !runVideoSearch || !applyVideoSelectedUrl || !videoSearchProvider || !videoSearchTerm || !videoSelectedUrl || !imageSearchBackdrop || !imageSearchPopup || !openImageSearch || !closeImageSearch || !runImageSearch || !applyImageSelectedUrl || !imageSearchProvider || !imageSearchTerm || !imageSelectedUrl || !imageSearchError) {
                 return;
             }
 
-            let selectedImageObjectUrl = null;
             let contextTarget = null;
 
-            function clearSelectedImageObjectUrl() {
-                if (!selectedImageObjectUrl) {
-                    return;
-                }
-
-                URL.revokeObjectURL(selectedImageObjectUrl);
-                selectedImageObjectUrl = null;
-            }
-
             function resetSelectedImagePreview() {
-                clearSelectedImageObjectUrl();
                 selectedImageLink.classList.add('d-none');
                 selectedImageEmpty.classList.remove('d-none');
                 selectedImagePreview.src = '#';
                 selectedImageLink.href = '#';
+            }
+
+            function updateSelectedImagePanel() {
+                const raw = imageInput.value ? imageInput.value.trim() : '';
+                if (!isHttpUrl(raw)) {
+                    resetSelectedImagePreview();
+                    return;
+                }
+
+                selectedImagePreview.src = raw;
+                selectedImageLink.href = raw;
+                selectedImageLink.classList.remove('d-none');
+                selectedImageEmpty.classList.add('d-none');
             }
 
             function isHttpUrl(value) {
@@ -451,7 +507,7 @@ else
             function openVideoSearchPopup() {
                 videoSearchBackdrop.classList.remove('d-none');
                 videoSearchPopup.classList.remove('d-none');
-                videoSelectedUrl.value = videoInput.value || '';
+                videoSelectedUrl.value = '';
             }
 
             function closeVideoSearchPopup() {
@@ -459,22 +515,25 @@ else
                 videoSearchBackdrop.classList.add('d-none');
             }
 
-            imageInput.addEventListener('change', function () {
-                const file = imageInput.files && imageInput.files[0];
-                if (!file) {
-                    resetSelectedImagePreview();
-                    return;
-                }
+            function openImageSearchPopup() {
+                imageSearchBackdrop.classList.remove('d-none');
+                imageSearchPopup.classList.remove('d-none');
+                imageSelectedUrl.value = '';
+                imageSearchError.classList.add('d-none');
+                imageSearchError.textContent = '';
+            }
 
-                clearSelectedImageObjectUrl();
-                selectedImageObjectUrl = URL.createObjectURL(file);
-                selectedImagePreview.src = selectedImageObjectUrl;
-                selectedImageLink.href = selectedImageObjectUrl;
-                selectedImageLink.classList.remove('d-none');
-                selectedImageEmpty.classList.add('d-none');
+            function closeImageSearchPopup() {
+                imageSearchPopup.classList.add('d-none');
+                imageSearchBackdrop.classList.add('d-none');
+            }
+
+            imageInput.addEventListener('input', updateSelectedImagePanel);
+
+            videoInput.addEventListener('input', function () {
+                hiddenVideoInput.value = videoInput.value.trim();
+                updateSelectedVideoPanel();
             });
-
-            videoInput.addEventListener('input', updateSelectedVideoPanel);
 
             selectedImageLink.addEventListener('contextmenu', function (e) {
                 if (selectedImageLink.classList.contains('d-none')) {
@@ -495,9 +554,10 @@ else
             contextMenuDeselect.addEventListener('click', function () {
                 if (contextTarget === 'image') {
                     imageInput.value = '';
-                    resetSelectedImagePreview();
+                    updateSelectedImagePanel();
                 } else if (contextTarget === 'video') {
                     videoInput.value = '';
+                    hiddenVideoInput.value = '';
                     updateSelectedVideoPanel();
                 }
                 hideContextMenu();
@@ -513,6 +573,7 @@ else
                 if (e.key === 'Escape') {
                     hideContextMenu();
                     closeVideoSearchPopup();
+                    closeImageSearchPopup();
                 }
             });
 
@@ -538,8 +599,40 @@ else
 
             applyVideoSelectedUrl.addEventListener('click', function () {
                 videoInput.value = (videoSelectedUrl.value || '').trim();
+                hiddenVideoInput.value = videoInput.value;
                 updateSelectedVideoPanel();
                 closeVideoSearchPopup();
+            });
+
+            openImageSearch.addEventListener('click', openImageSearchPopup);
+            closeImageSearch.addEventListener('click', closeImageSearchPopup);
+            imageSearchBackdrop.addEventListener('click', closeImageSearchPopup);
+
+            runImageSearch.addEventListener('click', function () {
+                const providerBaseUrl = (imageSearchProvider.value || '').trim();
+                if (!providerBaseUrl || !isHttpUrl(providerBaseUrl.replace('{query}', 'x'))) {
+                    imageSearchError.textContent = 'No image library found. Set a valid image library URL on the Settings page (File storage) before searching.';
+                    imageSearchError.classList.remove('d-none');
+                    return;
+                }
+
+                imageSearchError.classList.add('d-none');
+                imageSearchError.textContent = '';
+
+                const term = (imageSearchTerm.value || '').trim();
+                let url = providerBaseUrl;
+
+                if (providerBaseUrl.includes('{query}')) {
+                    url = providerBaseUrl.replace('{query}', encodeURIComponent(term));
+                }
+
+                window.open(url, '_blank', 'noopener');
+            });
+
+            applyImageSelectedUrl.addEventListener('click', function () {
+                imageInput.value = (imageSelectedUrl.value || '').trim();
+                updateSelectedImagePanel();
+                closeImageSearchPopup();
             });
 
             if (currentVideoLink && currentVideoThumb && currentVideoPlayer && currentVideoFallback) {
@@ -547,7 +640,7 @@ else
             }
 
             updateSelectedVideoPanel();
-            window.addEventListener('beforeunload', clearSelectedImageObjectUrl);
+            updateSelectedImagePanel();
         })();
     </script>
 }

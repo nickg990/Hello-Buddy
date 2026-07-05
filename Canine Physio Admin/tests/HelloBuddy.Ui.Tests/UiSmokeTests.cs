@@ -56,7 +56,7 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
         Assert.Contains("Selected image (pending save)", html);
         Assert.Contains("Current video", html);
         Assert.Contains("Selected video (pending save)", html);
-        Assert.Contains("/Exercises/1/Image", html);
+        Assert.Contains(StubAdminApiClient.Exercise.ImageUrl!, html);
         Assert.Contains("id=\"selected-image-link\"", html);
         Assert.Contains("id=\"selected-image-preview\"", html);
         Assert.Contains("id=\"selected-video-link\"", html);
@@ -439,7 +439,7 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
             true,
             Owner.FullName,
             Owner.Email,
-            [new PetDetailVm.CaseRow(1, "Buddy Hind Limb Rehab", "active", new DateOnly(2026, 5, 1))]);
+            [new PetDetailVm.CaseRow(1, "Buddy Hind Limb Rehab", "active", new DateOnly(2026, 5, 1), "Amelia Carter")]);
 
         private static readonly CaseDetailVm TreatmentCase = new(
             1,
@@ -457,6 +457,7 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
             6,
             Owner.FullName,
             Owner.Email,
+            "Amelia Carter",
             [new CaseDetailVm.NoteRow(1, new DateTime(2026, 5, 1, 10, 0, 0, DateTimeKind.Utc), "assessment", "Initial clinical assessment completed.")],
             [
                 new CaseDetailVm.ProgrammeRow(1, "Buddy Hind Limb Rehab published", "active", new DateOnly(2026, 5, 1), null, 1, 0, true),
@@ -482,7 +483,7 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
             Notes = _caseNotes.OrderByDescending(n => n.CreatedDate).ToList(),
         };
 
-        private static readonly ExerciseDetailVm Exercise = new(
+        internal static readonly ExerciseDetailVm Exercise = new(
             1,
             1,
             "Strength",
@@ -571,6 +572,9 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
                 new ExerciseCategoryListItem(2, "Mobility", true)
             ]);
 
+        public Task<IReadOnlyList<ExerciseAuditEntryVm>> GetExerciseAuditHistoryAsync(ulong id, CancellationToken ct)
+            => Task.FromResult<IReadOnlyList<ExerciseAuditEntryVm>>([]);
+
         public Task<ProgrammeVm?> CreateDraftProgrammeAsync(ulong caseId, CancellationToken ct)
             => Task.FromResult<ProgrammeVm?>(new ProgrammeVm(
                 2,
@@ -607,7 +611,7 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
             => Task.FromResult(new RemoveSessionExerciseClientResult(RemoveSessionExerciseClientOutcome.Removed));
 
         public Task<IReadOnlyList<CaseRow>> ListCasesAsync(CancellationToken ct)
-            => Task.FromResult<IReadOnlyList<CaseRow>>([new CaseRow(1, TreatmentCase.CaseTitle, TreatmentCase.Status, TreatmentCase.StartDate, TreatmentCase.PetName, TreatmentCase.OwnerName)]);
+            => Task.FromResult<IReadOnlyList<CaseRow>>([new CaseRow(1, TreatmentCase.CaseTitle, TreatmentCase.Status, TreatmentCase.StartDate, TreatmentCase.PetName, TreatmentCase.OwnerName, "Amelia Carter")]);
         public Task<CaseDetailVm?> GetCaseAsync(ulong id, CancellationToken ct)
             => Task.FromResult<CaseDetailVm?>(id == 1 ? BuildTreatmentCase() : null);
 
@@ -770,6 +774,12 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
 
         public Task<bool> DeleteProgrammeVersionAsync(ulong id, ulong versionId, CancellationToken ct)
             => Task.FromResult(true);
+
+        public Task<string?> GetAppSettingAsync(string key, CancellationToken ct)
+            => Task.FromResult<string?>(null);
+
+        public Task SaveAppSettingAsync(string key, string? value, CancellationToken ct)
+            => Task.CompletedTask;
 
         public Task<PetDeleteClientResult> DeletePetAsync(ulong id, CancellationToken ct)
             => Task.FromResult(id == 1

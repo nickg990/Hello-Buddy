@@ -5,13 +5,13 @@
 
 <h1>Treatment cases</h1>
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <p class="text-muted mb-0">List, create, and maintain treatment cases for the current practitioner.</p>
+    <p class="text-muted mb-0">List, create, and maintain treatment cases.</p>
     <a class="btn btn-primary" asp-action="Create">Add treatment case</a>
 </div>
 
 @if (Model.Count == 0)
 {
-    <div class="alert alert-info">No cases found for the seeded practitioner.</div>
+    <div class="alert alert-info">No treatment cases found.</div>
 }
 else
 {
@@ -22,6 +22,7 @@ else
                 <th>Title</th>
                 <th>Pet</th>
                 <th>Owner</th>
+                <th>Practitioner</th>
                 <th>Status</th>
                 <th>Start</th>
             </tr>
@@ -35,6 +36,7 @@ else
                     </td>
                     <td>@row.PetName</td>
                     <td>@row.OwnerName</td>
+                    <td>@row.PractitionerName</td>
                     <td>@row.Status</td>
                     <td>@row.StartDate.ToString("yyyy-MM-dd")</td>
                     <td class="text-end">

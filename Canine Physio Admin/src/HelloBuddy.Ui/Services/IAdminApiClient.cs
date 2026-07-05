@@ -35,6 +35,7 @@ public interface IAdminApiClient
     Task<ExerciseDetailVm?> UpdateExerciseAsync(ulong id, SaveExerciseRequest request, CancellationToken ct);
     Task<ExerciseDetailVm?> SetExerciseActiveAsync(ulong id, bool isActive, CancellationToken ct);
     Task<IReadOnlyList<ExerciseCategoryListItem>> ListExerciseCategoriesAsync(CancellationToken ct);
+    Task<IReadOnlyList<ExerciseAuditEntryVm>> GetExerciseAuditHistoryAsync(ulong id, CancellationToken ct);
     Task<ProgrammeVm?> CreateDraftProgrammeAsync(ulong caseId, CancellationToken ct);
     Task<DeleteProgrammeResult> DeleteProgrammeAsync(ulong programmeId, CancellationToken ct);
     Task<ProgrammeStatusTransitionClientResult> ActivateProgrammeAsync(ulong programmeId, CancellationToken ct);
@@ -51,6 +52,8 @@ public interface IAdminApiClient
     Task<DownloadUrlResponse> GetDownloadUrlAsync(string fileName, CancellationToken ct);
     Task<PdfDocumentContent?> GetProgrammeVersionPdfAsync(ulong id, ulong versionId, CancellationToken ct);
     Task<bool> DeleteProgrammeVersionAsync(ulong id, ulong versionId, CancellationToken ct);
+    Task<string?> GetAppSettingAsync(string key, CancellationToken ct);
+    Task SaveAppSettingAsync(string key, string? value, CancellationToken ct);
 }
 
 public sealed record ExerciseImageContent(byte[] Bytes, string ContentType);

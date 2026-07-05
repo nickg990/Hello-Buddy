@@ -65,6 +65,7 @@ else
         <thead>
             <tr>
                 <th>Title</th>
+                <th>Physiotherapist</th>
                 <th>Status</th>
                 <th>Start</th>
                 <th></th>
@@ -75,6 +76,7 @@ else
             {
                 <tr>
                     <td>@treatmentCase.CaseTitle</td>
+                    <td>@treatmentCase.PractitionerName</td>
                     <td>@treatmentCase.Status</td>
                     <td>@treatmentCase.StartDate.ToString("yyyy-MM-dd")</td>
                     <td class="text-end">

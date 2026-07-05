@@ -49,7 +49,17 @@ public class ExercisesController : Controller
     public async Task<IActionResult> Details(ulong id, CancellationToken ct)
     {
         var exercise = await _api.GetExerciseAsync(id, ct);
-        return exercise is null ? NotFound() : View(exercise);
+        if (exercise is null)
+        {
+            return NotFound();
+        }
+
+        var auditHistory = await _api.GetExerciseAuditHistoryAsync(id, ct);
+        return View(new ExerciseDetailPageVm
+        {
+            Exercise = exercise,
+            AuditHistory = auditHistory
+        });
     }
 
     [HttpGet("{id:long}/Image")]
@@ -78,7 +88,8 @@ public class ExercisesController : Controller
     public async Task<IActionResult> Create(ExerciseEditorVm vm, CancellationToken ct)
     {
         vm.CategoryOptions = await BuildCategoryOptionsAsync(ct);
-        vm.VideoSearchProviders = BuildVideoSearchProviderOptions();
+        vm.VideoSearchProviders = await BuildVideoSearchProviderOptionsAsync(ct);
+        vm.ImageLibraryUrl = await BuildImageLibraryUrlAsync(ct);
         vm.Form.Instructions = ParseInstructions(vm.InstructionsText);
 
         if (!ModelState.IsValid)
@@ -88,7 +99,6 @@ public class ExercisesController : Controller
 
         try
         {
-            await ApplyImageSelectionAsync(vm, ct);
             var exercise = await _api.CreateExerciseAsync(vm.Form, ct);
             TempData["Saved"] = $"Created exercise {exercise.Title}.";
             return RedirectToAction(nameof(Details), new { id = exercise.ExerciseId });
@@ -136,7 +146,8 @@ public class ExercisesController : Controller
     {
         vm.ExerciseId = id;
         vm.CategoryOptions = await BuildCategoryOptionsAsync(ct);
-        vm.VideoSearchProviders = BuildVideoSearchProviderOptions();
+        vm.VideoSearchProviders = await BuildVideoSearchProviderOptionsAsync(ct);
+        vm.ImageLibraryUrl = await BuildImageLibraryUrlAsync(ct);
         vm.Form.Instructions = ParseInstructions(vm.InstructionsText);
 
         if (!ModelState.IsValid)
@@ -146,7 +157,6 @@ public class ExercisesController : Controller
 
         try
         {
-            await ApplyImageSelectionAsync(vm, ct);
             var exercise = await _api.UpdateExerciseAsync(id, vm.Form, ct);
             if (exercise is null)
             {
@@ -190,7 +200,8 @@ public class ExercisesController : Controller
             ExerciseId = exerciseId,
             Form = form,
             CategoryOptions = await BuildCategoryOptionsAsync(ct),
-            VideoSearchProviders = BuildVideoSearchProviderOptions(),
+            VideoSearchProviders = await BuildVideoSearchProviderOptionsAsync(ct),
+            ImageLibraryUrl = await BuildImageLibraryUrlAsync(ct),
             LegacyInstructionsText = legacyInstructionsText,
             InstructionsText = string.Join(Environment.NewLine,
                 form.Instructions
@@ -208,45 +219,54 @@ public class ExercisesController : Controller
             .ToList();
     }
 
-    private IReadOnlyList<VideoSearchProviderVm> BuildVideoSearchProviderOptions()
+    private async Task<IReadOnlyList<VideoSearchProviderVm>> BuildVideoSearchProviderOptionsAsync(CancellationToken ct)
     {
-        var configured = _mediaSearchOptions.VideoProviders
-            .Where(x => !string.IsNullOrWhiteSpace(x.Description) && IsHttpUrl(x.BaseUrl))
-            .Select(x => new VideoSearchProviderVm
-            {
-                Description = x.Description.Trim(),
-                BaseUrl = x.BaseUrl.Trim()
-            })
-            .ToList();
+        // Resolve the Google Drive URL from the admin-managed DB setting.
+        // Falls back to appsettings when the setting is not yet configured.
+        const string driveKey = "VideoLibrary.GoogleDriveUrl";
+        const string driveDefault = "https://drive.google.com/drive/folders/1FQXInuGCPdFP5ywFaNnO39Be0ffeZMGm";
 
-        if (configured.Count > 0)
+        string? storedDriveUrl = null;
+        try
         {
-            return configured;
+            storedDriveUrl = await _api.GetAppSettingAsync(driveKey, ct);
+        }
+        catch
+        {
+            // If the settings endpoint is unavailable, fall through to defaults.
         }
 
-        return
-        [
-            new VideoSearchProviderVm
-            {
-                Description = "Google Drive",
-                BaseUrl = "https://drive.google.com/drive/u/1/folders/13mCIF8x8VNVfg30xbbnrAxKEFRh2QF9C"
-            },
-            new VideoSearchProviderVm
-            {
-                Description = "YouTube",
-                BaseUrl = "https://www.youtube.com/results?search_query={query}"
-            },
-            new VideoSearchProviderVm
-            {
-                Description = "Vimeo",
-                BaseUrl = "https://vimeo.com/search?q={query}"
-            },
-            new VideoSearchProviderVm
-            {
-                Description = "General web",
-                BaseUrl = "https://www.google.com/search?q={query}"
-            }
-        ];
+        var configuredDriveEntry = _mediaSearchOptions.VideoProviders
+            .FirstOrDefault(x => x.Description?.Trim() == "Google Drive");
+
+        var driveUrl = !string.IsNullOrWhiteSpace(storedDriveUrl)
+            ? storedDriveUrl.Trim()
+            : (configuredDriveEntry is not null && IsHttpUrl(configuredDriveEntry.BaseUrl)
+                ? configuredDriveEntry.BaseUrl.Trim()
+                : driveDefault);
+
+        var others = _mediaSearchOptions.VideoProviders
+            .Where(x => x.Description?.Trim() != "Google Drive"
+                        && !string.IsNullOrWhiteSpace(x.Description)
+                        && IsHttpUrl(x.BaseUrl))
+            .Select(x => new VideoSearchProviderVm { Description = x.Description.Trim(), BaseUrl = x.BaseUrl.Trim() })
+            .ToList();
+
+        var result = new List<VideoSearchProviderVm>
+        {
+            new VideoSearchProviderVm { Description = "Google Drive", BaseUrl = driveUrl }
+        };
+        result.AddRange(others);
+
+        // If appsettings has no other providers at all, add the standard fallbacks.
+        if (others.Count == 0)
+        {
+            result.Add(new VideoSearchProviderVm { Description = "YouTube", BaseUrl = "https://www.youtube.com/results?search_query={query}" });
+            result.Add(new VideoSearchProviderVm { Description = "Vimeo", BaseUrl = "https://vimeo.com/search?q={query}" });
+            result.Add(new VideoSearchProviderVm { Description = "General web", BaseUrl = "https://www.google.com/search?q={query}" });
+        }
+
+        return result;
     }
 
     private static bool IsHttpUrl(string? value)
@@ -257,6 +277,26 @@ public class ExercisesController : Controller
         }
 
         return uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps;
+    }
+
+    private async Task<string> BuildImageLibraryUrlAsync(CancellationToken ct)
+    {
+        // Resolve the image-library URL from the admin-managed DB setting
+        // (Settings → File storage → Image library URL). Empty when unset.
+        try
+        {
+            var stored = await _api.GetAppSettingAsync("FileStorage.ImageLibraryUrl", ct);
+            if (!string.IsNullOrWhiteSpace(stored) && IsHttpUrl(stored.Trim()))
+            {
+                return stored.Trim();
+            }
+        }
+        catch
+        {
+            // If the settings endpoint is unavailable, fall through to empty.
+        }
+
+        return string.Empty;
     }
 
     private static List<SaveExerciseRequest.InstructionStepInput> ParseInstructions(string instructionsText)
@@ -286,9 +326,7 @@ public class ExercisesController : Controller
         {
             var key = entry.Key.Equals(nameof(SaveExerciseRequest.Instructions), StringComparison.OrdinalIgnoreCase)
                 ? nameof(ExerciseEditorVm.InstructionsText)
-                : entry.Key.Equals("file", StringComparison.OrdinalIgnoreCase)
-                    ? nameof(ExerciseEditorVm.UploadImage)
-                    : $"Form.{entry.Key}";
+                : $"Form.{entry.Key}";
 
             foreach (var error in entry.Value)
             {
@@ -297,23 +335,4 @@ public class ExercisesController : Controller
         }
     }
 
-    private async Task ApplyImageSelectionAsync(ExerciseEditorVm vm, CancellationToken ct)
-    {
-        if (vm.UploadImage is { Length: > 0 })
-        {
-            await using var stream = vm.UploadImage.OpenReadStream();
-            var uploaded = await _api.UploadExerciseImageAsync(
-                stream,
-                vm.UploadImage.FileName,
-                vm.UploadImage.ContentType,
-                ct);
-            vm.Form.ImageUrl = uploaded.Url;
-            return;
-        }
-
-        if (vm.RemoveImage)
-        {
-            vm.Form.ImageUrl = null;
-        }
-    }
 }

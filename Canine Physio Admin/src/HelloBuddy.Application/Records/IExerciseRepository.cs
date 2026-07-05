@@ -14,4 +14,5 @@ public interface IExerciseRepository
     Task<ulong> CreateAsync(SaveExerciseRequest request, CancellationToken ct);
     Task<bool> UpdateAsync(ulong exerciseId, SaveExerciseRequest request, CancellationToken ct);
     Task<bool> SetActiveAsync(ulong exerciseId, bool isActive, CancellationToken ct);
+    Task<IReadOnlyList<ExerciseAuditEntryVm>> GetAuditHistoryAsync(ulong exerciseId, CancellationToken ct);
 }
