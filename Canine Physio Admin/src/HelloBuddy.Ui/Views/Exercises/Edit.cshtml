@@ -3,7 +3,9 @@
 @{
     var isCreate = !Model.ExerciseId.HasValue;
     ViewData["Title"] = isCreate ? "Add exercise" : "Edit exercise";
-    var currentImageDisplayUrl = GoogleDriveImageHelper.ToDisplayUrl(Model.Form.ImageUrl);
+    var currentImageDisplayUrl = ExerciseMediaKey.TryResolve(Model.Form.ImageUrl, out var currentImageKey)
+        ? Url.Action("MediaContent", "Exercises", new { key = currentImageKey })
+        : Model.Form.ImageUrl;
     var currentVideoUrlRaw = Model.Form.VideoUrl?.Trim() ?? string.Empty;
     var hasValidCurrentVideoUrl = Uri.TryCreate(currentVideoUrlRaw, UriKind.Absolute, out var parsedCurrentVideoUrl)
         && (parsedCurrentVideoUrl.Scheme == Uri.UriSchemeHttp || parsedCurrentVideoUrl.Scheme == Uri.UriSchemeHttps);
@@ -55,10 +57,10 @@ else
                         <label asp-for="Form.ImageUrl" class="form-label">Image URL</label>
                         <div class="input-group">
                             <input asp-for="Form.ImageUrl" id="Form_ImageUrl" class="form-control exercise-url-input" placeholder="No image selected" autocomplete="off" />
-                            <button id="open-image-search" type="button" class="btn btn-outline-secondary">Search image</button>
+                            <button id="open-image-picker" type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#imagePickerModal">Choose from library</button>
                         </div>
                         <span asp-validation-for="Form.ImageUrl" class="text-danger"></span>
-                        <div class="form-text">Paste the image URL from blob storage or the shared image library (https://...). Left click selected image to open; right click selected image to deselect.</div>
+                        <div class="form-text">Select an image from the library or paste a managed image URL. Left click selected image to open; right click selected image to deselect.</div>
                     </div>
 
                     <div class="col-md-6">
@@ -233,58 +235,169 @@ else
     </div>
 </div>
 
-<div id="image-search-backdrop" class="exercise-video-search-backdrop d-none position-fixed top-0 start-0 w-100 h-100"></div>
-<div id="image-search-popup" class="exercise-video-search-popup d-none position-fixed bg-white border rounded shadow p-3">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-        <h3 class="h6 m-0">Search for image URL</h3>
-        <button id="close-image-search" type="button" class="btn btn-sm btn-outline-secondary">Close</button>
-    </div>
-    <div class="row g-2 align-items-end">
-        <div class="col-md-5">
-            <label for="image-search-term" class="form-label">Search term</label>
-            <input id="image-search-term" class="form-control" placeholder="e.g. canine physio step up exercise" />
-        </div>
-        <div class="col-md-4">
-            <label for="image-search-provider" class="form-label">Provider</label>
-            <select id="image-search-provider" class="form-select">
-                @if (!string.IsNullOrWhiteSpace(Model.ImageLibraryUrl))
+<div id="selected-media-context-menu" class="exercise-media-context-menu d-none position-fixed bg-white border rounded shadow-sm py-1">
+    <button id="selected-media-deselect" type="button" class="btn btn-link text-start text-decoration-none w-100 px-3 py-1">Deselect</button>
+</div>
+
+<!-- Image library picker modal -->
+<div class="modal fade" id="imagePickerModal" tabindex="-1" aria-labelledby="imagePickerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imagePickerModalLabel">Choose image from library</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @if (!Model.ImageLibrary.Any())
                 {
-                    <option value="@Model.ImageLibraryUrl">Image library</option>
+                    <div class="text-muted">
+                        <p>No images found in the configured library folder (<code>@Model.ImageLibraryFolder</code>).</p>
+                        <p>Upload images to that folder in blob storage, or update the folder path in <a asp-controller="Admin" asp-action="Settings">Settings</a>.</p>
+                    </div>
                 }
                 else
                 {
-                    <option value="">No image library configured (set it in Settings)</option>
+                    <div class="row g-3" id="image-picker-grid">
+                        @foreach (var item in Model.ImageLibrary)
+                        {
+                            ExerciseMediaKey.TryResolve(item.Url, out var blobKey);
+                            var proxyUrl = string.IsNullOrWhiteSpace(blobKey)
+                                ? null
+                                : Url.Action("MediaContent", "Exercises", new { key = blobKey });
+                            <div class="col-6 col-md-3 col-lg-2">
+                                <div class="image-picker-tile border rounded p-1 h-100 d-flex flex-column align-items-center justify-content-center" style="cursor:pointer" data-image-url="@item.Url" data-bs-dismiss="modal">
+                                    @if (proxyUrl is not null)
+                                    {
+                                        <img src="@proxyUrl" alt="@item.Name" class="img-fluid rounded" style="max-height:120px;object-fit:contain" loading="lazy" />
+                                    }
+                                    <div class="small text-muted mt-1 text-truncate w-100 text-center" title="@item.Name">@item.Name</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
                 }
-            </select>
-        </div>
-        <div class="col-md-3">
-            <button id="run-image-search" type="button" class="btn btn-primary w-100">Open library</button>
-        </div>
-    </div>
-    <div class="form-text mt-2">Opens the shared image library in a new tab. Copy the URL of the chosen image and paste it below.</div>
-    <div id="image-search-error" class="alert alert-warning d-none mt-2 mb-0 py-2 px-3 small" role="alert"></div>
-    <div class="mt-3">
-        <label for="image-selected-url" class="form-label">Selected image URL</label>
-        <div class="input-group">
-            <input id="image-selected-url" class="form-control exercise-url-input" placeholder="No image selected" />
-            <button id="apply-image-selected-url" type="button" class="btn btn-outline-secondary">Use URL</button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
         </div>
     </div>
-</div>
-
-<div id="selected-media-context-menu" class="exercise-media-context-menu d-none position-fixed bg-white border rounded shadow-sm py-1">
-    <button id="selected-media-deselect" type="button" class="btn btn-link text-start text-decoration-none w-100 px-3 py-1">Deselect</button>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
+        // ── Image picker IIFE ──────────────────────────────────────────────────────
         (function () {
             const imageInput = document.getElementById('Form_ImageUrl');
             const selectedImageEmpty = document.getElementById('selected-image-empty');
             const selectedImageLink = document.getElementById('selected-image-link');
             const selectedImagePreview = document.getElementById('selected-image-preview');
+            const contextMenu = document.getElementById('selected-media-context-menu');
+            const contextMenuDeselect = document.getElementById('selected-media-deselect');
+            const pickerGrid = document.getElementById('image-picker-grid');
 
+            if (!imageInput || !selectedImageEmpty || !selectedImageLink || !selectedImagePreview) {
+                return;
+            }
+
+            function resetSelectedImagePreview() {
+                selectedImageLink.classList.add('d-none');
+                selectedImageEmpty.classList.remove('d-none');
+                selectedImagePreview.src = '#';
+                selectedImageLink.href = '#';
+            }
+
+            function isHttpUrl(value) {
+                if (!value) { return false; }
+                try {
+                    const p = new URL(value);
+                    return p.protocol === 'http:' || p.protocol === 'https:';
+                } catch { return false; }
+            }
+
+            // Managed /exercise-media/ blobs live in a private container and cannot be
+            // hotlinked directly; route them through the server-side content proxy.
+            function toDisplayUrl(value) {
+                const marker = '/exercise-media/';
+                const i = value.indexOf(marker);
+                if (i >= 0) {
+                    const key = value.substring(i + 1);
+                    return '/Exercises/MediaContent?key=' + encodeURIComponent(key);
+                }
+                return value;
+            }
+
+            function updateSelectedImagePanel() {
+                const raw = imageInput.value ? imageInput.value.trim() : '';
+                if (!isHttpUrl(raw)) {
+                    resetSelectedImagePreview();
+                    return;
+                }
+                const display = toDisplayUrl(raw);
+                selectedImagePreview.src = display;
+                selectedImageLink.href = display;
+                selectedImageLink.classList.remove('d-none');
+                selectedImageEmpty.classList.add('d-none');
+            }
+
+            // Image library picker tiles
+            if (pickerGrid) {
+                pickerGrid.querySelectorAll('.image-picker-tile').forEach(function (tile) {
+                    tile.addEventListener('click', function () {
+                        const url = tile.getAttribute('data-image-url');
+                        if (url) {
+                            imageInput.value = url;
+                            updateSelectedImagePanel();
+                        }
+                    });
+                });
+            }
+
+            // Context menu (right-click to deselect image)
+            if (contextMenu && contextMenuDeselect) {
+                let contextTarget = null;
+
+                selectedImageLink.addEventListener('contextmenu', function (e) {
+                    if (selectedImageLink.classList.contains('d-none')) { return; }
+                    e.preventDefault();
+                    contextTarget = 'image';
+                    contextMenuDeselect.textContent = 'Deselect image';
+                    contextMenu.style.left = e.pageX + 'px';
+                    contextMenu.style.top = e.pageY + 'px';
+                    contextMenu.classList.remove('d-none');
+                });
+
+                contextMenuDeselect.addEventListener('click', function () {
+                    if (contextTarget === 'image') {
+                        imageInput.value = '';
+                        updateSelectedImagePanel();
+                    }
+                    contextMenu.classList.add('d-none');
+                    contextTarget = null;
+                });
+
+                document.addEventListener('click', function (e) {
+                    if (!contextMenu.contains(e.target)) {
+                        contextMenu.classList.add('d-none');
+                        contextTarget = null;
+                    }
+                });
+            }
+
+            imageInput.addEventListener('input', updateSelectedImagePanel);
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && contextMenu) {
+                    contextMenu.classList.add('d-none');
+                }
+            });
+
+            updateSelectedImagePanel();
+        })();
+
+        // ── Video IIFE (unchanged) ────────────────────────────────────────────────
+        (function () {
             const videoInput = document.getElementById('Form_VideoUrl');
             const hiddenVideoInput = document.getElementById('Form_VideoUrl_Hidden');
             const selectedVideoEmpty = document.getElementById('selected-video-empty');
@@ -293,15 +406,12 @@ else
             const selectedVideoThumb = document.getElementById('selected-video-thumb');
             const selectedVideoPlayer = document.getElementById('selected-video-player');
             const selectedVideoFallback = document.getElementById('selected-video-fallback');
-
             const currentVideoLink = document.getElementById('current-video-link');
             const currentVideoThumb = document.getElementById('current-video-thumb');
             const currentVideoPlayer = document.getElementById('current-video-player');
             const currentVideoFallback = document.getElementById('current-video-fallback');
-
             const contextMenu = document.getElementById('selected-media-context-menu');
             const contextMenuDeselect = document.getElementById('selected-media-deselect');
-
             const videoSearchBackdrop = document.getElementById('video-search-backdrop');
             const videoSearchPopup = document.getElementById('video-search-popup');
             const openVideoSearch = document.getElementById('open-video-search');
@@ -312,54 +422,16 @@ else
             const videoSearchTerm = document.getElementById('video-search-term');
             const videoSelectedUrl = document.getElementById('video-selected-url');
 
-            const imageSearchBackdrop = document.getElementById('image-search-backdrop');
-            const imageSearchPopup = document.getElementById('image-search-popup');
-            const openImageSearch = document.getElementById('open-image-search');
-            const closeImageSearch = document.getElementById('close-image-search');
-            const runImageSearch = document.getElementById('run-image-search');
-            const applyImageSelectedUrl = document.getElementById('apply-image-selected-url');
-            const imageSearchProvider = document.getElementById('image-search-provider');
-            const imageSearchTerm = document.getElementById('image-search-term');
-            const imageSelectedUrl = document.getElementById('image-selected-url');
-            const imageSearchError = document.getElementById('image-search-error');
-
-            if (!imageInput || !selectedImageEmpty || !selectedImageLink || !selectedImagePreview || !videoInput || !hiddenVideoInput || !selectedVideoEmpty || !selectedVideoLink || !selectedVideoText || !selectedVideoThumb || !selectedVideoPlayer || !selectedVideoFallback || !contextMenu || !contextMenuDeselect || !videoSearchBackdrop || !videoSearchPopup || !openVideoSearch || !closeVideoSearch || !runVideoSearch || !applyVideoSelectedUrl || !videoSearchProvider || !videoSearchTerm || !videoSelectedUrl || !imageSearchBackdrop || !imageSearchPopup || !openImageSearch || !closeImageSearch || !runImageSearch || !applyImageSelectedUrl || !imageSearchProvider || !imageSearchTerm || !imageSelectedUrl || !imageSearchError) {
+            if (!videoInput || !hiddenVideoInput || !selectedVideoEmpty || !selectedVideoLink || !selectedVideoText || !selectedVideoThumb || !selectedVideoPlayer || !selectedVideoFallback || !videoSearchBackdrop || !videoSearchPopup || !openVideoSearch || !closeVideoSearch || !runVideoSearch || !applyVideoSelectedUrl || !videoSearchProvider || !videoSearchTerm || !videoSelectedUrl) {
                 return;
             }
 
-            let contextTarget = null;
-
-            function resetSelectedImagePreview() {
-                selectedImageLink.classList.add('d-none');
-                selectedImageEmpty.classList.remove('d-none');
-                selectedImagePreview.src = '#';
-                selectedImageLink.href = '#';
-            }
-
-            function updateSelectedImagePanel() {
-                const raw = imageInput.value ? imageInput.value.trim() : '';
-                if (!isHttpUrl(raw)) {
-                    resetSelectedImagePreview();
-                    return;
-                }
-
-                selectedImagePreview.src = raw;
-                selectedImageLink.href = raw;
-                selectedImageLink.classList.remove('d-none');
-                selectedImageEmpty.classList.add('d-none');
-            }
-
             function isHttpUrl(value) {
-                if (!value) {
-                    return false;
-                }
-
+                if (!value) { return false; }
                 try {
-                    const parsed = new URL(value);
-                    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-                } catch {
-                    return false;
-                }
+                    const p = new URL(value);
+                    return p.protocol === 'http:' || p.protocol === 'https:';
+                } catch { return false; }
             }
 
             function extractYouTubeId(url) {
@@ -370,33 +442,23 @@ else
                         const id = parsed.searchParams.get('v');
                         return id && id.trim() ? id.trim() : null;
                     }
-
                     if (host === 'youtu.be') {
                         const path = parsed.pathname.replace(/^\//, '').split('/')[0];
                         return path ? path : null;
                     }
-                } catch {
-                }
-
+                } catch { }
                 return null;
             }
 
             function extractVimeoId(url) {
                 try {
                     const parsed = new URL(url);
-                    if (!parsed.hostname.toLowerCase().includes('vimeo.com')) {
-                        return null;
-                    }
-
+                    if (!parsed.hostname.toLowerCase().includes('vimeo.com')) { return null; }
                     const segments = parsed.pathname.split('/').filter(Boolean);
                     for (let i = segments.length - 1; i >= 0; i--) {
-                        if (/^\d+$/.test(segments[i])) {
-                            return segments[i];
-                        }
+                        if (/^\d+$/.test(segments[i])) { return segments[i]; }
                     }
-                } catch {
-                }
-
+                } catch { }
                 return null;
             }
 
@@ -407,45 +469,23 @@ else
             function extractGoogleDriveId(url) {
                 try {
                     const parsed = new URL(url);
-                    if (!parsed.hostname.toLowerCase().includes('drive.google.com')) {
-                        return null;
-                    }
-
+                    if (!parsed.hostname.toLowerCase().includes('drive.google.com')) { return null; }
                     const fileMatch = parsed.pathname.match(/\/file\/d\/([^/]+)/);
-                    if (fileMatch && fileMatch[1]) {
-                        return fileMatch[1];
-                    }
-
+                    if (fileMatch && fileMatch[1]) { return fileMatch[1]; }
                     const idParam = parsed.searchParams.get('id');
-                    if (idParam && idParam.trim()) {
-                        return idParam.trim();
-                    }
-                } catch {
-                }
-
+                    if (idParam && idParam.trim()) { return idParam.trim(); }
+                } catch { }
                 return null;
             }
 
             function resolveVideoPreview(url) {
                 const youtubeId = extractYouTubeId(url);
-                if (youtubeId) {
-                    return { type: 'thumb', src: 'https://img.youtube.com/vi/' + youtubeId + '/hqdefault.jpg' };
-                }
-
+                if (youtubeId) { return { type: 'thumb', src: 'https://img.youtube.com/vi/' + youtubeId + '/hqdefault.jpg' }; }
                 const vimeoId = extractVimeoId(url);
-                if (vimeoId) {
-                    return { type: 'thumb', src: 'https://vumbnail.com/' + vimeoId + '.jpg' };
-                }
-
+                if (vimeoId) { return { type: 'thumb', src: 'https://vumbnail.com/' + vimeoId + '.jpg' }; }
                 const driveId = extractGoogleDriveId(url);
-                if (driveId) {
-                    return { type: 'thumb', src: 'https://drive.google.com/thumbnail?id=' + driveId + '&sz=w640' };
-                }
-
-                if (isDirectVideoUrl(url)) {
-                    return { type: 'video', src: url };
-                }
-
+                if (driveId) { return { type: 'thumb', src: 'https://drive.google.com/thumbnail?id=' + driveId + '&sz=w640' }; }
+                if (isDirectVideoUrl(url)) { return { type: 'video', src: url }; }
                 return { type: 'fallback', src: null };
             }
 
@@ -456,7 +496,6 @@ else
                 thumb.src = '#';
                 player.removeAttribute('src');
                 player.load();
-
                 const preview = resolveVideoPreview(url);
                 if (preview.type === 'thumb') {
                     thumb.src = preview.src;
@@ -464,7 +503,6 @@ else
                     fallback.classList.add('d-none');
                     return;
                 }
-
                 if (preview.type === 'video') {
                     player.src = preview.src;
                     player.classList.remove('d-none');
@@ -484,26 +522,12 @@ else
                     selectedVideoFallback.classList.remove('d-none');
                     return;
                 }
-
                 const host = new URL(raw).host;
                 selectedVideoLink.href = raw;
                 selectedVideoText.textContent = host ? 'Open selected video (' + host + ')' : 'Open selected video';
                 selectedVideoLink.classList.remove('d-none');
                 selectedVideoEmpty.classList.add('d-none');
                 renderVideoPreview(selectedVideoLink, selectedVideoThumb, selectedVideoPlayer, selectedVideoFallback, raw);
-            }
-
-            function hideContextMenu() {
-                contextMenu.classList.add('d-none');
-                contextTarget = null;
-            }
-
-            function showContextMenu(x, y, target) {
-                contextTarget = target;
-                contextMenuDeselect.textContent = target === 'image' ? 'Deselect image' : 'Deselect video';
-                contextMenu.style.left = x + 'px';
-                contextMenu.style.top = y + 'px';
-                contextMenu.classList.remove('d-none');
             }
 
             function openVideoSearchPopup() {
@@ -517,65 +541,38 @@ else
                 videoSearchBackdrop.classList.add('d-none');
             }
 
-            function openImageSearchPopup() {
-                imageSearchBackdrop.classList.remove('d-none');
-                imageSearchPopup.classList.remove('d-none');
-                imageSelectedUrl.value = '';
-                imageSearchError.classList.add('d-none');
-                imageSearchError.textContent = '';
-            }
+            // Video right-click deselect via shared context menu
+            if (contextMenu && contextMenuDeselect) {
+                selectedVideoLink.addEventListener('contextmenu', function (e) {
+                    if (selectedVideoLink.classList.contains('d-none')) { return; }
+                    e.preventDefault();
+                    contextMenuDeselect.textContent = 'Deselect video';
+                    contextMenu.style.left = e.pageX + 'px';
+                    contextMenu.style.top = e.pageY + 'px';
+                    contextMenu.classList.remove('d-none');
+                    // Store target on element for the image IIFE to also read
+                    contextMenu.dataset.contextTarget = 'video';
+                });
 
-            function closeImageSearchPopup() {
-                imageSearchPopup.classList.add('d-none');
-                imageSearchBackdrop.classList.add('d-none');
+                contextMenuDeselect.addEventListener('click', function () {
+                    if (contextMenu.dataset.contextTarget === 'video') {
+                        videoInput.value = '';
+                        hiddenVideoInput.value = '';
+                        updateSelectedVideoPanel();
+                        contextMenu.classList.add('d-none');
+                        contextMenu.dataset.contextTarget = '';
+                    }
+                });
             }
-
-            imageInput.addEventListener('input', updateSelectedImagePanel);
 
             videoInput.addEventListener('input', function () {
                 hiddenVideoInput.value = videoInput.value.trim();
                 updateSelectedVideoPanel();
             });
 
-            selectedImageLink.addEventListener('contextmenu', function (e) {
-                if (selectedImageLink.classList.contains('d-none')) {
-                    return;
-                }
-                e.preventDefault();
-                showContextMenu(e.pageX, e.pageY, 'image');
-            });
-
-            selectedVideoLink.addEventListener('contextmenu', function (e) {
-                if (selectedVideoLink.classList.contains('d-none')) {
-                    return;
-                }
-                e.preventDefault();
-                showContextMenu(e.pageX, e.pageY, 'video');
-            });
-
-            contextMenuDeselect.addEventListener('click', function () {
-                if (contextTarget === 'image') {
-                    imageInput.value = '';
-                    updateSelectedImagePanel();
-                } else if (contextTarget === 'video') {
-                    videoInput.value = '';
-                    hiddenVideoInput.value = '';
-                    updateSelectedVideoPanel();
-                }
-                hideContextMenu();
-            });
-
-            document.addEventListener('click', function (e) {
-                if (!contextMenu.contains(e.target)) {
-                    hideContextMenu();
-                }
-            });
-
             document.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape') {
-                    hideContextMenu();
                     closeVideoSearchPopup();
-                    closeImageSearchPopup();
                 }
             });
 
@@ -585,17 +582,12 @@ else
 
             runVideoSearch.addEventListener('click', function () {
                 const providerBaseUrl = (videoSearchProvider.value || '').trim();
-                if (!providerBaseUrl) {
-                    return;
-                }
-
+                if (!providerBaseUrl) { return; }
                 const term = (videoSearchTerm.value || '').trim();
                 let url = providerBaseUrl;
-
                 if (providerBaseUrl.includes('{query}')) {
                     url = providerBaseUrl.replace('{query}', encodeURIComponent(term));
                 }
-
                 window.open(url, '_blank', 'noopener');
             });
 
@@ -606,44 +598,11 @@ else
                 closeVideoSearchPopup();
             });
 
-            openImageSearch.addEventListener('click', openImageSearchPopup);
-            closeImageSearch.addEventListener('click', closeImageSearchPopup);
-            imageSearchBackdrop.addEventListener('click', closeImageSearchPopup);
-
-            runImageSearch.addEventListener('click', function () {
-                const providerBaseUrl = (imageSearchProvider.value || '').trim();
-                if (!providerBaseUrl || !isHttpUrl(providerBaseUrl.replace('{query}', 'x'))) {
-                    imageSearchError.textContent = 'No image library found. Set a valid image library URL on the Settings page (File storage) before searching.';
-                    imageSearchError.classList.remove('d-none');
-                    return;
-                }
-
-                imageSearchError.classList.add('d-none');
-                imageSearchError.textContent = '';
-
-                const term = (imageSearchTerm.value || '').trim();
-                let url = providerBaseUrl;
-
-                if (providerBaseUrl.includes('{query}')) {
-                    url = providerBaseUrl.replace('{query}', encodeURIComponent(term));
-                }
-
-                window.open(url, '_blank', 'noopener');
-            });
-
-            applyImageSelectedUrl.addEventListener('click', function () {
-                imageInput.value = (imageSelectedUrl.value || '').trim();
-                updateSelectedImagePanel();
-                closeImageSearchPopup();
-            });
-
             if (currentVideoLink && currentVideoThumb && currentVideoPlayer && currentVideoFallback) {
                 renderVideoPreview(currentVideoLink, currentVideoThumb, currentVideoPlayer, currentVideoFallback, currentVideoLink.href);
             }
 
             updateSelectedVideoPanel();
-            updateSelectedImagePanel();
         })();
     </script>
 }
-

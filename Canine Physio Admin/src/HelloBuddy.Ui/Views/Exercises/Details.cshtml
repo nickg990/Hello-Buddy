@@ -1,4 +1,5 @@
 ﻿@using HelloBuddy.Ui.Models
+@using HelloBuddy.Application.Media
 @model ExerciseDetailPageVm
 @{
     ViewData["Title"] = Model.Exercise.Title;
@@ -7,6 +8,10 @@
     var hasValidVideoUrl = Uri.TryCreate(videoUrl, UriKind.Absolute, out var parsedVideoUrl)
         && (parsedVideoUrl.Scheme == Uri.UriSchemeHttp || parsedVideoUrl.Scheme == Uri.UriSchemeHttps);
     var safeVideoUrl = hasValidVideoUrl ? parsedVideoUrl!.ToString() : string.Empty;
+
+    var imageDisplayUrl = ExerciseMediaKey.TryResolve(Model.Exercise.ImageUrl, out var detailImageKey)
+        ? Url.Action("MediaContent", "Exercises", new { key = detailImageKey })
+        : Model.Exercise.ImageUrl;
 }
 
 <div class="mb-3">
@@ -67,8 +72,8 @@
                         <div class="exercise-media-panel exercise-media-panel--tile border rounded p-2 d-flex align-items-center justify-content-center bg-light overflow-hidden">
                             @if (!string.IsNullOrWhiteSpace(Model.Exercise.ImageUrl))
                             {
-                                <a href="@Model.Exercise.ImageUrl" target="_blank" rel="noopener noreferrer" title="Open image in new tab" class="d-inline-flex">
-                                    <img src="@Model.Exercise.ImageUrl" alt="@Model.Exercise.Title image" class="exercise-media-item exercise-media-item--contain" />
+                                <a href="@imageDisplayUrl" target="_blank" rel="noopener noreferrer" title="Open image in new tab" class="d-inline-flex">
+                                    <img src="@imageDisplayUrl" alt="@Model.Exercise.Title image" class="exercise-media-item exercise-media-item--contain" />
                                 </a>
                             }
                             else

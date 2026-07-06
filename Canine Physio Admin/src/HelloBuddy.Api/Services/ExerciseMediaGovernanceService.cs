@@ -1,4 +1,5 @@
 using HelloBuddy.Admin.Pdf;
+using HelloBuddy.Application.Media;
 
 namespace HelloBuddy.Api.Services;
 
@@ -77,7 +78,7 @@ public sealed class ExerciseMediaGovernanceService : IExerciseMediaGovernanceSer
             return;
         }
 
-        if (!TryResolveManagedKey(previous, out var key))
+        if (!ExerciseMediaKey.TryResolve(previous, out var key))
         {
             _logger.LogInformation("Previous image URL is outside managed exercise-media namespace; retained: {Url}", previous);
             return;
@@ -88,32 +89,5 @@ public sealed class ExerciseMediaGovernanceService : IExerciseMediaGovernanceSer
         {
             _logger.LogInformation("No orphan artefact found for key {Key}; nothing to delete", key);
         }
-    }
-
-    private bool TryResolveManagedKey(string url, out string key)
-    {
-        key = string.Empty;
-
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
-        {
-            return false;
-        }
-
-        var marker = "/exercise-media/";
-        var full = uri.AbsolutePath.Replace('\\', '/');
-        var markerIndex = full.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
-        if (markerIndex < 0)
-        {
-            return false;
-        }
-
-        var relative = full[(markerIndex + 1)..].Trim('/');
-        if (string.IsNullOrWhiteSpace(relative))
-        {
-            return false;
-        }
-
-        key = relative;
-        return true;
     }
 }

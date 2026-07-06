@@ -575,6 +575,12 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
         public Task<IReadOnlyList<ExerciseAuditEntryVm>> GetExerciseAuditHistoryAsync(ulong id, CancellationToken ct)
             => Task.FromResult<IReadOnlyList<ExerciseAuditEntryVm>>([]);
 
+        public Task<IReadOnlyList<ExerciseMediaLibraryItem>> GetExerciseImageLibraryAsync(CancellationToken ct)
+            => Task.FromResult<IReadOnlyList<ExerciseMediaLibraryItem>>([]);
+
+        public Task<ExerciseImageContent?> GetExerciseMediaContentAsync(string key, CancellationToken ct)
+            => Task.FromResult<ExerciseImageContent?>(null);
+
         public Task<ProgrammeVm?> CreateDraftProgrammeAsync(ulong caseId, CancellationToken ct)
             => Task.FromResult<ProgrammeVm?>(new ProgrammeVm(
                 2,

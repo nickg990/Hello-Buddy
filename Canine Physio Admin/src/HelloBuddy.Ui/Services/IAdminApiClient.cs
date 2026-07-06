@@ -36,6 +36,8 @@ public interface IAdminApiClient
     Task<ExerciseDetailVm?> SetExerciseActiveAsync(ulong id, bool isActive, CancellationToken ct);
     Task<IReadOnlyList<ExerciseCategoryListItem>> ListExerciseCategoriesAsync(CancellationToken ct);
     Task<IReadOnlyList<ExerciseAuditEntryVm>> GetExerciseAuditHistoryAsync(ulong id, CancellationToken ct);
+    Task<IReadOnlyList<ExerciseMediaLibraryItem>> GetExerciseImageLibraryAsync(CancellationToken ct);
+    Task<ExerciseImageContent?> GetExerciseMediaContentAsync(string key, CancellationToken ct);
     Task<ProgrammeVm?> CreateDraftProgrammeAsync(ulong caseId, CancellationToken ct);
     Task<DeleteProgrammeResult> DeleteProgrammeAsync(ulong programmeId, CancellationToken ct);
     Task<ProgrammeStatusTransitionClientResult> ActivateProgrammeAsync(ulong programmeId, CancellationToken ct);

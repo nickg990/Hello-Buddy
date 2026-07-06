@@ -45,22 +45,22 @@
         <div class="card-body">
             <h3 class="h5 mb-3">File storage</h3>
             <div class="mb-3">
-                <label for="ImageLibraryUrl" class="form-label">Image library URL</label>
-                <input type="url"
-                       id="ImageLibraryUrl"
-                       name="ImageLibraryUrl"
-                       value="@Model.ImageLibraryUrl"
-                       class="form-control @(ViewData.ModelState["ImageLibraryUrl"]?.Errors.Count > 0 ? "is-invalid" : "")"
-                       placeholder="https://..." />
-                @if (ViewData.ModelState["ImageLibraryUrl"]?.Errors.Count > 0)
+                <label for="ImageLibraryFolder" class="form-label">Image library folder (blob path)</label>
+                <input type="text"
+                       id="ImageLibraryFolder"
+                       name="ImageLibraryFolder"
+                       value="@Model.ImageLibraryFolder"
+                       class="form-control @(ViewData.ModelState["ImageLibraryFolder"]?.Errors.Count > 0 ? "is-invalid" : "")"
+                       placeholder="exercise-media/images/" />
+                @if (ViewData.ModelState["ImageLibraryFolder"]?.Errors.Count > 0)
                 {
                     <div class="invalid-feedback">
-                        @ViewData.ModelState["ImageLibraryUrl"]!.Errors[0].ErrorMessage
+                        @ViewData.ModelState["ImageLibraryFolder"]!.Errors[0].ErrorMessage
                     </div>
                 }
                 <div class="form-text">
-                    The base URL of the image library (blob storage or Google Drive) where exercise images are stored.
-                    Must be a valid <code>http(s)://</code> URL. Leave blank to use the built-in default.
+                    The blob folder prefix where exercise images are stored, e.g. <code>exercise-media/images/</code>.
+                    Leave blank to use the default. Must be a relative path — no <code>..</code> allowed.
                 </div>
             </div>
         </div>

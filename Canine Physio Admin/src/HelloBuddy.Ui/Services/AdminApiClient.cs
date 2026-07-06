@@ -212,6 +212,22 @@ public sealed class AdminApiClient : IAdminApiClient
         return rows ?? new List<ExerciseAuditEntryVm>();
     }
 
+    public async Task<IReadOnlyList<ExerciseMediaLibraryItem>> GetExerciseImageLibraryAsync(CancellationToken ct)
+    {
+        var rows = await _http.GetFromJsonAsync<List<ExerciseMediaLibraryItem>>("/api/exercises/media/library", ct);
+        return rows ?? new List<ExerciseMediaLibraryItem>();
+    }
+
+    public async Task<ExerciseImageContent?> GetExerciseMediaContentAsync(string key, CancellationToken ct)
+    {
+        var resp = await _http.GetAsync($"/api/exercises/media/content?key={Uri.EscapeDataString(key)}", ct);
+        if (resp.StatusCode == HttpStatusCode.NotFound) return null;
+        await EnsureSuccessOrThrowAsync(resp, ct);
+        var bytes = await resp.Content.ReadAsByteArrayAsync(ct);
+        var contentType = resp.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+        return new ExerciseImageContent(bytes, contentType);
+    }
+
     public async Task<ProgrammeVm?> CreateDraftProgrammeAsync(ulong caseId, CancellationToken ct)
     {
         var resp = await _http.PostAsync($"/api/cases/{caseId}/programmes", content: null, ct);

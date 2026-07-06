@@ -7,6 +7,9 @@ namespace HelloBuddy.Admin.Pdf;
 /// </summary>
 public interface IFileStore
 {
+    /// <summary>Lists artefact keys whose key starts with the supplied prefix.</summary>
+    Task<IReadOnlyList<string>> ListKeysAsync(string keyPrefix, CancellationToken ct = default);
+
     /// <summary>Writes the bytes and returns a stable URI identifying the artefact.</summary>
     Task<Uri> WriteAsync(string key, byte[] bytes, string contentType, CancellationToken ct = default);
 

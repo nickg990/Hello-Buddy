@@ -2,6 +2,7 @@
 param(
     [switch]$SkipAzurite,
     [switch]$ResetAzurite,
+    [switch]$SkipImageSeed,
     [switch]$SkipPdf,
     [switch]$SkipApi,
     [switch]$SkipUi,
@@ -41,7 +42,7 @@ function Ensure-Azurite {
 
     if (-not $existingContainer) {
         Write-Host "Starting Azurite container..." -ForegroundColor Cyan
-        docker run -d --name $containerName -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 | Out-Null
+        docker run -d --name $containerName -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --skipApiVersionCheck | Out-Null
     }
     else {
         $running = docker ps --filter "name=^/${containerName}$" --format "{{.Names}}"
@@ -74,6 +75,30 @@ function Ensure-Azurite {
     }
 
     Write-Host "Azurite ready at localhost:10000 (blob), 10001 (queue), 10002 (table)." -ForegroundColor Green
+}
+
+function Seed-ExerciseImages {
+    if ($SkipAzurite) {
+        return
+    }
+
+    if ($SkipImageSeed) {
+        Write-Host "Skipping exercise image seed (SkipImageSeed switch set)." -ForegroundColor Yellow
+        return
+    }
+
+    $seedScript = Join-Path $PSScriptRoot "seed-local-exercise-images.ps1"
+    if (-not (Test-Path $seedScript)) {
+        Write-Host "Exercise image seed script not found at $seedScript; skipping." -ForegroundColor Yellow
+        return
+    }
+
+    try {
+        & $seedScript
+    }
+    catch {
+        Write-Host "Exercise image seed failed: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
 }
 
 function Start-ServiceProcess {
@@ -222,6 +247,7 @@ function Assert-LocalConfigurationAlignment {
 }
 
 Ensure-Azurite
+Seed-ExerciseImages
 Assert-LocalConfigurationAlignment
 Prepare-Projects
 

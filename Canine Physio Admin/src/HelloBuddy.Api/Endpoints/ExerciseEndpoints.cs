@@ -1,4 +1,5 @@
 using FluentValidation;
+using HelloBuddy.Application.Admin;
 using HelloBuddy.Application.Media;
 using HelloBuddy.Application.Records;
 using HelloBuddy.Contracts;
@@ -67,13 +68,61 @@ public static class ExerciseEndpoints
                 return Results.NotFound();
             }
 
-            if (!TryResolveManagedKey(exercise.ImageUrl, out var key))
+            if (!ExerciseMediaKey.TryResolve(exercise.ImageUrl, out var key))
             {
-                if (GoogleDriveImageHelper.TryConvertToDirectUrl(exercise.ImageUrl, out var driveUrl))
-                {
-                    return Results.Redirect(driveUrl);
-                }
+                return Results.NotFound();
+            }
 
+            var artefact = await fileStore.OpenReadAsync(key, ct);
+            if (artefact is null)
+            {
+                return Results.NotFound();
+            }
+
+            return Results.File(artefact.Content, artefact.ContentType);
+        });
+
+        app.MapGet("/api/exercises/media/library", async (
+            IFileStore fileStore,
+            IAppSettingRepository settings,
+            IConfiguration config,
+            CancellationToken ct) =>
+        {
+            var rawFolder = await settings.GetAsync("FileStorage.ImageLibraryFolder", ct);
+            var folder = string.IsNullOrWhiteSpace(rawFolder) ? "exercise-media/images/" : rawFolder.Trim().Trim('/') + "/";
+
+            // Guard: must be inside exercise-media/
+            if (!folder.StartsWith(ExerciseMediaKey.Prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                folder = ExerciseMediaKey.Prefix + folder;
+            }
+
+            var baseUrl = config["Storage:ExerciseMediaBaseUrl"] ?? string.Empty;
+            var keys = await fileStore.ListKeysAsync(folder, ct);
+
+            var imageExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".webp" };
+            var items = keys
+                .Where(k => imageExtensions.Contains(Path.GetExtension(k)))
+                .Select(k => new ExerciseMediaLibraryItem(
+                    Path.GetFileName(k),
+                    string.IsNullOrWhiteSpace(baseUrl)
+                        ? $"/{k}"
+                        : $"{baseUrl.TrimEnd('/')}/{k}"))
+                .ToList();
+
+            return Results.Ok(items);
+        });
+
+        app.MapGet("/api/exercises/media/content", async (
+            string? key,
+            IFileStore fileStore,
+            CancellationToken ct) =>
+        {
+            // Path-traversal guard: only keys inside exercise-media/ are served.
+            if (string.IsNullOrWhiteSpace(key)
+                || !key.StartsWith(ExerciseMediaKey.Prefix, StringComparison.OrdinalIgnoreCase)
+                || key.Contains("..", StringComparison.Ordinal))
+            {
                 return Results.NotFound();
             }
 
@@ -155,7 +204,7 @@ public static class ExerciseEndpoints
             }
 
             var safeName = BuildSafeFileName(Path.GetFileNameWithoutExtension(file.FileName));
-            var key = $"exercise-media/{DateTime.UtcNow:yyyy/MM}/{safeName}-{Guid.NewGuid():N}{extension}";
+            var key = $"{ExerciseMediaKey.Prefix}{DateTime.UtcNow:yyyy/MM}/{safeName}-{Guid.NewGuid():N}{extension}";
             var uri = await fileStore.WriteAsync(key, bytes, contentType, ct);
 
             var baseUrl = config["Storage:ExerciseMediaBaseUrl"];

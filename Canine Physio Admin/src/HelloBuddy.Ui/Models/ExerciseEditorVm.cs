@@ -10,7 +10,8 @@ public sealed class ExerciseEditorVm
     public SaveExerciseRequest Form { get; set; } = new();
     public IReadOnlyList<SelectListItem> CategoryOptions { get; set; } = [];
     public IReadOnlyList<VideoSearchProviderVm> VideoSearchProviders { get; set; } = [];
-    public string ImageLibraryUrl { get; set; } = string.Empty;
+    public string ImageLibraryFolder { get; set; } = string.Empty;
+    public IReadOnlyList<ExerciseMediaLibraryItem> ImageLibrary { get; set; } = [];
     public string InstructionsText { get; set; } = string.Empty;
     public string? LegacyInstructionsText { get; set; }
 }

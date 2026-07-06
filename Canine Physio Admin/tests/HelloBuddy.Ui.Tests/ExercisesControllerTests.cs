@@ -17,7 +17,7 @@ public sealed class ExercisesControllerTests
         var api = Substitute.For<IAdminApiClient>();
         api.GetAppSettingAsync("VideoLibrary.GoogleDriveUrl", Arg.Any<CancellationToken>())
             .Returns((string?)null);
-        api.GetAppSettingAsync("FileStorage.ImageLibraryUrl", Arg.Any<CancellationToken>())
+        api.GetAppSettingAsync("FileStorage.ImageLibraryFolder", Arg.Any<CancellationToken>())
             .Returns((string?)null);
         api.ListExerciseCategoriesAsync(Arg.Any<CancellationToken>())
             .Returns(new List<ExerciseCategoryListItem>());
@@ -47,7 +47,7 @@ public sealed class ExercisesControllerTests
         var api = Substitute.For<IAdminApiClient>();
         api.GetAppSettingAsync("VideoLibrary.GoogleDriveUrl", Arg.Any<CancellationToken>())
             .Returns("https://drive.google.com/drive/folders/stored");
-        api.GetAppSettingAsync("FileStorage.ImageLibraryUrl", Arg.Any<CancellationToken>())
+        api.GetAppSettingAsync("FileStorage.ImageLibraryFolder", Arg.Any<CancellationToken>())
             .Returns((string?)null);
         api.ListExerciseCategoriesAsync(Arg.Any<CancellationToken>())
             .Returns(new List<ExerciseCategoryListItem>());
@@ -76,7 +76,7 @@ public sealed class ExercisesControllerTests
         var api = Substitute.For<IAdminApiClient>();
         api.GetAppSettingAsync("VideoLibrary.GoogleDriveUrl", Arg.Any<CancellationToken>())
             .Returns(Task.FromException<string?>(new HttpRequestException("unavailable")));
-        api.GetAppSettingAsync("FileStorage.ImageLibraryUrl", Arg.Any<CancellationToken>())
+        api.GetAppSettingAsync("FileStorage.ImageLibraryFolder", Arg.Any<CancellationToken>())
             .Returns(Task.FromException<string?>(new HttpRequestException("unavailable")));
         api.ListExerciseCategoriesAsync(Arg.Any<CancellationToken>())
             .Returns(new List<ExerciseCategoryListItem>());
@@ -89,7 +89,7 @@ public sealed class ExercisesControllerTests
         var vm = Assert.IsType<ExerciseEditorVm>(view.Model);
         var drive = Assert.Single(vm.VideoSearchProviders, x => x.Description == "Google Drive");
         Assert.Equal("https://drive.google.com/drive/folders/1FQXInuGCPdFP5ywFaNnO39Be0ffeZMGm", drive.BaseUrl);
-        Assert.Equal(string.Empty, vm.ImageLibraryUrl);
+        Assert.Equal("exercise-media/images/", vm.ImageLibraryFolder);
     }
 
     [Fact]
@@ -112,13 +112,13 @@ public sealed class ExercisesControllerTests
     }
 
     [Fact]
-    public async Task Create_Get_ImageLibraryUrl_UsesStoredHttpUrl()
+    public async Task Create_Get_ImageLibraryFolder_UsesStoredFolderValue()
     {
         var api = Substitute.For<IAdminApiClient>();
         api.GetAppSettingAsync("VideoLibrary.GoogleDriveUrl", Arg.Any<CancellationToken>())
             .Returns((string?)null);
-        api.GetAppSettingAsync("FileStorage.ImageLibraryUrl", Arg.Any<CancellationToken>())
-            .Returns("https://images.example.test/library");
+        api.GetAppSettingAsync("FileStorage.ImageLibraryFolder", Arg.Any<CancellationToken>())
+            .Returns("exercise-media/custom/");
         api.ListExerciseCategoriesAsync(Arg.Any<CancellationToken>())
             .Returns(new List<ExerciseCategoryListItem>());
 
@@ -128,17 +128,14 @@ public sealed class ExercisesControllerTests
 
         var view = Assert.IsType<ViewResult>(result);
         var vm = Assert.IsType<ExerciseEditorVm>(view.Model);
-        Assert.Equal("https://images.example.test/library", vm.ImageLibraryUrl);
+        Assert.Equal("exercise-media/custom/", vm.ImageLibraryFolder);
     }
 
     [Fact]
-    public async Task Create_Get_ImageLibraryUrl_IgnoresNonHttpStoredValue()
+    public async Task Create_Get_ImageLibraryFolder_DefaultsWhenNotConfigured()
     {
         var api = Substitute.For<IAdminApiClient>();
-        api.GetAppSettingAsync("VideoLibrary.GoogleDriveUrl", Arg.Any<CancellationToken>())
-            .Returns((string?)null);
-        api.GetAppSettingAsync("FileStorage.ImageLibraryUrl", Arg.Any<CancellationToken>())
-            .Returns("not-a-valid-url");
+        api.GetAppSettingAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((string?)null);
         api.ListExerciseCategoriesAsync(Arg.Any<CancellationToken>())
             .Returns(new List<ExerciseCategoryListItem>());
 
@@ -148,7 +145,7 @@ public sealed class ExercisesControllerTests
 
         var view = Assert.IsType<ViewResult>(result);
         var vm = Assert.IsType<ExerciseEditorVm>(view.Model);
-        Assert.Equal(string.Empty, vm.ImageLibraryUrl);
+        Assert.Equal("exercise-media/images/", vm.ImageLibraryFolder);
     }
 
     [Fact]

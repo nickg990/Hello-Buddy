@@ -35,6 +35,18 @@ public sealed class AzureBlobFileStore : IFileStore
         _logger = logger;
     }
 
+    public async Task<IReadOnlyList<string>> ListKeysAsync(string keyPrefix, CancellationToken ct = default)
+    {
+        await EnsureContainerExistsAsync(ct);
+        var keys = new List<string>();
+        await foreach (var item in _container.GetBlobsAsync(prefix: keyPrefix, cancellationToken: ct))
+        {
+            keys.Add(item.Name);
+        }
+
+        return keys;
+    }
+
     public async Task<Uri> WriteAsync(string key, byte[] bytes, string contentType, CancellationToken ct = default)
     {
         await EnsureContainerExistsAsync(ct);

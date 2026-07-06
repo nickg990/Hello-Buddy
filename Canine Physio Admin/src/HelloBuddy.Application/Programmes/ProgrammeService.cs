@@ -268,11 +268,9 @@ public sealed class ProgrammeService : IProgrammeService
             return originalUrl;
         }
 
-        if (!TryResolveManagedKey(originalUrl, out var key))
+        if (!ExerciseMediaKey.TryResolve(originalUrl, out var key))
         {
-            return GoogleDriveImageHelper.TryConvertToDirectUrl(originalUrl, out var driveUrl)
-                ? driveUrl
-                : originalUrl;
+            return originalUrl;
         }
 
         if (imageCache.TryGetValue(key, out var cached))
@@ -302,30 +300,4 @@ public sealed class ProgrammeService : IProgrammeService
         }
     }
 
-    private static bool TryResolveManagedKey(string url, out string key)
-    {
-        key = string.Empty;
-
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
-        {
-            return false;
-        }
-
-        const string marker = "/exercise-media/";
-        var full = uri.AbsolutePath.Replace('\\', '/');
-        var markerIndex = full.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
-        if (markerIndex < 0)
-        {
-            return false;
-        }
-
-        var relative = full[(markerIndex + 1)..].Trim('/');
-        if (string.IsNullOrWhiteSpace(relative))
-        {
-            return false;
-        }
-
-        key = relative;
-        return true;
-    }
 }

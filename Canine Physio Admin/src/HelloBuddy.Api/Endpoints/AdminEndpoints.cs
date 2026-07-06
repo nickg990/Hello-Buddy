@@ -182,6 +182,14 @@ public static class AdminEndpoints
                    && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp);
         }
 
+        if (key == "FileStorage.ImageLibraryFolder")
+        {
+            if (string.IsNullOrWhiteSpace(value)) return true; // allow clearing
+            var v = value.Trim().Trim('/');
+            return !v.Contains("..", StringComparison.Ordinal)
+                   && System.Text.RegularExpressions.Regex.IsMatch(v, @"^[A-Za-z0-9/_-]+$");
+        }
+
         return true;
     }
 
@@ -189,6 +197,7 @@ public static class AdminEndpoints
     {
         "VideoLibrary.GoogleDriveUrl" => "Must be a valid https://drive.google.com/... URL.",
         "FileStorage.ImageLibraryUrl" => "Must be a valid http(s):// URL.",
+        "FileStorage.ImageLibraryFolder" => "Must be a relative blob path, e.g. exercise-media/images/. No '..' allowed.",
         _ => "Invalid value for this setting.",
     };
 }

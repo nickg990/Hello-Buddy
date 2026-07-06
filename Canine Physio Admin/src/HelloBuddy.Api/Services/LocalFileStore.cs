@@ -19,6 +19,24 @@ public sealed class LocalFileStore : IFileStore
         Directory.CreateDirectory(_rootPath);
     }
 
+    public Task<IReadOnlyList<string>> ListKeysAsync(string keyPrefix, CancellationToken ct = default)
+    {
+        var keys = new List<string>();
+        if (Directory.Exists(_rootPath))
+        {
+            foreach (var path in Directory.EnumerateFiles(_rootPath, "*", SearchOption.AllDirectories))
+            {
+                var relKey = Path.GetRelativePath(_rootPath, path).Replace(Path.DirectorySeparatorChar, '/');
+                if (relKey.StartsWith(keyPrefix, StringComparison.Ordinal))
+                {
+                    keys.Add(relKey);
+                }
+            }
+        }
+
+        return Task.FromResult<IReadOnlyList<string>>(keys);
+    }
+
     public Task<Uri> WriteAsync(string key, byte[] bytes, string contentType, CancellationToken ct = default)
     {
         var path = Path.Combine(_rootPath, key);

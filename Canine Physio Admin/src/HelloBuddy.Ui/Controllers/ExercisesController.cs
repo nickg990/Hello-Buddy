@@ -1,3 +1,4 @@
+using HelloBuddy.Application.Media;
 using HelloBuddy.Contracts;
 using HelloBuddy.Ui.Models;
 using HelloBuddy.Ui.Services;
@@ -74,6 +75,25 @@ public class ExercisesController : Controller
         return File(image.Bytes, image.ContentType);
     }
 
+    [HttpGet("MediaContent")]
+    public async Task<IActionResult> MediaContent(string? key, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(key)
+            || !key.StartsWith(ExerciseMediaKey.Prefix, StringComparison.OrdinalIgnoreCase)
+            || key.Contains("..", StringComparison.Ordinal))
+        {
+            return NotFound();
+        }
+
+        var resp = await _api.GetExerciseMediaContentAsync(key, ct);
+        if (resp is null)
+        {
+            return NotFound();
+        }
+
+        return File(resp.Bytes, resp.ContentType);
+    }
+
     [HttpGet("Create")]
     public async Task<IActionResult> Create(CancellationToken ct)
     {
@@ -89,7 +109,7 @@ public class ExercisesController : Controller
     {
         vm.CategoryOptions = await BuildCategoryOptionsAsync(ct);
         vm.VideoSearchProviders = await BuildVideoSearchProviderOptionsAsync(ct);
-        vm.ImageLibraryUrl = await BuildImageLibraryUrlAsync(ct);
+        vm.ImageLibraryFolder = await BuildImageLibraryFolderAsync(ct);
         vm.Form.Instructions = ParseInstructions(vm.InstructionsText);
 
         if (!ModelState.IsValid)
@@ -147,7 +167,7 @@ public class ExercisesController : Controller
         vm.ExerciseId = id;
         vm.CategoryOptions = await BuildCategoryOptionsAsync(ct);
         vm.VideoSearchProviders = await BuildVideoSearchProviderOptionsAsync(ct);
-        vm.ImageLibraryUrl = await BuildImageLibraryUrlAsync(ct);
+        vm.ImageLibraryFolder = await BuildImageLibraryFolderAsync(ct);
         vm.Form.Instructions = ParseInstructions(vm.InstructionsText);
 
         if (!ModelState.IsValid)
@@ -201,7 +221,8 @@ public class ExercisesController : Controller
             Form = form,
             CategoryOptions = await BuildCategoryOptionsAsync(ct),
             VideoSearchProviders = await BuildVideoSearchProviderOptionsAsync(ct),
-            ImageLibraryUrl = await BuildImageLibraryUrlAsync(ct),
+            ImageLibraryFolder = await BuildImageLibraryFolderAsync(ct),
+            ImageLibrary = await LoadImageLibraryAsync(ct),
             LegacyInstructionsText = legacyInstructionsText,
             InstructionsText = string.Join(Environment.NewLine,
                 form.Instructions
@@ -279,24 +300,34 @@ public class ExercisesController : Controller
         return uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps;
     }
 
-    private async Task<string> BuildImageLibraryUrlAsync(CancellationToken ct)
+    private async Task<string> BuildImageLibraryFolderAsync(CancellationToken ct)
     {
-        // Resolve the image-library URL from the admin-managed DB setting
-        // (Settings → File storage → Image library URL). Empty when unset.
         try
         {
-            var stored = await _api.GetAppSettingAsync("FileStorage.ImageLibraryUrl", ct);
-            if (!string.IsNullOrWhiteSpace(stored) && IsHttpUrl(stored.Trim()))
+            var stored = await _api.GetAppSettingAsync("FileStorage.ImageLibraryFolder", ct);
+            if (!string.IsNullOrWhiteSpace(stored))
             {
-                return stored.Trim();
+                return stored.Trim().Trim('/') + "/";
             }
         }
         catch
         {
-            // If the settings endpoint is unavailable, fall through to empty.
+            // If the settings endpoint is unavailable, fall through to default.
         }
 
-        return string.Empty;
+        return "exercise-media/images/";
+    }
+
+    private async Task<IReadOnlyList<ExerciseMediaLibraryItem>> LoadImageLibraryAsync(CancellationToken ct)
+    {
+        try
+        {
+            return await _api.GetExerciseImageLibraryAsync(ct);
+        }
+        catch
+        {
+            return [];
+        }
     }
 
     private static List<SaveExerciseRequest.InstructionStepInput> ParseInstructions(string instructionsText)

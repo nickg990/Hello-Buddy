@@ -311,11 +311,11 @@ public sealed class AdminController : Controller
     public async Task<IActionResult> Settings(CancellationToken ct)
     {
         var driveUrl = await _api.GetAppSettingAsync("VideoLibrary.GoogleDriveUrl", ct);
-        var imageUrl = await _api.GetAppSettingAsync("FileStorage.ImageLibraryUrl", ct);
+        var imageFolder = await _api.GetAppSettingAsync("FileStorage.ImageLibraryFolder", ct);
         return View(new SettingsPageVm
         {
             GoogleDriveUrl = driveUrl ?? string.Empty,
-            ImageLibraryUrl = imageUrl ?? string.Empty,
+            ImageLibraryFolder = imageFolder ?? string.Empty,
         });
     }
 
@@ -335,13 +335,14 @@ public sealed class AdminController : Controller
             }
         }
 
-        if (!string.IsNullOrWhiteSpace(model.ImageLibraryUrl))
+        if (!string.IsNullOrWhiteSpace(model.ImageLibraryFolder))
         {
-            if (!Uri.TryCreate(model.ImageLibraryUrl.Trim(), UriKind.Absolute, out var imageUri)
-                || (imageUri.Scheme != Uri.UriSchemeHttps && imageUri.Scheme != Uri.UriSchemeHttp))
+            var folder = model.ImageLibraryFolder.Trim().Trim('/');
+            if (folder.Contains("..", StringComparison.Ordinal)
+                || !System.Text.RegularExpressions.Regex.IsMatch(folder, @"^[A-Za-z0-9/_-]+$"))
             {
-                ModelState.AddModelError(nameof(model.ImageLibraryUrl),
-                    "Must be a valid http(s):// URL.");
+                ModelState.AddModelError(nameof(model.ImageLibraryFolder),
+                    "Must be a relative blob path, e.g. exercise-media/images/. No '..' allowed.");
                 return View(model);
             }
         }
@@ -349,8 +350,8 @@ public sealed class AdminController : Controller
         await _api.SaveAppSettingAsync("VideoLibrary.GoogleDriveUrl",
             string.IsNullOrWhiteSpace(model.GoogleDriveUrl) ? null : model.GoogleDriveUrl.Trim(),
             ct);
-        await _api.SaveAppSettingAsync("FileStorage.ImageLibraryUrl",
-            string.IsNullOrWhiteSpace(model.ImageLibraryUrl) ? null : model.ImageLibraryUrl.Trim(),
+        await _api.SaveAppSettingAsync("FileStorage.ImageLibraryFolder",
+            string.IsNullOrWhiteSpace(model.ImageLibraryFolder) ? null : model.ImageLibraryFolder.Trim().Trim('/'),
             ct);
         TempData["Saved"] = "Settings saved.";
         return RedirectToAction(nameof(Settings));
