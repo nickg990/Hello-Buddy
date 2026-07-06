@@ -1,4 +1,5 @@
 using FluentValidation;
+using HelloBuddy.Application.Media;
 using HelloBuddy.Application.Records;
 using HelloBuddy.Contracts;
 using HelloBuddy.Admin.Pdf;
@@ -68,6 +69,11 @@ public static class ExerciseEndpoints
 
             if (!TryResolveManagedKey(exercise.ImageUrl, out var key))
             {
+                if (GoogleDriveImageHelper.TryConvertToDirectUrl(exercise.ImageUrl, out var driveUrl))
+                {
+                    return Results.Redirect(driveUrl);
+                }
+
                 return Results.NotFound();
             }
 

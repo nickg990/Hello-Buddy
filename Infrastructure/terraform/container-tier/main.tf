@@ -38,6 +38,15 @@ data "azurerm_key_vault_secret" "existing_mysql_connection_string" {
   key_vault_id = data.azurerm_key_vault.main.id
 }
 
+# Existing Automation Account (provisioned out-of-band, DEC-002). Its system-
+# assigned managed identity runs the scheduled Scale-ContainersUp/Down runbooks
+# and therefore needs write access to the container apps (see role assignments
+# near the end of this file). Read-only data source — never managed here.
+data "azurerm_automation_account" "scaling" {
+  name                = var.automation_account_name
+  resource_group_name = data.azurerm_resource_group.main.name
+}
+
 # ---------------------------------------------------------------------------
 # Log Analytics workspace + Application Insights — shared by all three apps.
 # ---------------------------------------------------------------------------
@@ -589,6 +598,135 @@ resource "azurerm_container_app" "ui" {
     azurerm_key_vault_access_policy.ui_app,
     azurerm_key_vault_secret.connection_string,
   ]
+}
+
+# ===========================================================================
+# Migration job (R2-S7): caj-hellobuddy-migrate
+# Runs inside the VNet-integrated CAE so it has private line-of-sight to MySQL.
+# Manual trigger only — never runs automatically during a deploy.
+# ===========================================================================
+
+# ----- Migration: UAMI -------------------------------------------------------
+resource "azurerm_user_assigned_identity" "migrate_app" {
+  name                = var.migrate_app_identity_name
+  location            = data.azurerm_resource_group.main.location
+  resource_group_name = data.azurerm_resource_group.main.name
+  tags                = local.tags
+}
+
+# ----- Migration: AcrPull ----------------------------------------------------
+resource "azurerm_role_assignment" "migrate_app_acr_pull" {
+  scope                = azurerm_container_registry.main.id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_user_assigned_identity.migrate_app.principal_id
+}
+
+# ----- Migration: Key Vault Get (connection string only) ---------------------
+resource "azurerm_key_vault_access_policy" "migrate_app" {
+  key_vault_id = data.azurerm_key_vault.main.id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = azurerm_user_assigned_identity.migrate_app.principal_id
+
+  secret_permissions = ["Get"]
+}
+
+# ----- Migration: Container App Job ------------------------------------------
+resource "azurerm_container_app_job" "migrate" {
+  count                        = var.deploy_container_apps ? 1 : 0
+  name                         = var.migrate_container_app_job_name
+  location                     = data.azurerm_resource_group.main.location
+  resource_group_name          = data.azurerm_resource_group.main.name
+  container_app_environment_id = azurerm_container_app_environment.main.id
+
+  # Migration scripts can take up to 5 minutes; no retries (forward-only).
+  replica_timeout_in_seconds = 300
+  replica_retry_limit        = 0
+
+  manual_trigger_config {
+    parallelism              = 1
+    replica_completion_count = 1
+  }
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.migrate_app.id]
+  }
+
+  registry {
+    server   = azurerm_container_registry.main.login_server
+    identity = azurerm_user_assigned_identity.migrate_app.id
+  }
+
+  # Inject the connection string from Key Vault via the job's managed identity.
+  # The secret is read at job startup — no plaintext credential in the image.
+  secret {
+    name                = "db-connection-string"
+    key_vault_secret_id = azurerm_key_vault_secret.connection_string.id
+    identity            = azurerm_user_assigned_identity.migrate_app.id
+  }
+
+  template {
+    container {
+      name   = "migrate"
+      image  = var.migrate_app_image
+      cpu    = 0.25
+      memory = "0.5Gi"
+
+      # Connection string surfaced as DB_CONNECTION_STRING; parsed by migrate.sh.
+      env {
+        name        = "DB_CONNECTION_STRING"
+        secret_name = "db-connection-string"
+      }
+
+      # Set SEED_BASELINE=true for the one-time first-adoption run against an
+      # already-populated production database (records without re-executing).
+      env {
+        name  = "SEED_BASELINE"
+        value = var.migrate_seed_baseline
+      }
+    }
+  }
+
+  tags = local.tags
+
+  depends_on = [
+    azurerm_role_assignment.migrate_app_acr_pull,
+    azurerm_key_vault_access_policy.migrate_app,
+    azurerm_key_vault_secret.connection_string,
+  ]
+}
+
+# ---------------------------------------------------------------------------
+# Scheduled scaling — grant the Automation Account managed identity permission
+# to write to each container app (needed to set scale.minReplicas from the
+# Scale-ContainersUp / Scale-ContainersDown runbooks).
+#
+# Scoped to the individual apps (not the resource group) for least privilege —
+# Key Vault, Storage, ACR and MySQL are deliberately left untouched. Count-
+# guarded like the apps so the grants are recreated automatically on every two-
+# phase deploy: the apps are destroyed in Phase A (deploy_container_apps=false)
+# and recreated in Phase B, which previously wiped a manual grant and broke
+# scaling with a 403. Managing the grant here makes it self-healing.
+# ---------------------------------------------------------------------------
+resource "azurerm_role_assignment" "automation_ui_contributor" {
+  count                = var.deploy_container_apps ? 1 : 0
+  scope                = azurerm_container_app.ui[0].id
+  role_definition_name = "Contributor"
+  principal_id         = data.azurerm_automation_account.scaling.identity[0].principal_id
+}
+
+resource "azurerm_role_assignment" "automation_api_contributor" {
+  count                = var.deploy_container_apps ? 1 : 0
+  scope                = azurerm_container_app.api[0].id
+  role_definition_name = "Contributor"
+  principal_id         = data.azurerm_automation_account.scaling.identity[0].principal_id
+}
+
+resource "azurerm_role_assignment" "automation_pdf_contributor" {
+  count                = var.deploy_container_apps ? 1 : 0
+  scope                = azurerm_container_app.pdf[0].id
+  role_definition_name = "Contributor"
+  principal_id         = data.azurerm_automation_account.scaling.identity[0].principal_id
 }
 
 locals {

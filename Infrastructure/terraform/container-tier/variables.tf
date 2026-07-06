@@ -171,3 +171,33 @@ variable "container_scale_polling_interval" {
     error_message = "Container scaler polling interval must be 30 seconds for this environment."
   }
 }
+
+# ----- Migration job (R2-S7) -----------------------------------------------
+
+variable "migrate_app_identity_name" {
+  type    = string
+  default = "uami-hellobuddy-migrate"
+}
+
+variable "migrate_container_app_job_name" {
+  type    = string
+  default = "caj-hellobuddy-migrate"
+}
+
+variable "migrate_app_image" {
+  description = "Fully-qualified image reference for the migration job."
+  type        = string
+  default     = ""
+}
+
+variable "migrate_seed_baseline" {
+  description = "Set to \"true\" for the one-time first-adoption baseline run (records without re-executing). Leave \"false\" for all normal migration runs."
+  type        = string
+  default     = "false"
+}
+
+variable "automation_account_name" {
+  description = "Name of the existing Automation Account whose managed identity runs the scheduled Scale-ContainersUp/Down runbooks. Granted Contributor on the container apps so it can set scale.minReplicas."
+  type        = string
+  default     = "aa-hellobuddy-prod"
+}

@@ -1,0 +1,24 @@
+# syntax=docker/dockerfile:1.7
+# Migration image — mysql-client + migrate.sh + ordered SQL files.
+# No application code; no credentials baked in.
+# Connection string injected at runtime from Key Vault via managed identity.
+#
+# Build context: this folder (Infrastructure/tools/db-migrate). COPY paths are
+# relative to it, so the build never packs the rest of the repo.
+
+FROM debian:bookworm-slim
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        default-mysql-client \
+        ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /migrate
+
+COPY migrate.sh ./
+COPY migrations/ ./migrations/
+
+RUN chmod +x migrate.sh
+
+ENTRYPOINT ["/migrate/migrate.sh"]

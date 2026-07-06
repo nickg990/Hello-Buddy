@@ -1,7 +1,9 @@
 ﻿@model ExerciseEditorVm
+@using HelloBuddy.Application.Media
 @{
     var isCreate = !Model.ExerciseId.HasValue;
     ViewData["Title"] = isCreate ? "Add exercise" : "Edit exercise";
+    var currentImageDisplayUrl = GoogleDriveImageHelper.ToDisplayUrl(Model.Form.ImageUrl);
     var currentVideoUrlRaw = Model.Form.VideoUrl?.Trim() ?? string.Empty;
     var hasValidCurrentVideoUrl = Uri.TryCreate(currentVideoUrlRaw, UriKind.Absolute, out var parsedCurrentVideoUrl)
         && (parsedCurrentVideoUrl.Scheme == Uri.UriSchemeHttp || parsedCurrentVideoUrl.Scheme == Uri.UriSchemeHttps);
@@ -79,8 +81,8 @@ else
                             <div class="exercise-media-panel exercise-media-panel--tile border rounded p-2 d-flex align-items-center justify-content-center bg-light overflow-hidden">
                                 @if (!string.IsNullOrWhiteSpace(Model.Form.ImageUrl))
                                 {
-                                    <a href="@Model.Form.ImageUrl" target="_blank" rel="noopener noreferrer" title="Open full-size image in new tab" class="d-inline-flex">
-                                        <img src="@Model.Form.ImageUrl" alt="Current exercise image" class="exercise-media-item exercise-media-item--contain" />
+                                    <a href="@currentImageDisplayUrl" target="_blank" rel="noopener noreferrer" title="Open full-size image in new tab" class="d-inline-flex">
+                                        <img src="@currentImageDisplayUrl" alt="Current exercise image" class="exercise-media-item exercise-media-item--contain" />
                                     </a>
                                 }
                                 else

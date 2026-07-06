@@ -1,4 +1,5 @@
 using HelloBuddy.Admin.Pdf;
+using HelloBuddy.Application.Media;
 using HelloBuddy.Contracts;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -269,7 +270,9 @@ public sealed class ProgrammeService : IProgrammeService
 
         if (!TryResolveManagedKey(originalUrl, out var key))
         {
-            return originalUrl;
+            return GoogleDriveImageHelper.TryConvertToDirectUrl(originalUrl, out var driveUrl)
+                ? driveUrl
+                : originalUrl;
         }
 
         if (imageCache.TryGetValue(key, out var cached))

@@ -55,9 +55,16 @@ public sealed class PuppeteerPdfRenderer : IPdfRenderer, IAsyncDisposable
 
             _browser = await Puppeteer.LaunchAsync(new LaunchOptions
             {
-                Headless = true,
+                // Use the classic ("old") headless mode. PuppeteerSharp's
+                // Headless=true selects the new headless mode (--headless=new),
+                // which starts a full Chrome that needs a D-Bus system bus and
+                // graphics stack — neither exists in the slim container, so the
+                // browser crashes at launch ("Failed to connect to the bus" /
+                // "Failed to launch browser"). Shell mode (--headless) is the
+                // lightweight, container-proven path and needs no D-Bus/GPU.
+                HeadlessMode = HeadlessMode.Shell,
                 ExecutablePath = string.IsNullOrWhiteSpace(executablePath) ? null : executablePath,
-                Args = new[] { "--no-sandbox", "--disable-dev-shm-usage" }
+                Args = new[] { "--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu" }
             });
             return _browser;
         }
