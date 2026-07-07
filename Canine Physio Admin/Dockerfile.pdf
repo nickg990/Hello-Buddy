@@ -23,16 +23,15 @@ WORKDIR /app
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# CloudFront mirror — DevBox networks intermittently fail Fastly mirror (HTTP 470).
-RUN if [ -f /etc/apt/sources.list.d/debian.sources ]; then \
-    sed -i 's|deb.debian.org|cloudfront.debian.net|g' /etc/apt/sources.list.d/debian.sources; \
-    fi \
-    && if [ -f /etc/apt/sources.list ]; then \
-    sed -i 's|deb.debian.org|cloudfront.debian.net|g' /etc/apt/sources.list; \
-    fi \
-    && apt-get update \
+# Pin Chromium to 149.0.7827.114-1~deb12u1 — the version confirmed working on 2026-06-18.
+# snapshot.debian.org freezes the apt repo at that date, preventing silent apt-drift to a
+# newer Chromium that introduces a hard dbus dependency and crashes in a minimal container.
+RUN rm -f /etc/apt/sources.list.d/debian.sources \
+    && echo 'deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/20260618T000000Z/ bookworm main' > /etc/apt/sources.list \
+    && echo 'deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-security/20260618T000000Z/ bookworm-security main' >> /etc/apt/sources.list \
+    && apt-get -o Acquire::Check-Valid-Until=false update \
     && apt-get install -y --no-install-recommends \
-    chromium \
+    "chromium=149.0.7827.114-1~deb12u1" \
     ca-certificates \
     fonts-liberation \
     fonts-dejavu-core \
