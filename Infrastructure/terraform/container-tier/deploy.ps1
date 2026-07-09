@@ -25,7 +25,8 @@ param(
     [switch] $ApiOnly,
     [switch] $PdfOnly,
     [switch] $MigrateOnly,
-    [switch] $RunMigrations
+    [switch] $RunMigrations,
+    [switch] $ResetTracking
 )
 
 $ErrorActionPreference = "Stop"
@@ -251,9 +252,11 @@ try {
     Write-Host "==> Phase B: terraform apply (Container Apps + migration job, deploy_container_apps=true)" -ForegroundColor Cyan
     $imgArgs = Get-ImageVarArgs
     $subnetArg = if ($SubnetAppsId) { @("-var", "subnet_apps_id=$SubnetAppsId") } else { @() }
+    $resetArg = if ($ResetTracking) { @("-var", "migrate_reset_tracking=true") } else { @() }
     terraform apply -auto-approve `
         -var "deploy_container_apps=true" `
         @subnetArg `
+        @resetArg `
         @imgArgs | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "Phase B apply failed." }
 

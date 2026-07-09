@@ -684,6 +684,14 @@ resource "azurerm_container_app_job" "migrate" {
         name  = "SEED_BASELINE"
         value = var.migrate_seed_baseline
       }
+
+      # Set RESET_TRACKING=true for a one-off clean rebuild: drops the
+      # _migrations metadata DB so every script re-runs (0010 rebuilds the
+      # app DB from scratch). Destructive — disposable/seed data only.
+      env {
+        name  = "RESET_TRACKING"
+        value = var.migrate_reset_tracking
+      }
     }
   }
 

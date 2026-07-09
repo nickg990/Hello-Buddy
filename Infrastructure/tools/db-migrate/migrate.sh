@@ -22,6 +22,11 @@ set -e
 
 MIGRATIONS_DIR="${MIGRATIONS_DIR:-$(dirname "$0")/migrations}"
 SEED_BASELINE="${SEED_BASELINE:-false}"
+# RESET_TRACKING=true drops the metadata database so ALL migrations are treated
+# as unapplied and re-run from scratch. Because 0010_schema_fresh.sql performs
+# DROP DATABASE + CREATE DATABASE on the application DB, a reset run rebuilds the
+# entire schema cleanly. Destructive: only use on a disposable/seed database.
+RESET_TRACKING="${RESET_TRACKING:-false}"
 
 # ---------------------------------------------------------------------------
 # Parse an ADO.NET-style connection string key (case-insensitive).
@@ -73,6 +78,16 @@ MYSQL="mysql -h $MYSQL_HOST -P $MYSQL_PORT -u $MYSQL_USER --ssl"
 META_DB="${META_DB:-_migrations}"
 
 echo "==> Connecting to $MYSQL_HOST:$MYSQL_PORT database=$MYSQL_DB user=$MYSQL_USER"
+
+# ---------------------------------------------------------------------------
+# Optional: reset migration tracking so every script re-runs from scratch.
+# Dropping the metadata DB clears all recorded filenames; the next loop then
+# re-applies 0010 (DROP + CREATE app DB) through the latest script.
+# ---------------------------------------------------------------------------
+if [ "$RESET_TRACKING" = "true" ]; then
+    echo "==> RESET_TRACKING=true — dropping metadata database '$META_DB' to force full re-run"
+    $MYSQL -e "DROP DATABASE IF EXISTS \`$META_DB\`;"
+fi
 
 # ---------------------------------------------------------------------------
 # Ensure metadata database + schema_migrations tracking table exist

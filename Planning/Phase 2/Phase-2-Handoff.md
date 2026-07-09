@@ -120,3 +120,47 @@ az acr repository show-tags --name acrhellobuddyprod --repository hello-buddy-mi
 - On the Exercise edit screen, the **Current image** and **Selected image** panels do not display the image. Reported after the exercise image source was changed from local managed file lookup to a Google Drive URL.
 - Status: **under investigation — not yet fixed.**
 
+---
+
+## DEPLOYMENT LOG — 2026-07-07 (PDF Chromium drift ROOT-CAUSED & pinned; full redeploy)
+
+### PDF service 500 — root cause PROVEN and permanently fixed
+- **Recap:** After a rebuild the PDF container crashed at Chromium launch with `Failed to connect to the bus … /run/dbus/system_bus_socket`. The prior session left this **unresolved** (root cause unproven; `HeadlessMode.Shell` was in the deployed image yet the dbus error still appeared — the "key contradiction").
+- **Root cause CONFIRMED — apt Chromium version drift:**
+  - The deployed PDF app was tagged `3ecd02c` (git SHA) but its **image contents** were from a later rebuild. Image tags = git short SHA, so rebuilding the same commit produces a *new* image with whatever Chromium `apt-get install chromium` (unpinned) pulls that day.
+  - Deployed the genuinely older **build** `e993a5d` (from 2026-06-16) → PDF preview **worked**. Deployed the rebuilt `3ecd02c` → dbus failure. Same C# code, different Chromium = regression. Proven.
+  - Confirmed the working Chromium version by `az containerapp exec … dpkg -l chromium` on the `e993a5d` replica: **`149.0.7827.114-1~deb12u1`** (Debian 12 bookworm).
+  - Note: `PuppeteerSharp` is pinned at `20.1.3` in `Directory.Packages.props` (NuGet = exact versions, no `^`/`~`). The drift was **not** the .NET package — it was the OS-level `apt` Chromium.
+- **Permanent FIX (code) — pin Chromium reproducibly:** Rewrote the apt block in `Canine Physio Admin/Dockerfile.pdf`:
+  - Replaced the live Debian mirror (`deb.debian.org` / `cloudfront.debian.net`) with **`snapshot.debian.org` frozen at `20260618T000000Z`** (bookworm + bookworm-security), using `[check-valid-until=no]` and `apt-get -o Acquire::Check-Valid-Until=false update`.
+  - Pinned the package: `chromium=149.0.7827.114-1~deb12u1`.
+  - This makes every future rebuild install the exact same known-good Chromium — immune to apt drift. Complements the existing `HeadlessMode.Shell` + `--no-zygote` + `--disable-gpu` resilience already in `PuppeteerPdfRenderer.cs`.
+- **Committed:** `96cf58a "Chromium fix #1"` on `main`.
+- **Deployed PDF-only and VERIFIED:** `deploy.ps1 -PdfOnly` built + deployed; new revision **`ca-hello-buddy-pdf--0000003`**; PDF generation confirmed working on the freshly built, pinned image.
+
+### Git gotcha — detached HEAD during this session
+- The Chromium fix was first committed while in **detached HEAD** (checked out by SHA/tag, not the branch), so it did not appear in the graph and "Publish branch" failed with *"you are not currently on a branch"*.
+- **Recovery (clean, no loss):** `git checkout main` then `git merge --ff-only 96cf58a` fast-forwarded `main` onto the floating commit. A `Live-Demo-18.06.26` branch pointing at `3ecd02c` was also present as a known-good marker.
+- **Avoid next time:** `git switch main` before committing.
+
+### PDF ↔ UI/API contract — verified stable
+- The PDF service is decoupled by a stable HTTP contract: API builds self-contained HTML (exercise images **inlined as base64 data URLs** in `ProgrammeService.ResolveRenderableImageUrlAsync`) and POSTs `{ html }` to `/render`; PDF returns bytes. `RenderRequest`, `HttpPdfRenderer`, and `PdfService/Program.cs` are **byte-for-byte identical** between `3ecd02c` (18.06) and now.
+- Consequence: the fixed PDF container works with the older 18.06 UI/API unchanged. Only the wider `Contracts` project changed (e.g. `ProgrammeVm` +2 fields for R2-S8) — irrelevant to PDF, which only takes an HTML string.
+- Inline iframe preview needs no header changes: UI `ProgrammesController.PreviewPdf` and the API endpoint both return `File(bytes,"application/pdf")` with **no `Content-Disposition`** on the preview path.
+
+### Gotenberg migration brief — assessed, deferred
+- A brief proposed swapping the custom PuppeteerSharp PDF container for **Gotenberg**. Strategy is viable (clean `IPdfRenderer` seam; HTML already self-contained; inline headers already correct), BUT the brief's diagnosis was wrong for this codebase (it assumed Node/Puppeteer + `package.json` + docker-compose; reality is .NET/PuppeteerSharp + `apt` Chromium on Azure Container Apps).
+- Decision: **pin Chromium now** (done) as the fast, proven fix; Gotenberg remains an optional future strategic move to eliminate self-managed Chromium entirely.
+
+### Database + all containers redeploy (in progress at end of session)
+- Goal: rebuild the Azure DB (Increment 8 + Release 2 scripts) and deploy UI/API/PDF at the pinned commit.
+- **Private-DB constraint reconfirmed:** `mysql-hellobuddy-prod` is VNet-only. Attempts to clear the `_migrations` tracking DB from the workstation are impossible (no firewall path; no local `mysql` client). Any SQL must run from inside the VNet via the migrate job. **No firewall rule was left behind** (creation failed/aborted — nothing to clean up).
+- **Command given to operator (single-shot full deploy + migrate):**
+  ```powershell
+  cd "c:\Projects\Hello Buddy\Infrastructure\terraform\container-tier"; .\deploy.ps1 -RunMigrations
+  ```
+- **Watch the migrate job log for `applied=N skipped=M`:**
+  - `applied=7 skipped=0` → clean full rebuild + seed (intended).
+  - `skipped=7` → tracking rows from the 2026-07-06 run still exist in `_migrations`; nothing re-ran (DB already seeded and working, just not rebuilt). To force a from-scratch rebuild, the `_migrations.schema_migrations` rows must be cleared from **inside the VNet** (e.g. a one-off job/exec) so `0010` fires again.
+- Reminder (unchanged risk): `0010_schema_fresh.sql` does `DROP DATABASE`. Safe here because the DB is disposable; for a populated DB, run `SEED_BASELINE=true` first.
+

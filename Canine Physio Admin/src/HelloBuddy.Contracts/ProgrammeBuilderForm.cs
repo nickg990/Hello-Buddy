@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace HelloBuddy.Contracts;
 
 /// <summary>
@@ -22,6 +24,7 @@ public sealed class ProgrammeBuilderForm
         public ushort? Sets { get; set; }
         public ushort? HoldSeconds { get; set; }
         public ushort SortOrder { get; set; }
+        [StringLength(60)]
         public string? Notes { get; set; }
     }
 }

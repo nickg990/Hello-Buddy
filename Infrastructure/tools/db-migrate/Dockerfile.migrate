@@ -19,6 +19,10 @@ WORKDIR /migrate
 COPY migrate.sh ./
 COPY migrations/ ./migrations/
 
-RUN chmod +x migrate.sh
+# Normalise line endings and make executable. If migrate.sh were committed with
+# CRLF, the kernel would try to exec "/bin/sh\r" and fail with the misleading
+# "no such file or directory". Stripping CR here guarantees a Linux-safe script.
+RUN sed -i 's/\r$//' migrate.sh \
+    && chmod +x migrate.sh
 
 ENTRYPOINT ["/migrate/migrate.sh"]

@@ -222,7 +222,8 @@
                             </td>
                             <td>
                                 <label for="@notesId" class="visually-hidden">Notes for @ex.ExerciseTitle</label>
-                                <input id="@notesId" form="session-edits-form" type="text" class="form-control form-control-sm" name="@(prefix).Notes" value="@ex.Notes" data-initial-value="@ex.Notes" />
+                                <input id="@notesId" form="session-edits-form" type="text" class="form-control form-control-sm" name="@(prefix).Notes" value="@ex.Notes" data-initial-value="@ex.Notes" maxlength="60" />
+                                <div class="form-text">Max 60 characters</div>
                             </td>
                         </tr>
                         editIndex++;

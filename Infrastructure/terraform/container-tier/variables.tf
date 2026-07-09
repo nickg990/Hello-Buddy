@@ -196,6 +196,12 @@ variable "migrate_seed_baseline" {
   default     = "false"
 }
 
+variable "migrate_reset_tracking" {
+  description = "Set to \"true\" for a one-off clean rebuild: drops the _migrations metadata DB so every script re-runs (0010 DROPs + recreates the app DB). Destructive — disposable/seed data only. Leave \"false\" for normal runs."
+  type        = string
+  default     = "false"
+}
+
 variable "automation_account_name" {
   description = "Name of the existing Automation Account whose managed identity runs the scheduled Scale-ContainersUp/Down runbooks. Granted Contributor on the container apps so it can set scale.minReplicas."
   type        = string

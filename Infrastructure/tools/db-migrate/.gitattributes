@@ -1,0 +1,7 @@
+# Shell scripts and SQL run inside a Linux container and MUST use LF line
+# endings. CRLF on migrate.sh causes the kernel to look for the interpreter
+# "/bin/sh\r", producing the misleading error:
+#   exec /migrate/migrate.sh: no such file or directory
+*.sh text eol=lf
+*.sql text eol=lf
+Dockerfile* text eol=lf
