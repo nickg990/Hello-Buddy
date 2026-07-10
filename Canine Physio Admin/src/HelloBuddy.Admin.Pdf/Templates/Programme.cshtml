@@ -6,11 +6,23 @@
 <meta charset="utf-8" />
 <title>@Model.ProgrammeName &mdash; @Model.PetName</title>
 <style>
-@@page { size: A4; margin: 0; }
+/* PDF-S4: small top/bottom margin on EVERY page (incl. continuation pages);
+   left/right 0 to preserve the header band's horizontal full-bleed (horizontal
+   insets come from .content and .pdf-header padding).
+   PRECEDENCE NOTE: the PDF service passes PuppeteerSharp PdfOptions.MarginOptions
+   (12 mm all round in PuppeteerPdfRenderer.cs), but a CSS @@page margin takes
+   precedence over MarginOptions for the page box in Chromium print. The effective
+   margin is therefore this CSS 10 mm, NOT the C# value — the C# margins appear
+   inert by design. Margin lives here (API-rendered template), not in the PDF
+   service, per the agreed CSS-only decision (see DecisionLog). */
+@@page { size: A4; margin: 10mm 0; }
 /* ── Body ──────────────────────────────────────────────────────────────── */
 body { font-family: Georgia, Cambria, 'Times New Roman', serif; color: #223843; margin: 0; padding: 0; font-size: 10.5pt; line-height: 1.5; }
 /* ── Header band (dark #28404F) ──────────────────────────────────────── */
-.pdf-header { background: #28404F; padding: 10mm 14mm; display: flex; align-items: center; gap: 14px; }
+/* PDF-S4: negative top margin pulls the page-1 header up into the 10 mm @@page
+   top margin so it stays full-bleed to the very top edge, while pages 2+ (which
+   have no header) still get the uniform 10 mm top margin. */
+.pdf-header { background: #28404F; padding: 10mm 14mm; margin-top: -10mm; display: flex; align-items: center; gap: 14px; }
 /* Logo sized to match the header text block height (title 17pt + 2 sub-lines 9pt each). */
 .pdf-header-logo { width: 68px; height: 68px; flex-shrink: 0; }
 .pdf-header-body { flex: 1; }

@@ -147,4 +147,36 @@ public sealed class PdfTemplateTests
         Assert.False(valid, "Expected validation failure for note exceeding 60 chars");
         Assert.Contains(results, r => r.MemberNames.Contains(nameof(ProgrammeBuilderForm.SessionExerciseEdit.Notes)));
     }
+
+    // ── PDF-S3: page-break-inside rules ────────────────────────────────────
+
+    [Fact]
+    public async Task ExerciseRow_HasBothModernAndLegacyBreakInsideAvoid()
+    {
+        var ex = ExerciseRow();
+        var vm = MinimalVm(new[] { SessionWithExercise("single", ex) });
+        var html = await RenderAsync(vm);
+        // Both properties must be present so Chromium print keeps the exercise together
+        Assert.Contains("break-inside: avoid; page-break-inside: avoid;", html, StringComparison.Ordinal);
+    }
+
+    // ── PDF-S4: page margins ───────────────────────────────────────────────
+
+    [Fact]
+    public async Task PageRule_HasTopAndBottomMargin()
+    {
+        var vm = MinimalVm();
+        var html = await RenderAsync(vm);
+        // 10 mm top/bottom, 0 left/right so the header stays full-bleed horizontally
+        Assert.Contains("@page { size: A4; margin: 10mm 0; }", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task PdfHeader_HasNegativeTopMarginForFullBleed()
+    {
+        var vm = MinimalVm();
+        var html = await RenderAsync(vm);
+        // Negative top margin pulls the page-1 header up into the 10 mm @page top margin
+        Assert.Contains("margin-top: -10mm;", html, StringComparison.Ordinal);
+    }
 }

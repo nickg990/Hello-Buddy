@@ -1,7 +1,7 @@
 # PDF Viewer — Bug-Fix Stories (Programme PDF)
 
 **Created:** 2026-07-09
-**Status:** In progress — PDF-S2 complete, PDF-S1 complete, PDF-S3 complete, PDF-S4 next
+**Status:** Implementation complete — PDF-S1, PDF-S2, PDF-S3, PDF-S4 all done and unit-tested (13/13 green). Pending: combined api+ui deploy + live A4 verification.
 **Scope:** Hello Buddy — Canine Physiotherapy **Admin** (`Canine Physio Admin`), Programme PDF generation path
 **Source:** Four defects found during live testing of the Exercise Programme Builder → View PDF → PDF Viewer flow.
 **Implementation model:** AI-led implementation (Sonnet 4.6, measured in minutes) + human testing (~30–60 min per story). Estimates include 20% contingency. Azure PDF-image rebuild/rollout allowance added where a live check is needed.
@@ -28,6 +28,8 @@ These are deliberately explicit because they reflect where an AI implementer ten
 ## Increment: PDF Viewer defect remediation
 
 ### Story PDF-S1: Render exercise notes on the prescription line (60-char limit)
+
+> **✅ Implemented 2026-07-09.** Notes render inline on `.ex-prescription` after the hold segment (truncate 60 + `…`); `[StringLength(60)]` on `ProgrammeBuilderForm.SessionExerciseEdit.Notes`; builder input `maxlength="60"` + hint. Unit tests green.
 
 #### a) User story and brief for Sonnet
 **User story**
@@ -70,6 +72,8 @@ Constraints: keep the note **on the same physical line** — it must share the `
 
 ### Story PDF-S2: Capitalise the session period header ("Single")
 
+> **✅ Implemented 2026-07-09.** Period display-cased at render (first char upper, culture-invariant); `single`→`Single`, `AM`/`PM` unchanged; stored constant untouched. Unit tests green.
+
 #### a) User story and brief for Sonnet
 **User story**
 As a practitioner, when I build a **single-session** programme, I want the PDF session header to read **"Single"** (capital S), not "single", so the document looks professionally cased.
@@ -104,6 +108,8 @@ Constraints: display-only; no DB or constant change; no new dependency. Respect 
 
 ### Story PDF-S3: Never split an exercise across a page boundary (A4)
 
+> **✅ Implemented 2026-07-09.** Added legacy `page-break-inside: avoid` alongside modern `break-inside: avoid` on `.ex-row`, `.ex-row-top`, `.ex-instructions`; comment added near ERR-AT-013. Needs live multi-page A4 verification.
+
 #### a) User story and brief for Sonnet
 **User story**
 As an owner, I want each exercise to stay wholly on one page — if it will not fit in the remaining space, it should start on a new page — so I never have an exercise cut in half across an A4 page break.
@@ -136,6 +142,8 @@ Constraints: pure CSS in the template; no renderer change required for this stor
 ---
 
 ### Story PDF-S4: Small top and bottom margin on every page (A4)
+
+> **✅ Implemented 2026-07-09.** CSS-only: `@@page { margin: 10mm 0; }` + `.pdf-header { margin-top: -10mm; }` for page-1 full-bleed; precedence documented in CSS comment + DEC-016 in Admin Decision Log. `PuppeteerPdfRenderer.cs` unchanged. Needs live multi-page A4 verification (page 2+ margins, page-1 header).
 
 #### a) User story and brief for Sonnet
 **User story**
