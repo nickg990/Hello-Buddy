@@ -172,12 +172,14 @@ public sealed class PdfTemplateTests
     }
 
     [Fact]
-    public async Task PdfHeader_HasNegativeTopMarginForFullBleed()
+    public async Task PageRule_FirstPageHasNoTopMargin_ForFullBleedHeader()
     {
         var vm = MinimalVm();
         var html = await RenderAsync(vm);
-        // Negative top margin pulls the page-1 header up into the 10 mm @page top margin
-        Assert.Contains("margin-top: -10mm;", html, StringComparison.Ordinal);
+        // PDF-S7: page 1 zeroes the top margin so the full-bleed header butts the top edge;
+        // the fragile negative-margin hack on .pdf-header is gone.
+        Assert.Contains("@page :first { margin-top: 0; }", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("margin-top: -10mm;", html, StringComparison.Ordinal);
     }
 
     // ── PDF-S6: top border restored on .ex-row ──────────────────────────────
@@ -187,9 +189,20 @@ public sealed class PdfTemplateTests
     {
         var vm = MinimalVm();
         var html = await RenderAsync(vm);
-        // Full border (no border-top:0) + -1px margin so mid-page boxes collapse the overlap
+        // Base .ex-row: full border + -1px margin so mid-page boxes collapse the overlap
         // and new-page boxes retain their own top border line (PDF-S6).
         Assert.Contains("border: 1px solid #B9CBD4; margin-top: -1px;", html, StringComparison.Ordinal);
-        Assert.DoesNotContain("border-top: 0", html, StringComparison.Ordinal);
+    }
+
+    // ── PDF-S7: first box under a heading seams cleanly (no doubled/top-of-page-1 border) ──
+
+    [Fact]
+    public async Task FirstExerciseUnderHeading_HasNoTopBorder()
+    {
+        var vm = MinimalVm();
+        var html = await RenderAsync(vm);
+        // The first .ex-row after a heading/objective drops its top border so it seams
+        // cleanly with the fully-bordered heading (and does not double the line on page 1).
+        Assert.Contains(".session-objective + .ex-row { border-top: 0; margin-top: 0; }", html, StringComparison.Ordinal);
     }
 }

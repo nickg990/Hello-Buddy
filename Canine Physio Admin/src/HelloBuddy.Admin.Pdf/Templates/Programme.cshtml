@@ -16,13 +16,19 @@
    inert by design. Margin lives here (API-rendered template), not in the PDF
    service, per the agreed CSS-only decision (see DecisionLog). */
 @@page { size: A4; margin: 10mm 0; }
+/* PDF-S7: page 1 carries the full-bleed dark header, which must butt against the
+   very top edge. The 10 mm top margin above would push it down, so zero the top
+   margin on the FIRST page only (bottom margin retained). Continuation pages keep
+   the 10 mm top margin from the base @@page rule. @@page :first is honoured by
+   headless-shell Chromium print and replaces the earlier negative-margin hack. */
+@@page :first { margin-top: 0; }
 /* ── Body ──────────────────────────────────────────────────────────────── */
 body { font-family: Georgia, Cambria, 'Times New Roman', serif; color: #223843; margin: 0; padding: 0; font-size: 10.5pt; line-height: 1.5; }
 /* ── Header band (dark #28404F) ──────────────────────────────────────── */
-/* PDF-S4: negative top margin pulls the page-1 header up into the 10 mm @@page
-   top margin so it stays full-bleed to the very top edge, while pages 2+ (which
-   have no header) still get the uniform 10 mm top margin. */
-.pdf-header { background: #28404F; padding: 10mm 14mm; margin-top: -10mm; display: flex; align-items: center; gap: 14px; }
+/* PDF-S7: page-1 full-bleed is achieved by @@page :first { margin-top: 0 } above,
+   not by a negative margin here (that hack pushed the header down in Chromium).
+   .pdf-header therefore uses no negative top margin. */
+.pdf-header { background: #28404F; padding: 10mm 14mm; display: flex; align-items: center; gap: 14px; }
 /* Logo sized to match the header text block height (title 17pt + 2 sub-lines 9pt each). */
 .pdf-header-logo { width: 68px; height: 68px; flex-shrink: 0; }
 .pdf-header-body { flex: 1; }
@@ -56,6 +62,14 @@ body { font-family: Georgia, Cambria, 'Times New Roman', serif; color: #223843; 
    nothing to collapse against, so the top border reappears — fixing the
    open-topped-box symptom on continuation pages. */
 .ex-row { background: #F8FBFC; border: 1px solid #B9CBD4; margin-top: -1px; padding: 4mm 5mm; break-inside: avoid; page-break-inside: avoid; }
+/* PDF-S7: the FIRST exercise box in a session sits directly under the fully-
+   bordered .session-heading (or .session-objective). It must seam cleanly to
+   the heading with no top border of its own (the original design), otherwise
+   S6's per-box top border doubles the line at the top of page 1. Continuation-
+   page boxes are unaffected: they are never the first sibling after a heading,
+   so they keep the S6 top border that fixes the open-topped-box symptom. */
+.session-heading + .ex-row,
+.session-objective + .ex-row { border-top: 0; margin-top: 0; }
 .ex-row:last-child { border-radius: 0 0 2px 2px; }
 .ex-row-top { display: flex; gap: 10px; align-items: flex-start; break-inside: avoid; page-break-inside: avoid; }
 .ex-media { width: 76px; height: 76px; flex: 0 0 76px; border: 1px solid #6392AE; border-radius: 2px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #D4E0E5; }
