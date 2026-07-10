@@ -202,6 +202,95 @@ Constraints: A4. **CSS-only — no change to the PDF service.** Must be verified
 ## Container rebuild summary
 | Container | Rebuild? | Why |
 |-----------|----------|-----|
-| **api** | **Yes** | Renders `Programme.cshtml` (S1 notes, S2 period, S3 breaks, S4 CSS margins) + validates `[StringLength(60)]` |
-| **ui** | **Yes** | Builder notes input `maxlength` (S1) + shared Contracts validation attribute |
+| **api** | **Yes** | Renders `Programme.cshtml` (S1 notes, S2 period, S3 breaks, S4 CSS margins, S6 top border) + validates `[StringLength(60)]` |
+| **ui** | **Yes** | Builder notes input `maxlength` (S1/S5) + shared Contracts validation attribute |
 | **pdf** | **No** | S4 is CSS-only in the template; the PDF service only converts pre-built HTML — unchanged |
+
+---
+
+## Increment: PDF Viewer defect remediation — round 2 (found in live testing 2026-07-10)
+
+> **Depends on PDF-S1–S4 (already implemented 2026-07-09).** These two stories build directly on that work — read the round-1 working notes above first (same template, same RazorEngineCore rules). **Reminder: every `@page` in `Programme.cshtml` — including inside CSS comments — must be written `@@page` or RazorEngineCore fails to compile (bit us on S4).**
+
+### Story PDF-S5: Move the "max 60 characters" note limit off the builder input onto the session period header
+
+> **✅ Implemented 2026-07-10.** Per-row `form-text` hint removed; notes `<th>` header updated to "Notes (max 60 characters)". `maxlength="60"` retained on input. Build + 14 tests green.
+
+#### a) User story and brief for Sonnet
+**User story**
+As a practitioner, I do **not** want a per-row "Max 60 characters" hint under every notes input (it clutters the builder table). Instead I want the 60-character limit communicated **once per session**, on the session period header, so the header reads **"AM — Notes (max 60 characters)"**, **"PM — Notes (max 60 characters)"** and **"Single — Notes (max 60 characters)"**.
+
+**Brief for Sonnet**
+Current state (from PDF-S1): the builder notes input in [_BuilderEditor.cshtml](../../Canine%20Physio%20Admin/src/HelloBuddy.Ui/Views/Programmes/_BuilderEditor.cshtml) has both `maxlength="60"` and a `<div class="form-text">Max 60 characters</div>` hint rendered under **every** row's notes cell. The builder table `<thead>` has a plain `<th>Notes</th>`.
+
+Implement:
+1. **Remove the per-row hint.** Delete the `<div class="form-text">Max 60 characters</div>` line that was added under the notes `<input>` in PDF-S1. **Keep** `maxlength="60"` on the input (the client cap stays; only the visible per-row hint text moves).
+2. **Add the limit to the notes column header instead.** Change the builder table header cell from `<th>Notes</th>` to `<th>Notes <span class="text-muted fw-normal">(max 60 characters)</span></th>` (or equivalent) so the "max 60 characters" guidance appears once, in the column header, not on every row.
+3. **Scope confirmation on "headers (AM, PM and Single)":** the builder groups exercises **per session**, and each session table is headed by its period (AM/PM/Single). The single "Notes (max 60 characters)" column header therefore appears once under each session's period grouping — satisfying "add it to the headers (AM, PM and Single)". Do **not** alter the **PDF** session period header ([Programme.cshtml](../../Canine%20Physio%20Admin/src/HelloBuddy.Admin.Pdf/Templates/Programme.cshtml)) — this is a **builder-UI-only** change; the PDF does not show the limit text.
+4. Do **not** change `[StringLength(60)]` on `ProgrammeBuilderForm.SessionExerciseEdit.Notes` (server cap stays) or the template's 60-char truncation (last-resort cap stays). Only the **visible builder hint** relocates.
+5. Tests:
+   - UI view/markup test that the per-row `form-text` "Max 60 characters" no longer renders under the notes input.
+   - UI view/markup test that the notes column header contains "max 60 characters".
+   - Existing PDF-S1 tests (server `[StringLength(60)]`, template truncation) must remain green.
+
+Constraints: builder UI only; `maxlength="60"` retained on the input; server + template caps unchanged. Respect `TreatWarningsAsErrors`.
+
+#### b) Acceptance criteria
+- No "Max 60 characters" hint appears under individual notes inputs.
+- Each session's notes column header reads "Notes (max 60 characters)".
+- Typing in the builder still stops at 60 chars (input `maxlength` intact); server still rejects > 60; template still truncates legacy > 60.
+
+#### c) Estimate (incl. 20% contingency)
+| Phase | Base | With 20% |
+|-------|------|----------|
+| AI implementation (move hint to header + tests) | ~8 min | ~10 min |
+| Human testing (builder visual check across AM/PM/Single sessions) | 15 min | 18 min |
+| Azure deploy (**ui** image) + rollout wait | ~20 min | ~24 min |
+| **Total** | **~0.7 h** | **~0.9 h** |
+
+---
+
+### Story PDF-S6: Restore the top border on the first exercise box when it starts a new page (A4)
+
+> **✅ Implemented 2026-07-10.** `.ex-row` `border-top: 0` replaced with full `border: 1px` + `margin-top: -1px` collapse trick. Comment added. Build + 14 tests green. Needs live multi-page A4 verification.
+
+#### a) User story and brief for Sonnet
+**User story**
+As an owner, when an exercise box is the **first** on a continuation page, I want it to have a **top border line** like every other box, so it does not look like an open-topped box missing its lid.
+
+**Brief for Sonnet**
+Root cause (confirmed): in [Programme.cshtml](../../Canine%20Physio%20Admin/src/HelloBuddy.Admin.Pdf/Templates/Programme.cshtml) the exercise box rule is:
+```css
+.ex-row { background: #F8FBFC; border: 1px solid #B9CBD4; border-top: 0; padding: 4mm 5mm; break-inside: avoid; page-break-inside: avoid; }
+```
+`border-top: 0` is deliberate — each `.ex-row` normally *borrows* the bottom edge of the element **above** it (the previous `.ex-row`, or the `.session-heading` which has a full border). This looks correct mid-page. **But when a page break pushes an exercise to the top of a new page, the element it would have borrowed from is on the previous page**, so the new page's first box has **no top line** — an open-topped box.
+
+The fix must add a top border **only** to the box that lands at the top of a page, without double-bordering every mid-page box (which would create a 2px doubled line against the box above). This is a known CSS-print challenge because "first box on a page" is not directly selectable.
+
+Implement (CSS-only in the template; **verify empirically on a real multi-page PDF** — CSS print behaviour varies in headless-shell Chromium):
+1. **Preferred approach — give every `.ex-row` its own top border and collapse the overlap.** Set `.ex-row { border-top: 1px solid #B9CBD4; margin-top: -1px; }` (replace `border-top: 0`). The `-1px` top margin pulls each box up by one pixel so its own top border sits exactly over the previous box's bottom border mid-page (no visible doubling), while a box that starts a **new page** keeps its own top border (the negative margin has nothing to overlap at the page top, and the browser clamps it), so the line reappears. **This is the most robust and is the required first attempt.**
+2. If the `-1px` overlap proves visually imperfect in headless-shell Chromium (e.g. a faint doubled line or a 1px gap on some boxes), fall back to: keep `border-top: 0` on `.ex-row` and instead add a top border to the **session container's first child** and rely on `break-before`/`box-decoration-break: clone` — but **only** adopt a fallback if approach 1 is demonstrably wrong on a real PDF. Do not over-engineer if approach 1 works.
+3. Ensure the change does **not** regress PDF-S3 (no exercise splitting) — the atomic `.ex-row` break rules stay; you are only changing its **border/margin**, not its break behaviour.
+4. Ensure `.ex-row:last-child { border-radius: 0 0 2px 2px; }` still renders a clean rounded bottom, and the first `.ex-row` under a `.session-heading` still butts cleanly against the heading (the heading has `border-radius: 2px 2px 0 0` and a full border; with per-box top borders + `-1px` margin the seam should remain clean — **verify**).
+5. Add a short CSS comment explaining the `-1px` margin trick and why `border-top` was restored (reference PDF-S6 + the new-page open-box symptom).
+
+Constraints: CSS-only in the template; no renderer change; **must be validated on a multi-page A4 PDF** where at least one exercise starts at the top of a continuation page — confirm that box has a top line and mid-page boxes show no doubled line. Respect `TreatWarningsAsErrors` and the `@@page`-escaping rule.
+
+#### b) Acceptance criteria
+- An exercise box that starts at the top of a continuation page has a visible top border line.
+- Mid-page exercise boxes show a single clean divider (no doubled 2px line, no 1px gap) between consecutive boxes.
+- The first box under a session heading still seams cleanly with the heading; the last box keeps its rounded bottom.
+- PDF-S3 (no exercise split across pages) is not regressed.
+
+#### c) Estimate (incl. 20% contingency)
+| Phase | Base | With 20% |
+|-------|------|----------|
+| AI implementation (border + `-1px` margin + comment) | ~8 min | ~10 min |
+| Human testing (multi-page PDF; inspect page-top box + mid-page seams) | 35 min | 42 min |
+| Azure deploy (**api** image) + rollout wait | ~20 min | ~24 min |
+| **Total** | **~1.0 h** | **~1.2 h** |
+
+---
+
+### Round-2 combined deploy note
+Both round-2 stories share the template + builder. S5 = **ui** only; S6 = **api** only (template). Implement both, run `dotnet build` + in-memory tests once, then a single combined **api + ui** rebuild/redeploy. **pdf** container remains out of scope (no Chromium change; pinned image untouched).

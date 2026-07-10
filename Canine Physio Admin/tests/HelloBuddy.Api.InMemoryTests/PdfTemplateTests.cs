@@ -156,7 +156,7 @@ public sealed class PdfTemplateTests
         var ex = ExerciseRow();
         var vm = MinimalVm(new[] { SessionWithExercise("single", ex) });
         var html = await RenderAsync(vm);
-        // Both properties must be present so Chromium print keeps the exercise together
+        // Both modern + legacy break properties must be present on .ex-row-top or .ex-instructions
         Assert.Contains("break-inside: avoid; page-break-inside: avoid;", html, StringComparison.Ordinal);
     }
 
@@ -178,5 +178,18 @@ public sealed class PdfTemplateTests
         var html = await RenderAsync(vm);
         // Negative top margin pulls the page-1 header up into the 10 mm @page top margin
         Assert.Contains("margin-top: -10mm;", html, StringComparison.Ordinal);
+    }
+
+    // ── PDF-S6: top border restored on .ex-row ──────────────────────────────
+
+    [Fact]
+    public async Task ExerciseRow_HasTopBorderAndNegativeMarginForCollapse()
+    {
+        var vm = MinimalVm();
+        var html = await RenderAsync(vm);
+        // Full border (no border-top:0) + -1px margin so mid-page boxes collapse the overlap
+        // and new-page boxes retain their own top border line (PDF-S6).
+        Assert.Contains("border: 1px solid #B9CBD4; margin-top: -1px;", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("border-top: 0", html, StringComparison.Ordinal);
     }
 }
