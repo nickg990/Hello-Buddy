@@ -1,9 +1,11 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Net.Http.Headers;
+using HelloBuddy.Application.Records;
 using HelloBuddy.Contracts;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using MySqlConnector;
 using Xunit;
 
@@ -453,6 +455,140 @@ public sealed class ApiTestcontainerIntegrationTests
         Assert.NotNull(afterUpdate);
         var updatedRow = Assert.Single(Assert.Single(afterUpdate.Sessions).Exercises);
         Assert.Equal((ushort?)99, updatedRow.Reps);
+    }
+
+    // Regression: deleting a pet whose programme has a PUBLISHED version (with session
+    // occurrences, a completion and a skip - the mobile-app sync shape the MSc seed does
+    // not populate) must succeed. Previously EF deleted the Programme before its
+    // ProgrammeVersion stub, MySQL's ON DELETE CASCADE removed the version rows first, and
+    // EF's own DELETE then affected 0 rows -> DbUpdateConcurrencyException (HTTP 500).
+    [Fact]
+    public async Task DeletePet_WithPublishedProgramme_Succeeds()
+    {
+        var graph = await CreatePublishedProgrammeGraphAsync();
+
+        using var scope = _factory.Services.CreateScope();
+        var pets = scope.ServiceProvider.GetRequiredService<IPetRepository>();
+
+        var result = await pets.DeleteAsync(graph.PetId, graph.PractitionerId, CancellationToken.None);
+
+        Assert.Equal(PetDeleteResult.Deleted, result);
+        Assert.False(await RowExistsAsync("Pet", "PetId", graph.PetId));
+        Assert.False(await RowExistsAsync("Programme", "ProgrammeId", graph.ProgrammeId));
+        Assert.False(await RowExistsAsync("ProgrammeVersion", "ProgrammeVersionId", graph.VersionId));
+        // The owner is retained (pet delete does not remove the owner) and seed data is intact.
+        Assert.True(await RowExistsAsync("Owner", "OwnerId", graph.OwnerId));
+    }
+
+    // Regression: GDPR delete of an owner whose programme has a published version must
+    // succeed (same root cause as the pet path).
+    [Fact]
+    public async Task DeleteOwner_WithPublishedProgramme_Succeeds()
+    {
+        var graph = await CreatePublishedProgrammeGraphAsync();
+
+        using var scope = _factory.Services.CreateScope();
+        var owners = scope.ServiceProvider.GetRequiredService<IOwnerRepository>();
+
+        var result = await owners.ApplyDataControlAsync(graph.OwnerId, graph.PractitionerId, CancellationToken.None);
+
+        Assert.Equal(OwnerDataControlResult.Deleted, result);
+        Assert.False(await RowExistsAsync("Owner", "OwnerId", graph.OwnerId));
+        Assert.False(await RowExistsAsync("Pet", "PetId", graph.PetId));
+        Assert.False(await RowExistsAsync("Programme", "ProgrammeId", graph.ProgrammeId));
+        Assert.False(await RowExistsAsync("ProgrammeVersion", "ProgrammeVersionId", graph.VersionId));
+    }
+
+    private async Task<bool> RowExistsAsync(string table, string keyColumn, ulong id)
+    {
+        await using var conn = new MySqlConnection(_fixture.ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new MySqlCommand($"SELECT 1 FROM `{table}` WHERE `{keyColumn}` = @id LIMIT 1", conn);
+        cmd.Parameters.AddWithValue("@id", id);
+        return await cmd.ExecuteScalarAsync() is not null;
+    }
+
+    private readonly record struct PublishedProgrammeGraph(
+        ulong OwnerId,
+        ulong PetId,
+        ulong PractitionerId,
+        ulong ProgrammeId,
+        ulong VersionId);
+
+    // Builds a fully independent owner -> pet -> case -> programme graph with a PUBLISHED
+    // version plus a completed and a skipped session occurrence. Uses unique keys so it
+    // never collides with, or mutates, the shared MSc seed data.
+    private async Task<PublishedProgrammeGraph> CreatePublishedProgrammeGraphAsync()
+    {
+        var unique = Guid.NewGuid().ToString("N");
+
+        await using var conn = new MySqlConnection(_fixture.ConnectionString + ";AllowUserVariables=True");
+        await conn.OpenAsync();
+
+        const string sql = @"
+SET @PractitionerId = (SELECT PractitionerId FROM Practitioner ORDER BY PractitionerId LIMIT 1);
+SET @ExerciseId = (SELECT ExerciseId FROM Exercise ORDER BY ExerciseId LIMIT 1);
+
+INSERT INTO Owner (FirstName, LastName, Email) VALUES ('Del', 'Owner', @Email);
+SET @OwnerId = LAST_INSERT_ID();
+
+INSERT INTO Pet (OwnerId, Name, Sex) VALUES (@OwnerId, 'DelPet', 'male');
+SET @PetId = LAST_INSERT_ID();
+
+INSERT INTO Practitioner_Pet (PractitionerId, PetId, IsPrimary) VALUES (@PractitionerId, @PetId, TRUE);
+
+INSERT INTO TreatmentCase (PetId, PractitionerId, CaseTitle, StartDate)
+VALUES (@PetId, @PractitionerId, 'Del Case', CURRENT_DATE);
+SET @CaseId = LAST_INSERT_ID();
+
+INSERT INTO Programme (TreatmentCaseId, ProgrammeName, StartDate, Status)
+VALUES (@CaseId, 'Del Programme', CURRENT_DATE, 'active');
+SET @ProgrammeId = LAST_INSERT_ID();
+
+INSERT INTO Session (ProgrammeId, Period, SortOrder) VALUES (@ProgrammeId, 'AM', 1);
+SET @SessionId = LAST_INSERT_ID();
+
+INSERT INTO SessionExercise (SessionId, ExerciseId, SortOrder) VALUES (@SessionId, @ExerciseId, 1);
+SET @SessionExerciseId = LAST_INSERT_ID();
+
+INSERT INTO ProgrammeVersion (ProgrammeId, VersionNumber, VersionStatus, PayloadJson, PayloadSchemaVersion, CreatedByPractitionerId, CreatedDate, PublishedDate)
+VALUES (@ProgrammeId, 1, 'published', '{""programme"":""snapshot""}', '1.0.0', @PractitionerId, NOW(), NOW());
+SET @VersionId = LAST_INSERT_ID();
+
+UPDATE Programme SET CurrentProgrammeVersionId = @VersionId WHERE ProgrammeId = @ProgrammeId;
+
+INSERT INTO SessionOccurrence (ProgrammeVersionId, SessionId, PetId, ScheduledDate, Period, Status, CompletedDateTime)
+VALUES (@VersionId, @SessionId, @PetId, CURRENT_DATE, 'AM', 'completed', NOW());
+SET @OccurrenceId = LAST_INSERT_ID();
+
+INSERT INTO ExerciseCompletion (SessionOccurrenceId, SessionExerciseId, ExerciseKeySnapshot, ExerciseTitleSnapshot, CompletedDateTime, CompletionStatus)
+VALUES (@OccurrenceId, @SessionExerciseId, 'delKey', 'Del Ex', NOW(), 'completed');
+
+INSERT INTO SessionSkipReason (ReasonName, IsActive) VALUES (@ReasonName, TRUE);
+SET @ReasonId = LAST_INSERT_ID();
+
+INSERT INTO SessionOccurrence (ProgrammeVersionId, SessionId, PetId, ScheduledDate, Period, Status, SkippedDateTime)
+VALUES (@VersionId, @SessionId, @PetId, DATE_ADD(CURRENT_DATE, INTERVAL 1 DAY), 'PM', 'skipped', NOW());
+SET @SkipOccurrenceId = LAST_INSERT_ID();
+
+INSERT INTO SessionSkip (SessionOccurrenceId, SessionSkipReasonId, Comments)
+VALUES (@SkipOccurrenceId, @ReasonId, 'Del skip');
+
+SELECT @OwnerId, @PetId, @PractitionerId, @ProgrammeId, @VersionId;
+";
+
+        await using var cmd = new MySqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@Email", $"del-{unique}@example.test");
+        cmd.Parameters.AddWithValue("@ReasonName", $"Del reason {unique}");
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+        return new PublishedProgrammeGraph(
+            OwnerId: Convert.ToUInt64(reader.GetValue(0)),
+            PetId: Convert.ToUInt64(reader.GetValue(1)),
+            PractitionerId: Convert.ToUInt64(reader.GetValue(2)),
+            ProgrammeId: Convert.ToUInt64(reader.GetValue(3)),
+            VersionId: Convert.ToUInt64(reader.GetValue(4)));
     }
 
     private sealed class TestcontainerFactory : WebApplicationFactory<Program>

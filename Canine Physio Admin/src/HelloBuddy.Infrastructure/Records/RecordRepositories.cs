@@ -693,16 +693,12 @@ public sealed class OwnerRepository : IOwnerRepository
             _db.Sessions.RemoveRange(sessions);
         }
 
-        foreach (var programme in programmes)
-        {
-            programme.CurrentProgrammeVersionId = null;
-        }
-
-        // Delete versions by key without materialising the large PayloadJson column.
-        var programmeVersions = versionIds
-            .Select(id => new Programmeversion { ProgrammeVersionId = id })
-            .ToList();
-        _db.Programmeversions.RemoveRange(programmeVersions);
+        // Session occurrences (deleted above) are the only rows that RESTRICT deleting a
+        // ProgrammeVersion, so the versions can now be removed. Do NOT delete them via EF:
+        // Programme.CurrentProgrammeVersionId -> ProgrammeVersion and
+        // ProgrammeVersion.ProgrammeId -> Programme form a cycle EF cannot order when both
+        // ends are Deleted. Instead we delete the Programme and let MySQL's
+        // FK_ProgrammeVersion_Programme (ON DELETE CASCADE) remove the version rows.
         _db.Programmes.RemoveRange(programmes);
 
         var treatmentCases = await _db.Treatmentcases
@@ -1014,16 +1010,12 @@ public sealed class PetRepository : IPetRepository
             _db.Sessions.RemoveRange(sessions);
         }
 
-        foreach (var programme in programmes)
-        {
-            programme.CurrentProgrammeVersionId = null;
-        }
-
-        // Delete versions by key without materialising the large PayloadJson column.
-        var programmeVersions = versionIds
-            .Select(id => new Programmeversion { ProgrammeVersionId = id })
-            .ToList();
-        _db.Programmeversions.RemoveRange(programmeVersions);
+        // Session occurrences (deleted above) are the only rows that RESTRICT deleting a
+        // ProgrammeVersion, so the versions can now be removed. Do NOT delete them via EF:
+        // Programme.CurrentProgrammeVersionId -> ProgrammeVersion and
+        // ProgrammeVersion.ProgrammeId -> Programme form a cycle EF cannot order when both
+        // ends are Deleted. Instead we delete the Programme and let MySQL's
+        // FK_ProgrammeVersion_Programme (ON DELETE CASCADE) remove the version rows.
         _db.Programmes.RemoveRange(programmes);
 
         // Step 3: Delete treatment case notes and treatment cases
