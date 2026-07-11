@@ -15,3 +15,6 @@
 
 # Signing material
 *.keystore
+
+# Archives / large binaries (not tracked in git)
+*.zip

@@ -239,8 +239,19 @@ else
                                     <a class="btn btn-sm btn-outline-secondary" asp-controller="Programmes" asp-action="Builder"
                                        asp-route-id="@p.ProgrammeId">PDF Builder</a>
                                 }
-                                <a class="btn btn-sm btn-outline-secondary" asp-controller="Programmes" asp-action="Preview"
+                                @if (p.IsLockedForEdit)
+                                {
+                                    <span class="btn btn-sm btn-outline-secondary disabled"
+                                          aria-disabled="true"
+                                          title="Published programmes are locked. Create a new draft from PDF History to edit.">
+                                        PDF Viewer
+                                    </span>
+                                }
+                                else
+                                {
+                                    <a class="btn btn-sm btn-outline-secondary" asp-controller="Programmes" asp-action="Preview"
                                               asp-route-id="@p.ProgrammeId">PDF Viewer</a>
+                                }
                                           <a class="btn btn-sm btn-outline-secondary" asp-controller="Programmes" asp-action="History"
                                               asp-route-id="@p.ProgrammeId">PDF History</a>
                                 <form id="delete-programme-form-@p.ProgrammeId"
