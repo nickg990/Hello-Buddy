@@ -202,6 +202,17 @@ variable "migrate_reset_tracking" {
   default     = "false"
 }
 
+variable "exercise_import_mode" {
+  description = "Exercise library import mode for the migrate job. \"off\" (default) runs normal migrations. \"update\" upserts exercises from exercise-import.sql (nothing deleted). \"replace\" deletes exercises not referenced by any SessionExercise, then applies the import (in-use exercises are retained and overwritten)."
+  type        = string
+  default     = "off"
+
+  validation {
+    condition     = contains(["off", "update", "replace"], var.exercise_import_mode)
+    error_message = "exercise_import_mode must be one of: off, update, replace."
+  }
+}
+
 variable "automation_account_name" {
   description = "Name of the existing Automation Account whose managed identity runs the scheduled Scale-ContainersUp/Down runbooks. Granted Contributor on the container apps so it can set scale.minReplicas."
   type        = string

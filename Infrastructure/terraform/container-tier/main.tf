@@ -692,6 +692,15 @@ resource "azurerm_container_app_job" "migrate" {
         name  = "RESET_TRACKING"
         value = var.migrate_reset_tracking
       }
+
+      # EXERCISE_IMPORT selects a re-runnable exercise-library load instead of
+      # the normal migration loop: "off" (default), "update" (upsert only) or
+      # "replace" (delete unreferenced exercises, then upsert). Driven from
+      # deploy.ps1 -ExerciseImport; reset to "off" after the run.
+      env {
+        name  = "EXERCISE_IMPORT"
+        value = var.exercise_import_mode
+      }
     }
   }
 

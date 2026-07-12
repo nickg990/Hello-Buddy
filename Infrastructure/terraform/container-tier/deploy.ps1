@@ -12,6 +12,19 @@
 # Migration opt-in:
 #   -RunMigrations  After apply, trigger caj-hellobuddy-migrate and tail its logs.
 #                   Does NOT run automatically — must be explicitly passed.
+#                   When passed ALONE (no build/deploy switches) it skips the
+#                   Terraform apply and image builds entirely and just starts +
+#                   tails the existing job — a lightweight "run migrations now".
+#
+# Exercise library import:
+#   -ExerciseImport         Generate exercise-import.sql from the markdown, rebuild
+#                           the migrate image, apply the job with the chosen import
+#                           mode, run it, then reset the mode to "off".
+#   -ImportMode update|replace
+#                           update  = upsert exercises (nothing deleted).
+#                           replace = delete exercises not referenced by any
+#                                     SessionExercise, then upsert (in-use ones
+#                                     are retained and overwritten). Default: update.
 
 [CmdletBinding()]
 param(
@@ -26,6 +39,9 @@ param(
     [switch] $PdfOnly,
     [switch] $MigrateOnly,
     [switch] $RunMigrations,
+    [switch] $ExerciseImport,
+    [ValidateSet("update", "replace")]
+    [string] $ImportMode = "update",
     [switch] $ResetTracking
 )
 
@@ -108,6 +124,213 @@ function Get-ImageVarArgs {
     }
     return $args
 }
+
+# ----------------------------------------------------------------------------
+# Start the migration/import job and tail its logs. Shared by -RunMigrations
+# and -ExerciseImport. Throws if the job finishes in any state but Succeeded.
+# ----------------------------------------------------------------------------
+function Invoke-MigrateJobRun {
+    param(
+        [Parameter(Mandatory)] [string] $ResourceGroupName,
+        [string] $JobName = "caj-hellobuddy-migrate"
+    )
+
+    Write-Host ""
+    Write-Host "==> Starting job $JobName" -ForegroundColor Cyan
+    $execJson = az containerapp job start `
+        --resource-group $ResourceGroupName `
+        --name $JobName `
+        --output json 2>&1
+    if ($LASTEXITCODE -ne 0) { throw "Failed to start job: $execJson" }
+
+    $execName = ($execJson | ConvertFrom-Json).name
+    Write-Host "==> Job execution started: $execName"
+    Write-Host "==> Polling for completion (max 5 min)..."
+
+    $timeout = [DateTime]::UtcNow.AddMinutes(5)
+    $jobStatus = $null
+    while ([DateTime]::UtcNow -lt $timeout) {
+        Start-Sleep -Seconds 10
+        $statusJson = az containerapp job execution show `
+            --resource-group $ResourceGroupName `
+            --name $JobName `
+            --job-execution-name $execName `
+            --output json 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            $jobStatus = ($statusJson | ConvertFrom-Json).properties.status
+            Write-Host "    status: $jobStatus"
+            if ($jobStatus -in @("Succeeded", "Failed", "Unknown")) { break }
+        }
+    }
+
+    Write-Host ""
+    Write-Host "==> Fetching job logs:" -ForegroundColor Cyan
+    # Container App Job logs are surfaced through Log Analytics (there is no
+    # 'job execution logs show' subcommand). Ingestion lags by a minute or two,
+    # so poll the workspace a few times before giving up.
+    $logWorkspaceName = "log-hellobuddy-prod"
+    $customerId = az monitor log-analytics workspace show `
+        --resource-group $ResourceGroupName `
+        --workspace-name $logWorkspaceName `
+        --query customerId -o tsv 2>$null
+    if ($customerId) {
+        $kql = "ContainerAppConsoleLogs_CL | where ContainerGroupName_s == '$execName' | project TimeGenerated, Log_s | order by TimeGenerated asc | take 200"
+        $logsShown = $false
+        for ($i = 0; $i -lt 6; $i++) {
+            $logRows = az monitor log-analytics query `
+                --workspace $customerId `
+                --analytics-query $kql `
+                --output table 2>$null
+            if ($LASTEXITCODE -eq 0 -and $logRows) {
+                $logRows | Out-Host
+                $logsShown = $true
+                break
+            }
+            Write-Host "    (logs not yet available, retrying in 20s...)"
+            Start-Sleep -Seconds 20
+        }
+        if (-not $logsShown) {
+            Write-Host "    Logs not yet ingested. Query later with:" -ForegroundColor Yellow
+            Write-Host "    az monitor log-analytics query --workspace $customerId --analytics-query `"$kql`" --output table"
+        }
+    }
+    else {
+        Write-Host "    Could not resolve Log Analytics workspace '$logWorkspaceName' to fetch logs." -ForegroundColor Yellow
+    }
+
+    if ($jobStatus -ne "Succeeded") {
+        throw "Job '$JobName' finished with status '$jobStatus'. Check logs above."
+    }
+    Write-Host "==> Job completed successfully." -ForegroundColor Green
+}
+
+# ----------------------------------------------------------------------------
+# Return the currently-deployed image reference for a Container App, so a
+# job-only Terraform apply can keep the web apps pinned to their live images
+# (the *_app_image variables default to "" and would otherwise blank them).
+# ----------------------------------------------------------------------------
+function Get-LiveAppImage {
+    param(
+        [Parameter(Mandatory)] [string] $ResourceGroupName,
+        [Parameter(Mandatory)] [string] $AppName
+    )
+    $ref = az containerapp show `
+        --resource-group $ResourceGroupName `
+        --name $AppName `
+        --query "properties.template.containers[0].image" -o tsv 2>$null
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($ref)) {
+        throw "Could not read live image for $AppName; refusing to re-apply Terraform (would blank the app image)."
+    }
+    return $ref.Trim()
+}
+
+# ----------------------------------------------------------------------------
+# Standalone -RunMigrations: when passed with no build/deploy switches, skip
+# Terraform and image builds entirely and just start + tail the existing job.
+# ----------------------------------------------------------------------------
+if ($RunMigrations -and -not ($ExerciseImport -or $FoundationOnly -or $AppsOnly -or $componentDeploy)) {
+    Write-Host "==> -RunMigrations (standalone): starting existing job without deploy." -ForegroundColor Cyan
+    Invoke-MigrateJobRun -ResourceGroupName $ResourceGroupName -JobName "caj-hellobuddy-migrate"
+    return
+}
+
+# ----------------------------------------------------------------------------
+# -ExerciseImport: generate SQL from the markdown, rebuild the migrate image,
+# apply the job with EXERCISE_IMPORT=<mode>, run it, then reset the mode to off.
+# The web apps are left untouched (pinned to their live images).
+# ----------------------------------------------------------------------------
+if ($ExerciseImport) {
+    if ($FoundationOnly -or $AppsOnly -or $componentDeploy) {
+        throw "-ExerciseImport cannot be combined with -FoundationOnly, -AppsOnly, or component-only switches."
+    }
+
+    $migrateImg = $images | Where-Object { $_.Component -eq "migrate" } | Select-Object -First 1
+    $importGenerator = Join-Path $migrateImg.BuildContext "exercise-import\Generate-ExerciseImportSql.ps1"
+
+    Write-Host "==> Exercise import (mode=$ImportMode)" -ForegroundColor Cyan
+    Write-Host "==> Generating exercise-import.sql from markdown"
+    & $importGenerator
+    if ($LASTEXITCODE -ne 0) { throw "Exercise import SQL generation failed." }
+
+    # Build + push the migrate image (bakes in the freshly generated SQL).
+    if (-not $SkipBuild) {
+        $env:PYTHONUTF8 = '1'
+        $env:PYTHONIOENCODING = 'utf-8:replace'
+        Push-Location $migrateImg.BuildContext
+        try {
+            Write-Host "==> az acr build -t $($migrateImg.Name):$ImageTag -f $($migrateImg.Dockerfile) [--no-logs]" -ForegroundColor Cyan
+            az acr build `
+                --registry $acrName `
+                --image "$($migrateImg.Name):$ImageTag" `
+                --file $migrateImg.Dockerfile `
+                --no-logs `
+                . | Out-Host
+            if ($LASTEXITCODE -ne 0) { throw "az acr build failed for $($migrateImg.Name)." }
+        }
+        finally {
+            Pop-Location
+        }
+    }
+    else {
+        Write-Host "==> SkipBuild set; using existing migrate image tag $ImageTag" -ForegroundColor Yellow
+    }
+
+    # Pin the web apps to their live images so this job-only apply cannot blank them.
+    $liveUi = Get-LiveAppImage -ResourceGroupName $ResourceGroupName -AppName "ca-hello-buddy-ui"
+    $liveApi = Get-LiveAppImage -ResourceGroupName $ResourceGroupName -AppName "ca-hello-buddy-api"
+    $livePdf = Get-LiveAppImage -ResourceGroupName $ResourceGroupName -AppName "ca-hello-buddy-pdf"
+
+    $pinnedImageArgs = @(
+        "-var", "ui_app_image=$liveUi",
+        "-var", "api_app_image=$liveApi",
+        "-var", "pdf_app_image=$livePdf",
+        "-var", "migrate_app_image=$($migrateImg.Ref)"
+    )
+    $subnetArg = if ($SubnetAppsId) { @("-var", "subnet_apps_id=$SubnetAppsId") } else { @() }
+
+    Push-Location $tfDir
+    try {
+        if (-not (Test-Path .terraform)) {
+            Write-Host "==> terraform init"
+            terraform init | Out-Host
+        }
+
+        Write-Host "==> terraform apply (job env EXERCISE_IMPORT=$ImportMode)" -ForegroundColor Cyan
+        terraform apply -auto-approve `
+            -var "deploy_container_apps=true" `
+            -var "exercise_import_mode=$ImportMode" `
+            @subnetArg `
+            @pinnedImageArgs | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "Terraform apply (exercise import mode) failed." }
+    }
+    finally {
+        Pop-Location
+    }
+
+    try {
+        Invoke-MigrateJobRun -ResourceGroupName $ResourceGroupName -JobName "caj-hellobuddy-migrate"
+    }
+    finally {
+        # Always reset the mode back to off so a later migration run is unaffected.
+        Push-Location $tfDir
+        try {
+            Write-Host "==> terraform apply (reset exercise_import_mode=off)" -ForegroundColor Cyan
+            terraform apply -auto-approve `
+                -var "deploy_container_apps=true" `
+                -var "exercise_import_mode=off" `
+                @subnetArg `
+                @pinnedImageArgs | Out-Host
+            if ($LASTEXITCODE -ne 0) { Write-Host "WARNING: failed to reset exercise_import_mode to off -- do so manually." -ForegroundColor Yellow }
+        }
+        finally {
+            Pop-Location
+        }
+    }
+
+    Write-Host "==> Exercise import completed." -ForegroundColor Green
+    return
+}
+
 
 # ----------------------------------------------------------------------------
 # Phase A — foundation (skipped when -AppsOnly is set)
@@ -270,75 +493,10 @@ finally {
 
 # ----------------------------------------------------------------------------
 # Optional: trigger migration job (-RunMigrations)
-# Not run automatically — must be passed explicitly.
+# Not run automatically — must be passed explicitly. The standalone fast path
+# (no build/deploy switches) is handled earlier and returns before this point;
+# here we run after a full/partial apply has completed.
 # ----------------------------------------------------------------------------
 if ($RunMigrations) {
-    $jobName = "caj-hellobuddy-migrate"
-    Write-Host ""
-    Write-Host "==> -RunMigrations: starting $jobName" -ForegroundColor Cyan
-    $execJson = az containerapp job start `
-        --resource-group $ResourceGroupName `
-        --name $jobName `
-        --output json 2>&1
-    if ($LASTEXITCODE -ne 0) { throw "Failed to start migration job: $execJson" }
-
-    $execName = ($execJson | ConvertFrom-Json).name
-    Write-Host "==> Job execution started: $execName"
-    Write-Host "==> Polling for completion (max 5 min)..."
-
-    $timeout  = [DateTime]::UtcNow.AddMinutes(5)
-    $jobStatus = $null
-    while ([DateTime]::UtcNow -lt $timeout) {
-        Start-Sleep -Seconds 10
-        $statusJson = az containerapp job execution show `
-            --resource-group $ResourceGroupName `
-            --name $jobName `
-            --job-execution-name $execName `
-            --output json 2>&1
-        if ($LASTEXITCODE -eq 0) {
-            $jobStatus = ($statusJson | ConvertFrom-Json).properties.status
-            Write-Host "    status: $jobStatus"
-            if ($jobStatus -in @("Succeeded", "Failed", "Unknown")) { break }
-        }
-    }
-
-    Write-Host ""
-    Write-Host "==> Fetching job logs:" -ForegroundColor Cyan
-    # Container App Job logs are surfaced through Log Analytics (there is no
-    # 'job execution logs show' subcommand). Ingestion lags by a minute or two,
-    # so poll the workspace a few times before giving up.
-    $logWorkspaceName = "log-hellobuddy-prod"
-    $customerId = az monitor log-analytics workspace show `
-        --resource-group $ResourceGroupName `
-        --workspace-name $logWorkspaceName `
-        --query customerId -o tsv 2>$null
-    if ($customerId) {
-        $kql = "ContainerAppConsoleLogs_CL | where ContainerGroupName_s == '$execName' | project TimeGenerated, Log_s | order by TimeGenerated asc | take 200"
-        $logsShown = $false
-        for ($i = 0; $i -lt 6; $i++) {
-            $logRows = az monitor log-analytics query `
-                --workspace $customerId `
-                --analytics-query $kql `
-                --output table 2>$null
-            if ($LASTEXITCODE -eq 0 -and $logRows) {
-                $logRows | Out-Host
-                $logsShown = $true
-                break
-            }
-            Write-Host "    (logs not yet available, retrying in 20s...)"
-            Start-Sleep -Seconds 20
-        }
-        if (-not $logsShown) {
-            Write-Host "    Logs not yet ingested. Query later with:" -ForegroundColor Yellow
-            Write-Host "    az monitor log-analytics query --workspace $customerId --analytics-query `"$kql`" --output table"
-        }
-    }
-    else {
-        Write-Host "    Could not resolve Log Analytics workspace '$logWorkspaceName' to fetch logs." -ForegroundColor Yellow
-    }
-
-    if ($jobStatus -ne "Succeeded") {
-        throw "Migration job finished with status '$jobStatus'. Check logs above."
-    }
-    Write-Host "==> Migration job completed successfully." -ForegroundColor Green
+    Invoke-MigrateJobRun -ResourceGroupName $ResourceGroupName -JobName "caj-hellobuddy-migrate"
 }

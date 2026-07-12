@@ -47,6 +47,13 @@ az containerapp job start `
     --name caj-hellobuddy-migrate
 ```
 
+> **Note — standalone `-RunMigrations`:** when `-RunMigrations` is passed on its
+> own (no build/deploy switches such as `-ApiOnly`, `-AppsOnly`, `-FoundationOnly`
+> or `-ExerciseImport`), `deploy.ps1` now **skips the Terraform apply and image
+> builds entirely** and just starts + tails the existing job. This is the fast
+> "run migrations now" path. To force a full build + two-phase apply before
+> running, combine it with a deploy switch (e.g. `-MigrateOnly -RunMigrations`).
+
 ---
 
 ## Checking status and logs
@@ -159,6 +166,48 @@ Expected after baseline + Release 2 apply:
 | 0050_increment9_rollback_email_audit.sql | ... |
 | 0060_release2_exercise_audit.sql | ... |
 | 0070_release2_app_settings.sql | ... |
+
+---
+
+## Exercise library import
+
+The exercise library (categories, exercises, per-step instructions) is loaded
+through the **same migrate job** via a re-runnable import mode, driven from
+`deploy.ps1 -ExerciseImport`. It is separate from the numbered forward-only
+migrations: the source of truth is
+`Infrastructure/tools/db-migrate/exercise-import/exercises.md`, which is compiled
+to `exercise-import.sql` and baked into the migrate image.
+
+### Modes
+
+| `-ImportMode` | Behaviour |
+|---------------|-----------|
+| `update` (default) | Upsert only. Categories upsert on `CategoryKey`, exercises on `ExerciseKey`, instructions rebuilt per exercise. **Nothing is deleted.** |
+| `replace` | Deletes every `Exercise` **not referenced** by any `SessionExercise` row, then applies the upsert. Exercises currently in use by a programme are retained and overwritten (FK-safe guarded delete — a blanket delete would fail on `FK ... ON DELETE RESTRICT`). |
+
+### What `deploy.ps1 -ExerciseImport` does
+
+1. Regenerates `exercise-import.sql` from `exercises.md`.
+2. Rebuilds and pushes the migrate image (unless `-SkipBuild`).
+3. `terraform apply` with `exercise_import_mode=<update|replace>`, pinning the
+   web apps to their **live** images so they are never blanked.
+4. Starts + tails the job.
+5. `terraform apply` again to reset `exercise_import_mode=off`, so a later
+   `-RunMigrations` is unaffected. This reset runs even if the job fails.
+
+### Commands
+
+```powershell
+cd Infrastructure/terraform/container-tier
+
+# Upsert (safe, additive) — nothing removed
+.\deploy.ps1 -ExerciseImport -ImportMode update
+
+# Replace — remove unreferenced exercises, then upsert
+.\deploy.ps1 -ExerciseImport -ImportMode replace
+```
+
+The job log reports the `Exercise` row count before and after the import.
 
 ---
 

@@ -18,6 +18,7 @@ WORKDIR /migrate
 
 COPY migrate.sh ./
 COPY migrations/ ./migrations/
+COPY exercise-import/exercise-import.sql ./exercise-import/exercise-import.sql
 
 # Normalise line endings and make executable. If migrate.sh were committed with
 # CRLF, the kernel would try to exec "/bin/sh\r" and fail with the misleading

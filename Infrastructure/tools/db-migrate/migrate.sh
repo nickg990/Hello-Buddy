@@ -80,6 +80,60 @@ META_DB="${META_DB:-_migrations}"
 echo "==> Connecting to $MYSQL_HOST:$MYSQL_PORT database=$MYSQL_DB user=$MYSQL_USER"
 
 # ---------------------------------------------------------------------------
+# Exercise library import mode (independent of schema migrations).
+#
+# EXERCISE_IMPORT selects a re-runnable data load from exercise-import.sql
+# (baked into the image), NOT a tracked migration:
+#   off     — do nothing here; fall through to the normal migration loop.
+#   update  — upsert exercises/categories; existing rows are overwritten,
+#             missing rows are added. Nothing is deleted.
+#   replace — first delete exercises NOT referenced by any SessionExercise
+#             (their ExerciseInstruction rows cascade), then apply the import.
+#             In-use exercises are RESTRICT-protected, so they are retained and
+#             overwritten in place by the upsert. This is the FK-safe form of
+#             "delete everything and re-add".
+# ---------------------------------------------------------------------------
+EXERCISE_IMPORT="${EXERCISE_IMPORT:-off}"
+IMPORT_SQL="${IMPORT_SQL:-$(dirname "$0")/exercise-import/exercise-import.sql}"
+
+if [ "$EXERCISE_IMPORT" != "off" ]; then
+    echo "==> EXERCISE_IMPORT mode: $EXERCISE_IMPORT"
+
+    if [ "$EXERCISE_IMPORT" != "update" ] && [ "$EXERCISE_IMPORT" != "replace" ]; then
+        echo "ERROR: EXERCISE_IMPORT must be 'off', 'update' or 'replace' (got '$EXERCISE_IMPORT')." >&2
+        exit 1
+    fi
+
+    if [ ! -f "$IMPORT_SQL" ]; then
+        echo "ERROR: exercise import SQL not found at $IMPORT_SQL" >&2
+        exit 1
+    fi
+
+    TOTAL_BEFORE=$($MYSQL "$MYSQL_DB" -N -e "SELECT COUNT(*) FROM Exercise;" 2>/dev/null)
+    IN_USE=$($MYSQL "$MYSQL_DB" -N -e "SELECT COUNT(DISTINCT e.ExerciseId) FROM Exercise e JOIN SessionExercise se ON se.ExerciseId = e.ExerciseId;" 2>/dev/null)
+    echo "    Exercises before: ${TOTAL_BEFORE:-?} (referenced by a session: ${IN_USE:-?})"
+
+    if [ "$EXERCISE_IMPORT" = "replace" ]; then
+        echo "    replace: deleting exercises not referenced by any SessionExercise"
+        if ! $MYSQL "$MYSQL_DB" -e "DELETE e FROM Exercise e WHERE NOT EXISTS (SELECT 1 FROM SessionExercise se WHERE se.ExerciseId = e.ExerciseId);"; then
+            echo "ERROR deleting unreferenced exercises — aborting" >&2
+            exit 1
+        fi
+        echo "    retained ${IN_USE:-0} in-use exercise(s); they will be overwritten by the import"
+    fi
+
+    echo "==> Applying exercise import: $IMPORT_SQL"
+    if $MYSQL "$MYSQL_DB" < "$IMPORT_SQL"; then
+        TOTAL_AFTER=$($MYSQL "$MYSQL_DB" -N -e "SELECT COUNT(*) FROM Exercise;" 2>/dev/null)
+        echo "==> Exercise import complete: mode=$EXERCISE_IMPORT exercises=${TOTAL_AFTER:-?}"
+        exit 0
+    else
+        echo "ERROR applying exercise import — aborting" >&2
+        exit 1
+    fi
+fi
+
+# ---------------------------------------------------------------------------
 # Optional: reset migration tracking so every script re-runs from scratch.
 # Dropping the metadata DB clears all recorded filenames; the next loop then
 # re-applies 0010 (DROP + CREATE app DB) through the latest script.
