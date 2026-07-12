@@ -2,8 +2,10 @@ using HelloBuddy.Contracts;
 using HelloBuddy.Ui.Controllers;
 using HelloBuddy.Ui.Models;
 using HelloBuddy.Ui.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 using NSubstitute;
 using Xunit;
 
@@ -240,6 +242,110 @@ public sealed class ExercisesControllerTests
         var result = await sut.SetActive(1, false, CancellationToken.None);
 
         Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task Index_ExplicitFilter_PersistsFilterToCookie()
+    {
+        var api = CreateIndexApi();
+        var sut = CreateSut(api, new MediaSearchOptions());
+        SetHttpContext(sut, queryKeys: new Dictionary<string, StringValues>
+        {
+            ["searchText"] = "stretch",
+            ["categoryId"] = "7",
+            ["hasVideo"] = "true",
+            ["activeOnly"] = "false",
+        });
+
+        var result = await sut.Index("stretch", 7, true, activeOnly: false, CancellationToken.None);
+
+        var vm = Assert.IsType<ExerciseIndexVm>(Assert.IsType<ViewResult>(result).Model);
+        Assert.Equal("stretch", vm.Filter.SearchText);
+        Assert.Equal(7ul, vm.Filter.CategoryId);
+        Assert.True(vm.Filter.HasVideo);
+        Assert.False(vm.Filter.ActiveOnly);
+
+        var setCookie = sut.HttpContext.Response.Headers["Set-Cookie"].ToString();
+        Assert.Contains("hb_exercise_filter=", setCookie);
+    }
+
+    [Fact]
+    public async Task Index_NoQuery_RestoresFilterFromCookie()
+    {
+        var api = CreateIndexApi();
+
+        // First request applies an explicit filter and produces the Set-Cookie value.
+        var saver = CreateSut(api, new MediaSearchOptions());
+        SetHttpContext(saver, queryKeys: new Dictionary<string, StringValues>
+        {
+            ["searchText"] = "balance",
+            ["activeOnly"] = "false",
+        });
+        await saver.Index("balance", null, null, activeOnly: false, CancellationToken.None);
+        var cookieValue = ExtractCookieValue(saver.HttpContext.Response.Headers["Set-Cookie"].ToString());
+
+        // Second request carries no query string but presents the saved cookie.
+        var restorer = CreateSut(api, new MediaSearchOptions());
+        SetHttpContext(restorer, cookieHeader: $"hb_exercise_filter={cookieValue}");
+
+        var result = await restorer.Index(null, null, null, activeOnly: true, CancellationToken.None);
+
+        var vm = Assert.IsType<ExerciseIndexVm>(Assert.IsType<ViewResult>(result).Model);
+        Assert.Equal("balance", vm.Filter.SearchText);
+        Assert.False(vm.Filter.ActiveOnly);
+    }
+
+    [Fact]
+    public async Task Index_NoQueryNoCookie_UsesDefaults()
+    {
+        var api = CreateIndexApi();
+        var sut = CreateSut(api, new MediaSearchOptions());
+        SetHttpContext(sut);
+
+        var result = await sut.Index(null, null, null, activeOnly: true, CancellationToken.None);
+
+        var vm = Assert.IsType<ExerciseIndexVm>(Assert.IsType<ViewResult>(result).Model);
+        Assert.Null(vm.Filter.SearchText);
+        Assert.Null(vm.Filter.CategoryId);
+        Assert.Null(vm.Filter.HasVideo);
+        Assert.True(vm.Filter.ActiveOnly);
+    }
+
+    private static IAdminApiClient CreateIndexApi()
+    {
+        var api = Substitute.For<IAdminApiClient>();
+        api.ListExercisesAsync(Arg.Any<ExerciseListFilter>(), Arg.Any<CancellationToken>())
+            .Returns(new List<ExerciseListItem>());
+        api.ListExerciseCategoriesAsync(Arg.Any<CancellationToken>())
+            .Returns(new List<ExerciseCategoryListItem>());
+        return api;
+    }
+
+    private static void SetHttpContext(
+        ExercisesController controller,
+        IDictionary<string, StringValues>? queryKeys = null,
+        string? cookieHeader = null)
+    {
+        var httpContext = new DefaultHttpContext();
+        if (queryKeys is not null)
+        {
+            httpContext.Request.Query = new QueryCollection(new Dictionary<string, StringValues>(queryKeys));
+        }
+        if (cookieHeader is not null)
+        {
+            httpContext.Request.Headers["Cookie"] = cookieHeader;
+        }
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = httpContext,
+        };
+    }
+
+    private static string ExtractCookieValue(string setCookieHeader)
+    {
+        // "hb_exercise_filter=<value>; path=/; secure; samesite=lax; httponly"
+        var firstSegment = setCookieHeader.Split(';', 2)[0];
+        return firstSegment.Split('=', 2)[1];
     }
 
     private static ExercisesController CreateSut(IAdminApiClient api, MediaSearchOptions options)

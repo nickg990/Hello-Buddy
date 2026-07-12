@@ -5,12 +5,15 @@ using HelloBuddy.Ui.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Options;
+using System.Text.Json;
 
 namespace HelloBuddy.Ui.Controllers;
 
 [Route("Exercises")]
 public class ExercisesController : Controller
 {
+    private const string FilterCookieName = "hb_exercise_filter";
+
     private readonly IAdminApiClient _api;
     private readonly MediaSearchOptions _mediaSearchOptions;
 
@@ -28,13 +31,40 @@ public class ExercisesController : Controller
         bool activeOnly = true,
         CancellationToken ct = default)
     {
-        var filter = new ExerciseListFilter
+        // The filter is submitted via GET, but the "Back to exercise library" links
+        // (and any other navigation back to this page) carry no query string, which
+        // would otherwise reset the filter. Persist the last-applied filter in a
+        // cookie so it survives navigation for the session: an explicit submit (any
+        // filter key present in the query) saves the filter; a bare navigation with
+        // no filter keys restores it.
+        var hasExplicitFilter =
+            Request.Query.ContainsKey(nameof(searchText))
+            || Request.Query.ContainsKey(nameof(categoryId))
+            || Request.Query.ContainsKey(nameof(hasVideo))
+            || Request.Query.ContainsKey(nameof(activeOnly));
+
+        ExerciseListFilter filter;
+        if (hasExplicitFilter)
         {
-            SearchText = searchText,
-            CategoryId = categoryId,
-            HasVideo = hasVideo,
-            ActiveOnly = activeOnly
-        };
+            filter = new ExerciseListFilter
+            {
+                SearchText = searchText,
+                CategoryId = categoryId,
+                HasVideo = hasVideo,
+                ActiveOnly = activeOnly
+            };
+            SaveFilterCookie(filter);
+        }
+        else
+        {
+            filter = ReadFilterCookie() ?? new ExerciseListFilter
+            {
+                SearchText = searchText,
+                CategoryId = categoryId,
+                HasVideo = hasVideo,
+                ActiveOnly = activeOnly
+            };
+        }
 
         var vm = new ExerciseIndexVm
         {
@@ -44,6 +74,36 @@ public class ExercisesController : Controller
         };
 
         return View(vm);
+    }
+
+    private void SaveFilterCookie(ExerciseListFilter filter)
+    {
+        var json = JsonSerializer.Serialize(filter);
+        Response.Cookies.Append(FilterCookieName, json, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Lax,
+            IsEssential = true,
+            // Session cookie (no Expires/MaxAge): cleared when the browser closes.
+        });
+    }
+
+    private ExerciseListFilter? ReadFilterCookie()
+    {
+        if (!Request.Cookies.TryGetValue(FilterCookieName, out var json) || string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<ExerciseListFilter>(json);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     [HttpGet("{id:long}")]
