@@ -322,7 +322,11 @@ else
                 const marker = '/exercise-media/';
                 const i = value.indexOf(marker);
                 if (i >= 0) {
-                    const key = value.substring(i + 1);
+                    // The blob path may be percent-encoded (spaces as %20). Decode first
+                    // so encodeURIComponent produces a single-encoded key (%20), not a
+                    // double-encoded one (%2520) that fails the server-side blob lookup.
+                    let key = value.substring(i + 1);
+                    try { key = decodeURIComponent(key); } catch { /* leave as-is if not valid encoding */ }
                     return '/Exercises/MediaContent?key=' + encodeURIComponent(key);
                 }
                 return value;

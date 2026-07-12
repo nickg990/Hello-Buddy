@@ -42,7 +42,12 @@ public static class ExerciseMediaKey
             return false;
         }
 
-        key = relative;
+        // uri.AbsolutePath keeps the path percent-encoded (e.g. spaces as %20).
+        // Blob keys are the decoded path, and every consumer (blob lookups,
+        // Url.Action re-encoding) expects a decoded key. Returning the encoded
+        // form here causes double-encoding downstream (%20 -> %2520) and 404s
+        // for any blob whose name contains spaces or other reserved characters.
+        key = Uri.UnescapeDataString(relative);
         return true;
     }
 }
