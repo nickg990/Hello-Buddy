@@ -279,6 +279,26 @@ public sealed class UiSmokeTests : IClassFixture<UiSmokeTests.Factory>
     }
 
     [Fact]
+    public async Task BuilderPage_RendersReusableExerciseFilterPane_AndDropsCategoryFromDropdown()
+    {
+        var response = await _client.GetAsync("/Programmes/1/Builder");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var html = await response.Content.ReadAsStringAsync();
+
+        // Reusable filter pane is present and targets the session's add-exercise select.
+        Assert.Contains("data-exercise-filter=\"true\"", html);
+        Assert.Contains("data-target-select=\"#add-exercise-1\"", html);
+
+        // The pane exposes the category criterion (populated from active categories).
+        Assert.Contains("data-filter-category", html);
+
+        // Category name is no longer appended to the dropdown option text
+        // (it is now a filter criterion instead).
+        Assert.DoesNotContain($"{StubAdminApiClient.Exercise.Title} (Strength)", html);
+    }
+
+    [Fact]
     public async Task BuilderPreviewPanel_RendersExpectedContent()
     {
         var response = await _client.GetAsync("/Programmes/1/Builder/PreviewPanel");

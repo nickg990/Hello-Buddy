@@ -1104,7 +1104,11 @@ public sealed class TreatmentCaseRepository : ITreatmentCaseRepository
                 OwnerEmail = x.Pet.Owner.Email,
                 PractitionerName = x.Practitioner.FirstName + " " + x.Practitioner.LastName,
                 Notes = x.Treatmentcasenotes
+                    // Newest first. TreatmentCaseNoteId is the tiebreaker so notes
+                    // created within the same second still order deterministically
+                    // (the later insert has the higher id).
                     .OrderByDescending(n => n.CreatedDate)
+                    .ThenByDescending(n => n.TreatmentCaseNoteId)
                     .Select(n => new CaseDetailVm.NoteRow(
                         n.TreatmentCaseNoteId,
                         n.CreatedDate,

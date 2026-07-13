@@ -1,0 +1,49 @@
+@model HelloBuddy.Ui.Models.ExerciseFilterPaneVm
+@{
+    var key = Model.InstanceKey;
+    var searchId = $"ex-filter-search-{key}";
+    var categoryId = $"ex-filter-category-{key}";
+    var videoId = $"ex-filter-video-{key}";
+    var activeId = $"ex-filter-active-{key}";
+}
+
+<div class="exercise-filter-pane border rounded p-2 mb-2 bg-body-tertiary"
+     data-exercise-filter="true"
+     data-filter-key="@key"
+     data-filter-scope="@Model.PersistScope"
+     data-target-select="@Model.TargetSelectSelector">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label mb-1 small" for="@searchId">Search</label>
+            <input id="@searchId" type="text" class="form-control form-control-sm" data-filter-search
+                   placeholder="Title or summary" autocomplete="off" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label mb-1 small" for="@categoryId">Category</label>
+            <select id="@categoryId" class="form-select form-select-sm" data-filter-category>
+                <option value="">All categories</option>
+                @foreach (var category in Model.CategoryOptions)
+                {
+                    <option value="@category.Value">@category.Text</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label mb-1 small" for="@videoId">Video</label>
+            <select id="@videoId" class="form-select form-select-sm" data-filter-video>
+                <option value="">Any</option>
+                <option value="true">Has video</option>
+                <option value="false">No video</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <div class="form-check mt-4">
+                <input class="form-check-input" type="checkbox" id="@activeId" data-filter-active checked />
+                <label class="form-check-label small" for="@activeId">Active only</label>
+            </div>
+        </div>
+        <div class="col-md-1 d-grid">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-filter-clear title="Clear filter">Clear</button>
+        </div>
+    </div>
+</div>

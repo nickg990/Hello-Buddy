@@ -95,6 +95,20 @@
             <div class="form-text">Required: summarise the purpose for this session.</div>
         </div>
 
+        @{
+            var filterPaneVm = new HelloBuddy.Ui.Models.ExerciseFilterPaneVm
+            {
+                InstanceKey = session.SessionId.ToString(),
+                PersistScope = $"programme-{programme.ProgrammeId}",
+                CategoryOptions = Model.CategoryOptions,
+                TargetSelectSelector = $"#add-exercise-{session.SessionId}",
+            };
+        }
+        <div class="card-body border-bottom bg-light-subtle">
+            <label class="form-label mb-1">Filter exercises</label>
+            <partial name="_ExerciseFilterPane" model="filterPaneVm" />
+        </div>
+
         <div class="card-body border-bottom bg-light-subtle">
             <div class="row g-2">
                 <div class="col-md-8">
@@ -106,7 +120,11 @@
                                 <option value="">Select exercise...</option>
                                 @foreach (var ex in Model.AvailableExercises.Where(e => !sessionExerciseIds.Contains(e.ExerciseId)))
                                 {
-                                    <option value="@ex.ExerciseId">@ex.Title (@ex.CategoryName)</option>
+                                    <option value="@ex.ExerciseId"
+                                            data-category-id="@(ex.ExerciseCategoryId?.ToString() ?? string.Empty)"
+                                            data-has-video="@(ex.HasVideo ? "true" : "false")"
+                                            data-active="@(ex.IsActive ? "true" : "false")"
+                                            data-search="@($"{ex.Title} {ex.ObjectiveSummary}".Trim().ToLowerInvariant())">@ex.Title</option>
                                 }
                             </select>
                         </div>

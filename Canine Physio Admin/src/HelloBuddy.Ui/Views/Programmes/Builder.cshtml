@@ -96,7 +96,112 @@
                 editorHost.innerHTML = await editorResponse.text();
                 bindChangeState();
                 bindAsyncForms();
+                initExerciseFilters();
                 window.scrollTo({ top: currentScroll, behavior: 'auto' });
+            };
+
+            // ── Reusable exercise-filter panes ─────────────────────────────────
+            // Each [data-exercise-filter] pane narrows the options of its target
+            // <select> client-side (search / category / video / active-only) and
+            // persists its criteria per (scope, key) in sessionStorage so the
+            // filter survives navigating away and back for the session.
+            const initExerciseFilters = () => {
+                root.querySelectorAll('[data-exercise-filter="true"]').forEach(function (pane) {
+                    if (pane.dataset.filterBound === 'true') {
+                        return;
+                    }
+                    pane.dataset.filterBound = 'true';
+
+                    const scope = pane.dataset.filterScope || '';
+                    const key = pane.dataset.filterKey || '';
+                    const storageKey = 'hb-ex-filter:' + scope + ':' + key;
+                    const targetSelect = document.querySelector(pane.dataset.targetSelect);
+                    if (!targetSelect) {
+                        return;
+                    }
+
+                    const searchInput = pane.querySelector('[data-filter-search]');
+                    const categorySelect = pane.querySelector('[data-filter-category]');
+                    const videoSelect = pane.querySelector('[data-filter-video]');
+                    const activeCheck = pane.querySelector('[data-filter-active]');
+                    const clearButton = pane.querySelector('[data-filter-clear]');
+
+                    const readState = () => ({
+                        search: (searchInput?.value || '').trim().toLowerCase(),
+                        category: categorySelect?.value || '',
+                        video: videoSelect?.value || '',
+                        activeOnly: activeCheck ? activeCheck.checked : true,
+                    });
+
+                    const applyFilter = () => {
+                        const state = readState();
+                        let hiddenSelected = false;
+
+                        Array.from(targetSelect.options).forEach(function (option) {
+                            if (!option.value) {
+                                return; // keep the "Select exercise..." prompt
+                            }
+                            const matchesSearch = !state.search
+                                || (option.dataset.search || '').indexOf(state.search) !== -1;
+                            const matchesCategory = !state.category
+                                || option.dataset.categoryId === state.category;
+                            const matchesVideo = !state.video
+                                || option.dataset.hasVideo === state.video;
+                            const matchesActive = !state.activeOnly
+                                || option.dataset.active === 'true';
+
+                            const visible = matchesSearch && matchesCategory && matchesVideo && matchesActive;
+                            option.hidden = !visible;
+                            option.disabled = !visible;
+                            if (!visible && option.selected) {
+                                option.selected = false;
+                                hiddenSelected = true;
+                            }
+                        });
+
+                        if (hiddenSelected) {
+                            targetSelect.value = '';
+                        }
+                    };
+
+                    const persist = () => {
+                        try {
+                            sessionStorage.setItem(storageKey, JSON.stringify(readState()));
+                        } catch (e) { /* storage unavailable — filter still works */ }
+                    };
+
+                    const restore = () => {
+                        let saved = null;
+                        try {
+                            const raw = sessionStorage.getItem(storageKey);
+                            saved = raw ? JSON.parse(raw) : null;
+                        } catch (e) { saved = null; }
+                        if (!saved) {
+                            return;
+                        }
+                        if (searchInput) { searchInput.value = saved.search || ''; }
+                        if (categorySelect) { categorySelect.value = saved.category || ''; }
+                        if (videoSelect) { videoSelect.value = saved.video || ''; }
+                        if (activeCheck) { activeCheck.checked = saved.activeOnly !== false; }
+                    };
+
+                    const onChange = () => { persist(); applyFilter(); };
+
+                    searchInput?.addEventListener('input', onChange);
+                    categorySelect?.addEventListener('change', onChange);
+                    videoSelect?.addEventListener('change', onChange);
+                    activeCheck?.addEventListener('change', onChange);
+                    clearButton?.addEventListener('click', function () {
+                        if (searchInput) { searchInput.value = ''; }
+                        if (categorySelect) { categorySelect.value = ''; }
+                        if (videoSelect) { videoSelect.value = ''; }
+                        if (activeCheck) { activeCheck.checked = true; }
+                        onChange();
+                    });
+
+                    restore();
+                    applyFilter();
+                });
             };
 
             const bindAsyncForms = () => {
@@ -198,6 +303,7 @@
 
             bindChangeState();
             bindAsyncForms();
+            initExerciseFilters();
 
             // Remove exercise confirmation modal handler (wired once; pendingRemoveForm set in bindAsyncForms)
             var removeExerciseConfirmBtn = document.getElementById('remove-exercise-confirm-btn');

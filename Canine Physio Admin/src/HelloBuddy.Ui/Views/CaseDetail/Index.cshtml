@@ -67,222 +67,9 @@
     </div>
 }
 
-<div class="row g-4 mb-4">
-    <div class="col-lg-7">
-        <div class="card h-100">
-            <div class="card-body">
-                <h2 class="h4">Case notes</h2>
-                @if (Model.Case.Notes.Count == 0)
-                {
-                    <div class="alert alert-info mb-0">No case notes recorded yet.</div>
-                }
-                else
-                {
-                    <div class="list-group">
-                        @foreach (var note in Model.Case.Notes)
-                        {
-                            var noteTypeLabel = string.IsNullOrWhiteSpace(note.NoteType) ? "Clinical note" : note.NoteType;
-                            <div class="list-group-item">
-                                <div class="d-flex justify-content-between align-items-start gap-2">
-                                    <strong>@noteTypeLabel</strong>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="text-muted">@note.CreatedDate.ToString("yyyy-MM-dd HH:mm")</span>
-                                        <button type="button"
-                                                class="btn btn-sm btn-outline-secondary"
-                                                title="Edit note"
-                                                aria-label="Edit note"
-                                                data-edit-note
-                                                data-note-id="@note.TreatmentCaseNoteId"
-                                                data-note-type="@note.NoteType"
-                                                data-note-text="@note.NoteText">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                                                <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z" />
-                                            </svg>
-                                        </button>
-                                        <form id="delete-note-form-@note.TreatmentCaseNoteId"
-                                              asp-action="DeleteNote"
-                                              asp-route-id="@Model.Case.TreatmentCaseId"
-                                              asp-route-noteId="@note.TreatmentCaseNoteId"
-                                              method="post"
-                                              class="d-inline">
-                                            @Html.AntiForgeryToken()
-                                            <button type="button"
-                                                    class="btn btn-sm btn-outline-danger"
-                                                    title="Delete note"
-                                                    aria-label="Delete note"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#deleteNoteModal"
-                                                    data-confirm-form-id="delete-note-form-@note.TreatmentCaseNoteId">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0A.5.5 0 0 1 8.5 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z" />
-                                                    <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2H5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1h2.5a1 1 0 0 1 1 1ZM6 2v.5h4V2H6ZM4 4v9a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4H4Z" />
-                                                </svg>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                                <p class="mb-0 mt-2">@note.NoteText</p>
-                            </div>
-                        }
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-5">
-        <div class="card h-100">
-            <div class="card-body">
-                <h2 class="h4">Add case note</h2>
-                <form asp-action="Notes" asp-route-id="@Model.Case.TreatmentCaseId" method="post">
-                    @Html.AntiForgeryToken()
-                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-                    <div class="mb-3">
-                        <label asp-for="NewNote.NoteType" class="form-label"></label>
-                        <input asp-for="NewNote.NoteType" class="form-control" />
-                        <span asp-validation-for="NewNote.NoteType" class="text-danger"></span>
-                    </div>
-                    <div class="mb-3">
-                        <label asp-for="NewNote.NoteText" class="form-label"></label>
-                        <textarea asp-for="NewNote.NoteText" class="form-control" rows="6"></textarea>
-                        <span asp-validation-for="NewNote.NoteText" class="text-danger"></span>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Add note</button>
-                </form>
-            </div>
-        </div>
-    </div>
+<div id="caseDetailBody" data-case-content-url="/Cases/@Model.Case.TreatmentCaseId/ContentPanel">
+    <partial name="_CaseDetailBody" model="Model" />
 </div>
-
-<div class="d-flex justify-content-between align-items-start mb-3">
-    <div>
-        <h2 class="h4 mb-0">Programmes</h2>
-        <p class="text-muted mb-0">Create a programme for this case or open an existing PDF Builder.</p>
-    </div>
-    <form asp-action="CreateProgramme" asp-route-id="@Model.Case.TreatmentCaseId" method="post" class="d-inline">
-        @Html.AntiForgeryToken()
-        <button type="submit" class="btn btn-primary">New programme</button>
-    </form>
-</div>
-
-@if (Model.Case.Programmes.Count == 0)
-{
-    <div class="alert alert-info">No programmes on this case yet.</div>
-}
-else
-{
-    <div class="card">
-        <div class="card-body p-0">
-            <table class="table table-sm mb-0 align-middle">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Status</th>
-                        <th>Sessions</th>
-                        <th>Exercises</th>
-                        <th>Start</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var p in Model.Case.Programmes.OrderBy(p => p.StartDate))
-                    {
-                        var status = p.Status?.Trim().ToLowerInvariant() ?? string.Empty;
-                        var statusFormId = $"programme-status-{p.ProgrammeId}";
-                        var statusOptions = status switch
-                        {
-                            "planned" => new[] { "planned", "active" },
-                            "active" => new[] { "active", "completed" },
-                            "completed" => new[] { "completed" },
-                            _ => new[] { status },
-                        };
-                        <tr>
-                            <td>@p.ProgrammeName</td>
-                            <td>
-                                <select name="targetStatus"
-                                        class="form-select form-select-sm"
-                                        form="@statusFormId"
-                                        aria-label="Programme status">
-                                    @foreach (var option in statusOptions)
-                                    {
-                                        var isSelected = string.Equals(option, status, StringComparison.OrdinalIgnoreCase);
-                                        var optionLabel = string.IsNullOrWhiteSpace(option)
-                                            ? "Unknown"
-                                            : char.ToUpperInvariant(option[0]) + option[1..];
-                                        <option value="@option" selected="@isSelected">@optionLabel</option>
-                                    }
-                                </select>
-                            </td>
-                            <td>@p.SessionCount</td>
-                            <td>@p.ExerciseCount</td>
-                            <td>@p.StartDate.ToString("yyyy-MM-dd")</td>
-                            <td class="text-end d-flex justify-content-end gap-2">
-                                <form id="@statusFormId"
-                                      asp-action="UpdateProgrammeStatus"
-                                      asp-route-id="@Model.Case.TreatmentCaseId"
-                                      asp-route-programmeId="@p.ProgrammeId"
-                                      method="post"
-                                      class="d-none">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="currentStatus" value="@status" />
-                                </form>
-                                <button type="submit" form="@statusFormId" class="btn btn-sm btn-outline-secondary">Apply</button>
-                                @if (p.IsLockedForEdit)
-                                {
-                                    <span class="btn btn-sm btn-outline-secondary disabled"
-                                          aria-disabled="true"
-                                          title="Published programmes are locked. Create a new draft from PDF History to edit.">
-                                        PDF Builder
-                                    </span>
-                                }
-                                else
-                                {
-                                    <a class="btn btn-sm btn-outline-secondary" asp-controller="Programmes" asp-action="Builder"
-                                       asp-route-id="@p.ProgrammeId">PDF Builder</a>
-                                }
-                                @if (p.IsLockedForEdit)
-                                {
-                                    <span class="btn btn-sm btn-outline-secondary disabled"
-                                          aria-disabled="true"
-                                          title="Published programmes are locked. Create a new draft from PDF History to edit.">
-                                        PDF Viewer
-                                    </span>
-                                }
-                                else
-                                {
-                                    <a class="btn btn-sm btn-outline-secondary" asp-controller="Programmes" asp-action="Preview"
-                                              asp-route-id="@p.ProgrammeId">PDF Viewer</a>
-                                }
-                                          <a class="btn btn-sm btn-outline-secondary" asp-controller="Programmes" asp-action="History"
-                                              asp-route-id="@p.ProgrammeId">PDF History</a>
-                                <form id="delete-programme-form-@p.ProgrammeId"
-                                      asp-action="DeleteProgramme"
-                                      asp-route-id="@Model.Case.TreatmentCaseId"
-                                      asp-route-programmeId="@p.ProgrammeId"
-                                      method="post"
-                                      class="d-none">
-                                    @Html.AntiForgeryToken()
-                                </form>
-                                <button type="button"
-                                        class="btn btn-sm btn-outline-danger"
-                                        aria-label="Delete programme @p.ProgrammeName"
-                                        title="Delete programme"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#deleteProgrammeModal"
-                                        data-confirm-form-id="delete-programme-form-@p.ProgrammeId"
-                                        data-programme-name="@p.ProgrammeName">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0A.5.5 0 0 1 8.5 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z" />
-                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2H5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1h2.5a1 1 0 0 1 1 1ZM6 2v.5h4V2H6ZM4 4v9a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4H4Z" />
-                                    </svg>
-                                </button>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
-}
 
 <div class="modal fade" id="deleteNoteModal" tabindex="-1" aria-labelledby="deleteNoteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -324,7 +111,7 @@ else
 
 <div class="modal fade" id="editNoteModal" tabindex="-1" aria-labelledby="editNoteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-        <form id="editNoteForm" method="post">
+        <form id="editNoteForm" method="post" data-async-case>
             @Html.AntiForgeryToken()
             <div class="modal-content">
                 <div class="modal-header">
@@ -354,6 +141,68 @@ else
     <partial name="_ValidationScriptsPartial" />
     <script>
         (function () {
+            var body = document.getElementById('caseDetailBody');
+            if (!body) { return; }
+            var contentUrl = body.getAttribute('data-case-content-url');
+            var caseId = '@Model.Case.TreatmentCaseId';
+
+            function toast(message, kind) {
+                if (window.showToast) { window.showToast(message, kind || 'success'); }
+            }
+
+            // Re-fetch just the case-detail body partial and swap it in place, preserving scroll.
+            function refreshBody() {
+                var scrollY = window.scrollY;
+                return fetch(contentUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(function (r) { return r.text(); })
+                    .then(function (html) {
+                        body.innerHTML = html;
+                        window.scrollTo(0, scrollY);
+                        bindEditNoteButtons();
+                    });
+            }
+
+            // Submit an async case form via fetch; on success refresh the body in place.
+            function submitAsyncForm(form) {
+                var scrollY = window.scrollY;
+                var fd = new FormData(form);
+                var method = (form.getAttribute('method') || 'post').toUpperCase();
+                fetch(form.action, {
+                    method: method,
+                    body: fd,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                    .then(function (r) {
+                        if (!r.ok) { throw new Error('Request failed'); }
+                        return r.json();
+                    })
+                    .then(function (data) {
+                        window.scrollTo(0, scrollY);
+                        if (data && data.ok === false) {
+                            toast(data.error || data.message || 'Action failed.', 'error');
+                            return;
+                        }
+                        if (form.hasAttribute('data-reset-on-success')) {
+                            form.reset();
+                        }
+                        var msg = (data && (data.message || data.error)) || 'Saved.';
+                        return refreshBody().then(function () { toast(msg, 'success'); });
+                    })
+                    .catch(function () {
+                        window.scrollTo(0, scrollY);
+                        toast('Something went wrong. Please try again.', 'error');
+                    });
+            }
+
+            // Delegated submit handler: intercept any async case form (content is swapped dynamically).
+            document.addEventListener('submit', function (e) {
+                var form = e.target;
+                if (form && form.matches && form.matches('form[data-async-case]')) {
+                    e.preventDefault();
+                    submitAsyncForm(form);
+                }
+            });
+
             // Delete note confirm modal
             var deleteNoteModal = document.getElementById('deleteNoteModal');
             var deleteNoteConfirmBtn = document.getElementById('delete-note-confirm-btn');
@@ -363,9 +212,14 @@ else
                     pendingNoteFormId = e.relatedTarget && e.relatedTarget.dataset.confirmFormId;
                 });
                 deleteNoteConfirmBtn.addEventListener('click', function () {
-                    if (pendingNoteFormId) document.getElementById(pendingNoteFormId).submit();
+                    if (pendingNoteFormId) {
+                        var f = document.getElementById(pendingNoteFormId);
+                        window.bootstrap.Modal.getOrCreateInstance(deleteNoteModal).hide();
+                        if (f) { submitAsyncForm(f); }
+                    }
                 });
             }
+
             // Delete programme confirm modal
             var deleteProgrammeModal = document.getElementById('deleteProgrammeModal');
             var deleteProgrammeConfirmBtn = document.getElementById('delete-programme-confirm-btn');
@@ -375,29 +229,45 @@ else
                     pendingProgrammeFormId = e.relatedTarget && e.relatedTarget.dataset.confirmFormId;
                 });
                 deleteProgrammeConfirmBtn.addEventListener('click', function () {
-                    if (pendingProgrammeFormId) document.getElementById(pendingProgrammeFormId).submit();
+                    if (pendingProgrammeFormId) {
+                        var f = document.getElementById(pendingProgrammeFormId);
+                        window.bootstrap.Modal.getOrCreateInstance(deleteProgrammeModal).hide();
+                        if (f) { submitAsyncForm(f); }
+                    }
                 });
             }
-        })();
-        (function () {
-            var modalEl = document.getElementById('editNoteModal');
-            if (!modalEl || !window.bootstrap) {
-                return;
-            }
-            var modal = window.bootstrap.Modal.getOrCreateInstance(modalEl);
-            var form = document.getElementById('editNoteForm');
-            var typeInput = document.getElementById('editNoteType');
-            var textInput = document.getElementById('editNoteText');
-            var caseId = '@Model.Case.TreatmentCaseId';
-            document.querySelectorAll('[data-edit-note]').forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    var noteId = btn.getAttribute('data-note-id');
-                    typeInput.value = btn.getAttribute('data-note-type') || '';
-                    textInput.value = btn.getAttribute('data-note-text') || '';
-                    form.action = '/Cases/' + caseId + '/Notes/' + noteId + '/Update';
-                    modal.show();
+
+            // Edit note modal populate + submit
+            var editModalEl = document.getElementById('editNoteModal');
+            var editModal = editModalEl && window.bootstrap
+                ? window.bootstrap.Modal.getOrCreateInstance(editModalEl)
+                : null;
+            var editForm = document.getElementById('editNoteForm');
+            var editType = document.getElementById('editNoteType');
+            var editText = document.getElementById('editNoteText');
+
+            function bindEditNoteButtons() {
+                document.querySelectorAll('[data-edit-note]').forEach(function (btn) {
+                    if (btn.dataset.bound === '1') { return; }
+                    btn.dataset.bound = '1';
+                    btn.addEventListener('click', function () {
+                        var noteId = btn.getAttribute('data-note-id');
+                        if (editType) { editType.value = btn.getAttribute('data-note-type') || ''; }
+                        if (editText) { editText.value = btn.getAttribute('data-note-text') || ''; }
+                        if (editForm) { editForm.action = '/Cases/' + caseId + '/Notes/' + noteId + '/Update'; }
+                        if (editModal) { editModal.show(); }
+                    });
                 });
-            });
+            }
+
+            // Hide the edit modal after a successful async submit of the edit form.
+            if (editForm) {
+                editForm.addEventListener('submit', function () {
+                    if (editModal) { editModal.hide(); }
+                });
+            }
+
+            bindEditNoteButtons();
         })();
     </script>
 }

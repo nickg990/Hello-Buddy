@@ -145,10 +145,13 @@ INSERT INTO TreatmentCase (
 SET @TreatmentCaseId = LAST_INSERT_ID();
 
 -- ---------- TreatmentCaseNote: initial assessment ----------
+-- Use UTC_TIMESTAMP() (not CURRENT_TIMESTAMP) so seed timestamps match the
+-- application, which stamps CreatedDate with DateTime.UtcNow. Mixing the two
+-- makes seed rows appear up to an hour "newer" under BST and breaks note sort.
 INSERT INTO TreatmentCaseNote (
     TreatmentCaseId, PractitionerId, CreatedDate, NoteType, NoteText, IsActive
 ) VALUES (
-    @TreatmentCaseId, @PractitionerId, CURRENT_TIMESTAMP,
+    @TreatmentCaseId, @PractitionerId, UTC_TIMESTAMP(),
     'initial_assessment',
     'Initial assessment completed. Mild hind limb weakness observed, reduced hip extension on the left side, and slight reluctance during sit-to-stand transition. Home exercise programme recommended with controlled strengthening and mobility work.',
     TRUE
@@ -159,7 +162,7 @@ INSERT INTO TreatmentCaseNote (
     TreatmentCaseId, PractitionerId, CreatedDate, NoteType, NoteText, IsActive
 ) VALUES (
     @TreatmentCaseId, @PractitionerId,
-    DATE_ADD(CURRENT_TIMESTAMP, INTERVAL -3 DAY),
+    DATE_ADD(UTC_TIMESTAMP(), INTERVAL -3 DAY),
     'progress_note',
     'Owner reports good compliance with the exercise programme. Buddy is completing AM and PM sessions without difficulty. Slight improvement in sit-to-stand transition noted. Continue current programme and review at next appointment.',
     TRUE

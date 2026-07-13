@@ -68,3 +68,4 @@
         document.querySelectorAll('.app-toast-container .toast').forEach(showToastElement);
     });
 })();
+

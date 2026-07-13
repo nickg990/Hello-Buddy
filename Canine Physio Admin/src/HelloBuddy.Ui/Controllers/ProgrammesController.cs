@@ -2,6 +2,7 @@ using HelloBuddy.Contracts;
 using HelloBuddy.Ui.Models;
 using HelloBuddy.Ui.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Logging;
 using System.Text.RegularExpressions;
 
@@ -378,6 +379,9 @@ public class ProgrammesController : Controller
             return null;
         }
 
+        // Load the full active exercise set once; the add-exercise filter pane
+        // narrows it client-side (search / category / video), so no round-trip
+        // is needed per keystroke and each session panel can filter independently.
         var exercises = await _api.ListExercisesAsync(new ExerciseListFilter
         {
             ActiveOnly = true,
@@ -386,10 +390,17 @@ public class ProgrammesController : Controller
             SearchText = null,
         }, ct);
 
+        var categories = await _api.ListExerciseCategoriesAsync(ct);
+        var categoryOptions = categories
+            .Where(x => x.IsActive)
+            .Select(x => new SelectListItem(x.CategoryName, x.ExerciseCategoryId.ToString()))
+            .ToList();
+
         return new ProgrammesBuilderPageVm
         {
             Programme = vm,
             AvailableExercises = exercises,
+            CategoryOptions = categoryOptions,
         };
     }
 

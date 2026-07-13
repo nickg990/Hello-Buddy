@@ -546,6 +546,44 @@ public sealed class ApiInMemoryTests : IClassFixture<ApiInMemoryTests.Factory>
     }
 
     [Fact]
+    public async Task CaseNotes_AreReturnedNewestFirst()
+    {
+        var (treatmentCase, _) = await CreateDraftProgrammeForDeleteAsync();
+
+        // Add three notes in sequence; the last added must appear first.
+        string[] texts = ["First note added.", "Second note added.", "Third note added."];
+        foreach (var text in texts)
+        {
+            var add = await _client.PostAsJsonAsync(
+                $"/api/cases/{treatmentCase.TreatmentCaseId}/notes",
+                new CreateCaseNoteRequest { NoteType = "progress", NoteText = text });
+            Assert.Equal(HttpStatusCode.OK, add.StatusCode);
+        }
+
+        var getCase = await _client.GetFromJsonAsync<CaseDetailVm>($"/api/cases/{treatmentCase.TreatmentCaseId}");
+        Assert.NotNull(getCase);
+
+        var added = getCase.Notes
+            .Where(n => texts.Contains(n.NoteText))
+            .ToList();
+        Assert.Equal(3, added.Count);
+
+        // Newest first: descending CreatedDate, then descending id as tiebreaker
+        // for notes created within the same second.
+        Assert.Equal("Third note added.", added[0].NoteText);
+        Assert.Equal("Second note added.", added[1].NoteText);
+        Assert.Equal("First note added.", added[2].NoteText);
+
+        for (var i = 0; i < added.Count - 1; i++)
+        {
+            Assert.True(
+                added[i].CreatedDate > added[i + 1].CreatedDate
+                    || added[i].TreatmentCaseNoteId > added[i + 1].TreatmentCaseNoteId,
+                "Notes must be ordered newest-first with id as the tiebreaker.");
+        }
+    }
+
+    [Fact]
     public async Task CaseNotes_EmptyNoteText_ReturnsBadRequest()
     {
         var (treatmentCase, _) = await CreateDraftProgrammeForDeleteAsync();
